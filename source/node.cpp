@@ -4,12 +4,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
 
-#include <operon/core/node.hpp>
 #include "pyoperon/pyoperon.hpp"
+
+#include <operon/core/node.hpp>
 
 namespace py = pybind11;
 
-void init_node(py::module_ &m)
+void InitNode(py::module_ &m)
 {
     // node type
     py::enum_<Operon::NodeType>(m, "NodeType")

@@ -4,7 +4,7 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/operators/reinserter.hpp>
 
-void init_reinserter(py::module_ &m)
+void InitReinserter(py::module_ &m)
 {
     // reinserter
     py::class_<Operon::ReinserterBase> rb(m, "ReinserterBase");

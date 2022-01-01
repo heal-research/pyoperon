@@ -10,6 +10,9 @@ project(
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 docs_early_return()
 
 include(cmake/project-is-top-level.cmake)
@@ -35,6 +38,7 @@ pybind11_add_module(
     source/dataset.cpp
     source/eval.cpp
     source/generator.cpp
+    source/initializer.cpp
     source/mutation.cpp
     source/node.cpp
     source/non_dominated_sorter.cpp

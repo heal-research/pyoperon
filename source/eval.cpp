@@ -27,7 +27,7 @@ namespace detail {
 
 }
 
-void init_eval(py::module_ &m)
+void InitEval(py::module_ &m)
 {
     // free functions
     // we use a lambda to avoid defining a fourth arg for the defaulted C++ function arg

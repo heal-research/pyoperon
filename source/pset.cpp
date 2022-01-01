@@ -3,7 +3,9 @@
 
 #include "pyoperon/pyoperon.hpp"
 
-void init_pset(py::module_ &m)
+#include <operon/core/pset.hpp>
+
+void InitPset(py::module_ &m)
 {
     // primitive set 
     py::class_<Operon::PrimitiveSet>(m, "PrimitiveSet")

@@ -3,9 +3,11 @@
 
 #include "pyoperon/pyoperon.hpp"
 
+#include <operon/operators/non_dominated_sorter.hpp>
+
 namespace py = pybind11;
 
-void init_non_dominated_sorter(py::module_ &m)
+void InitNondominatedSorter(py::module_ &m)
 {
     py::class_<Operon::NondominatedSorterBase>(m, "NonDominatedSorterBase");
 

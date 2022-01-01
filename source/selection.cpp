@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 #include "pyoperon/pyoperon.hpp"
+#include <operon/operators/selector.hpp>
 
-void init_selection(py::module_ &m)
+void InitSelector(py::module_ &m)
 {
     // selection
     py::class_<Operon::SelectorBase> sel(m, "SelectorBase");

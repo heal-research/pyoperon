@@ -69,7 +69,7 @@ Operon::Dataset MakeDataset(py::buffer buf)
 }
 
 
-void init_dataset(py::module_ &m)
+void InitDataset(py::module_ &m)
 {
     // dataset
     py::class_<Operon::Dataset>(m, "Dataset")

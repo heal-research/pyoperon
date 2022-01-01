@@ -3,8 +3,9 @@
 
 #include "pyoperon/pyoperon.hpp"
 #include <operon/core/range.hpp>
+#include <operon/core/problem.hpp>
 
-void init_problem(py::module_ &m)
+void InitProblem(py::module_ &m)
 {
     // problem
     py::class_<Operon::Problem>(m, "Problem")

@@ -11,25 +11,9 @@
 #include <pybind11/stl_bind.h>
 #include <type_traits>
 
-#include <operon/algorithms/gp.hpp>
-#include <operon/algorithms/nsga2.hpp>
-#include <operon/core/constants.hpp>
+#include <operon/core/types.hpp>
 #include <operon/core/dataset.hpp>
-#include <operon/core/format.hpp>
 #include <operon/core/individual.hpp>
-#include <operon/core/node.hpp>
-#include <operon/core/pset.hpp>
-#include <operon/core/metrics.hpp>
-#include <operon/core/operator.hpp>
-
-#include <operon/operators/creator.hpp>
-#include <operon/operators/crossover.hpp>
-#include <operon/operators/generator.hpp>
-#include <operon/operators/initializer.hpp>
-#include <operon/operators/mutation.hpp>
-#include <operon/operators/non_dominated_sorter.hpp>
-#include <operon/operators/selection.hpp>
-#include <operon/operators/reinserter.hpp>
 
 namespace py = pybind11;
 
@@ -37,11 +21,8 @@ namespace py = pybind11;
 PYBIND11_MAKE_OPAQUE(std::vector<Operon::Variable>);
 PYBIND11_MAKE_OPAQUE(std::vector<Operon::Individual>);
 
-using GeneticProgrammingAlgorithm = Operon::GeneticProgrammingAlgorithm<Operon::UniformInitializer>;
-using NSGA2Algorithm              = Operon::NSGA2<Operon::UniformInitializer>;
-
 template<typename T>
-py::array_t<T const> MakeView(Operon::Span<T const> view)
+auto MakeView(Operon::Span<T const> view) -> py::array_t<T const>
 {
     auto sz = static_cast<pybind11::ssize_t>(view.size());
     py::array_t<T const> arr(sz, view.data(), py::capsule(view.data()));
@@ -51,24 +32,24 @@ py::array_t<T const> MakeView(Operon::Span<T const> view)
 }
 
 template<typename T>
-Operon::Span<T> MakeSpan(py::array_t<T> arr)
+auto MakeSpan(py::array_t<T> arr) -> Operon::Span<T>
 {
     py::buffer_info info = arr.request();
-    using size_type = typename Operon::Span<T>::size_type;
-    return Operon::Span<T>(static_cast<T*>(info.ptr), static_cast<size_type>(info.size));
+    return Operon::Span<T>(static_cast<T*>(info.ptr), static_cast<typename Operon::Span<T>::size_type>(info.size));
 }
 
-void init_algorithm(py::module_&);
-void init_creator(py::module_&);
-void init_crossover(py::module_&);
-void init_dataset(py::module_&);
-void init_eval(py::module_&);
-void init_generator(py::module_&);
-void init_mutation(py::module_&);
-void init_non_dominated_sorter(py::module_&);
-void init_node(py::module_&);
-void init_problem(py::module_&);
-void init_pset(py::module_&);
-void init_reinserter(py::module_&m);
-void init_selection(py::module_&m);
-void init_tree(py::module_&);
+void InitAlgorithm(py::module_&);
+void InitCreator(py::module_&);
+void InitCrossover(py::module_&);
+void InitDataset(py::module_&);
+void InitEval(py::module_&);
+void InitGenerator(py::module_&);
+void InitInitializer(py::module_&);
+void InitMutation(py::module_&);
+void InitNondominatedSorter(py::module_&);
+void InitNode(py::module_&);
+void InitProblem(py::module_&);
+void InitPset(py::module_&);
+void InitReinserter(py::module_&m);
+void InitSelector(py::module_&m);
+void InitTree(py::module_&);

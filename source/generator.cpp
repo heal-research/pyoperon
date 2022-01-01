@@ -3,7 +3,9 @@
 
 #include "pyoperon/pyoperon.hpp"
 
-void init_generator(py::module_ &m)
+#include <operon/operators/generator.hpp>
+
+void InitGenerator(py::module_ &m)
 {
     // offspring generator base
     py::class_<Operon::OffspringGeneratorBase>(m, "OffspringGeneratorBase")

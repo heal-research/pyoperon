@@ -5,6 +5,8 @@
 
 //#include <operon/core/version.hpp>
 #include <operon/parser/infix.hpp>
+#include <operon/core/format.hpp>
+#include <operon/algorithms/config.hpp>
 
 namespace py = pybind11;
 
@@ -17,20 +19,21 @@ PYBIND11_MODULE(pyoperon, m)
     py::bind_vector<std::vector<Operon::Variable>>(m, "VariableCollection");
     py::bind_vector<std::vector<Operon::Individual>>(m, "IndividualCollection");
 
-    init_algorithm(m);
-    init_creator(m);
-    init_crossover(m);
-    init_dataset(m);
-    init_eval(m);
-    init_generator(m);
-    init_mutation(m);
-    init_non_dominated_sorter(m);
-    init_node(m);
-    init_problem(m);
-    init_pset(m);
-    init_reinserter(m);
-    init_selection(m);
-    init_tree(m);
+    InitAlgorithm(m);
+    InitCreator(m);
+    InitCrossover(m);
+    InitDataset(m);
+    InitEval(m);
+    InitGenerator(m);
+    InitInitializer(m);
+    InitMutation(m);
+    InitNode(m);
+    InitNondominatedSorter(m);
+    InitProblem(m);
+    InitPset(m);
+    InitReinserter(m);
+    InitSelector(m);
+    InitTree(m);
 
     // build information
     //m.def("Version", &Operon::Version);

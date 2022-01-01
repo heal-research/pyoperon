@@ -4,11 +4,11 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/operators/mutation.hpp>
 
-void init_mutation(py::module_ &m)
+void InitMutation(py::module_ &m)
 {
     using D = std::normal_distribution<Operon::Scalar>; // distribution for perturbing leaf coefficients
     // mutation
-    py::class_<Operon::MutatorBase>(m, "MutatorBase");
+    py::class_<Operon::MutatorBase> mutatorBase(m, "MutatorBase");
 
     py::class_<Operon::OnePointMutation<D>, Operon::MutatorBase>(m, "OnePointMutation")
         .def(py::init<>())

@@ -49,7 +49,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         comparison_factor              = 0,
         brood_size                     = 10,
         tournament_size                = 5,
-        btc_bias                       = 0.0,
+        irregularity_bias              = 0.0,
         n_threads                      = 1,
         time_limit                     = None,
         random_state                   = None
@@ -78,7 +78,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.comparison_factor         = 0 if comparison_factor is None else comparison_factor
         self.brood_size                = 10 if brood_size is None else int(brood_size)
         self.tournament_size           = 5 if tournament_size is None else tournament_size # todo: set for both parent selectors
-        self.btc_bias                  = 0.0 if btc_bias is None else btc_bias
+        self.irregularity_bias         = 0.0 if irregularity_bias is None else irregularity_bias
         self.n_threads                 = 1 if n_threads is None else int(n_threads)
         self.time_limit                = sys.maxsize if time_limit is None else int(time_limit)
         self.random_state              = random_state
@@ -123,10 +123,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
     def __init_creator(self, initialization_method, pset, inputs):
         if initialization_method == 'btc':
-            return op.BalancedTreeCreator(pset, inputs, self.btc_bias)
+            return op.BalancedTreeCreator(pset, inputs, self.irregularity_bias)
 
         elif initialization_method == 'ptc2':
-            return op.ProbabilisticTreeCreator(pset, inputs)
+            return op.ProbabilisticTreeCreator(pset, inputs, self.irregularity_bias)
 
         elif initialization_method == 'koza':
             return op.GrowTreeCreator(pset, inputs)
@@ -287,8 +287,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         evaluators = [] # placeholder for the evaluator(s)
 
         for obj in self.objectives:
-            eval_         = self.__init_evaluator(obj, problem, self._interpreter)
-            eval_.Budget  = self.max_evaluations
+            eval_        = self.__init_evaluator(obj, problem, self._interpreter)
+            eval_.Budget = self.max_evaluations
             eval_.LocalOptimizationIterations = self.local_iterations
             evaluators.append(eval_)
 
@@ -319,9 +319,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         generator             = self.__init_generator(self.offspring_generator, evaluator, cx, mut, female_selector, male_selector)
 
         min_arity, max_arity  = pset.FunctionArityLimits()
-        initializer           = op.UniformInitializer(creator, min_arity+1, self.max_length)
-        initializer.MinDepth  = 1
-        initializer.MaxDepth  = 1000
+        tree_initializer      = op.UniformLengthTreeInitializer(creator)
+        tree_initializer.ParameterizeDistribution(min_arity+1, self.max_length)
+        tree_initializer.MinDepth = 1
+
+        # btc and ptc2 do not need a depth restriction
+        tree_initializer.MaxDepth = self.max_depth if self.initialization_method == 'koza' else 1000
+
+        coeff_initializer = op.NormalDistributedCoefficientInitializer()
+        coeff_initializer.ParameterizeDistribution(0, 1)
 
         if self.random_state is None:
             self.random_state = random.getrandbits(64)
@@ -339,7 +345,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                                     )
 
         sorter                = None if single_objective else op.RankSorter()
-        gp                    = op.GeneticProgrammingAlgorithm(problem, config, initializer, generator, reinserter) if single_objective else op.NSGA2Algorithm(problem, config, initializer, generator, reinserter, sorter) 
+        gp                    = op.GeneticProgrammingAlgorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter) if single_objective \
+                                else op.NSGA2Algorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter, sorter)
         rng                   = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)

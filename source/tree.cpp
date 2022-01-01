@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 #include "pyoperon/pyoperon.hpp"
+#include <operon/core/tree.hpp>
 
-void init_tree(py::module_ &m)
+void InitTree(py::module_ &m)
 {
     // tree
     py::class_<Operon::Tree>(m, "Tree")
@@ -39,7 +40,6 @@ void init_tree(py::module_ &m)
                 if (t.size() != 1) {
                     throw std::runtime_error("Invalid state!");
                 }
-
                 return Operon::Tree(t[0].cast<Operon::Vector<Operon::Node>>()).UpdateNodes();
             }
         ));
