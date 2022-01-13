@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 #include "pyoperon/pyoperon.hpp"
+#include <operon/operators/creator.hpp>
 #include <operon/operators/mutation.hpp>
 
 void InitMutation(py::module_ &m)

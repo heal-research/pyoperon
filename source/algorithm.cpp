@@ -4,6 +4,9 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/algorithms/gp.hpp>
 #include <operon/algorithms/nsga2.hpp>
+#include <operon/operators/initializer.hpp>
+#include <operon/operators/non_dominated_sorter.hpp>
+#include <operon/operators/reinserter.hpp>
 
 #include <pybind11/detail/common.h>
 

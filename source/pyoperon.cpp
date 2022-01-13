@@ -3,10 +3,10 @@
 
 #include "pyoperon/pyoperon.hpp"
 
-//#include <operon/core/version.hpp>
-#include <operon/parser/infix.hpp>
-#include <operon/core/format.hpp>
 #include <operon/algorithms/config.hpp>
+#include <operon/core/format.hpp>
+#include <operon/core/version.hpp>
+#include <operon/parser/infix.hpp>
 
 namespace py = pybind11;
 
@@ -36,7 +36,7 @@ PYBIND11_MODULE(pyoperon, m)
     InitTree(m);
 
     // build information
-    //m.def("Version", &Operon::Version);
+    m.def("Version", &Operon::Version);
 
     // random numbers
     m.def("UniformInt", &Operon::Random::Uniform<Operon::RandomGenerator, int>);
@@ -93,7 +93,10 @@ PYBIND11_MODULE(pyoperon, m)
         .def_static("Format", py::overload_cast<Operon::Tree const&, std::unordered_map<Operon::Hash, std::string> const&, int>(&Operon::InfixFormatter::Format));
 
     py::class_<Operon::InfixParser>(m, "InfixParser")
-        .def_static("Parse", &Operon::InfixParser::Parse<std::unordered_map<std::string, Operon::Hash>>);
+        .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& var) {
+                auto const& tok = Operon::InfixParser::DefaultTokens();
+                return Operon::InfixParser::Parse(expr, tok, var);
+        });
 
     // genetic algorithm
     py::class_<Operon::GeneticAlgorithmConfig>(m, "GeneticAlgorithmConfig")

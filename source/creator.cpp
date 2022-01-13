@@ -4,6 +4,7 @@
 #include "pyoperon/pyoperon.hpp"
 
 #include <operon/operators/creator.hpp>
+#include <operon/core/pset.hpp>
 
 void InitCreator(py::module_ &m)
 {

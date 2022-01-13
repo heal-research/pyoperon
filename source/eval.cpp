@@ -43,34 +43,36 @@ void InitEval(py::module_ &m)
         auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
-        if (metric == "rsquared") return Operon::RSquared<Operon::Scalar>(estimated, values); 
-        if (metric == "mse")      return Operon::MeanSquaredError<Operon::Scalar>(estimated, values);
-        if (metric == "rmse")     return Operon::RootMeanSquaredError<Operon::Scalar>(estimated, values);
-        if (metric == "nmse")     return Operon::NormalizedMeanSquaredError<Operon::Scalar>(estimated, values);
+        if (metric == "c2") { return Operon::SquaredCorrelation<Operon::Scalar>(estimated, values); }
+        if (metric == "r2") { return Operon::CoefficientOfDetermination<Operon::Scalar>(estimated, values); }
+        if (metric == "mse") { return Operon::MeanSquaredError<Operon::Scalar>(estimated, values); }
+        if (metric == "rmse") { return Operon::RootMeanSquaredError<Operon::Scalar>(estimated, values); }
+        if (metric == "nmse") { return Operon::NormalizedMeanSquaredError<Operon::Scalar>(estimated, values); }
         throw std::runtime_error("Invalid fitness metric"); 
 
     }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
 
     m.def("CalculateFitness", [](Operon::Interpreter const& i, std::vector<Operon::Tree> const& trees, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
-        std::add_pointer<double(Operon::Span<const Operon::Scalar>, Operon::Span<const Operon::Scalar>)>::type func;
-        if (metric == "rsquared")  func = &Operon::RSquared;
-        else if (metric == "mse")  func = &Operon::MeanSquaredError;
-        else if (metric == "nmse") func = &Operon::NormalizedMeanSquaredError;
-        else if (metric == "rmse") func = &Operon::RootMeanSquaredError;
-        else throw std::runtime_error("Unsupported error metric");
+        std::add_pointer<double(Operon::Span<const Operon::Scalar>, Operon::Span<const Operon::Scalar>)>::type func = nullptr;
+        if (metric == "r2") { func = &Operon::CoefficientOfDetermination; }
+        else if (metric == "mse")  { func = &Operon::MeanSquaredError; }
+        else if (metric == "nmse") { func = &Operon::NormalizedMeanSquaredError; }
+        else if (metric == "rmse") { func = &Operon::RootMeanSquaredError; }
+        else { throw std::runtime_error("Unsupported error metric"); }
 
         auto result = py::array_t<double>(static_cast<pybind11::ssize_t>(trees.size()));
         auto buf = result.request();
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
         // TODO: make this run in parallel with taskflow
-        std::transform(trees.begin(), trees.end(), (double*)buf.ptr, [&](auto const& t) -> double {
-            auto estimated = i.Evaluate(t, d, r, (Operon::Scalar*)nullptr);
+        std::transform(trees.begin(), trees.end(), static_cast<double*>(buf.ptr), [&](auto const& t) -> double {
+            auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
             return func(estimated, values);
         });
 
         return result;
     }, py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
+
 
     m.def("FitLeastSquares", [](py::array_t<float> lhs, py::array_t<float> rhs) {
         return detail::FitLeastSquares<float>(lhs, rhs);
@@ -80,12 +82,20 @@ void InitEval(py::module_ &m)
         return detail::FitLeastSquares<double>(lhs, rhs);
     });
 
-    m.def("RSquared", [](py::array_t<float> lhs, py::array_t<float> rhs) {
-        return Operon::RSquared<float>(MakeSpan(lhs), MakeSpan(rhs));
+    m.def("SquaredCorrelation", [](py::array_t<float> lhs, py::array_t<float> rhs) {
+        return Operon::SquaredCorrelation<float>(MakeSpan(lhs), MakeSpan(rhs));
     });
 
-    m.def("RSquared", [](py::array_t<double> lhs, py::array_t<double> rhs) {
-        return Operon::RSquared<double>(MakeSpan(lhs), MakeSpan(rhs));
+    m.def("SquaredCorrelation", [](py::array_t<double> lhs, py::array_t<double> rhs) {
+        return Operon::SquaredCorrelation<double>(MakeSpan(lhs), MakeSpan(rhs));
+    });
+
+    m.def("R2Score", [](py::array_t<float> lhs, py::array_t<float> rhs) {
+        return Operon::CoefficientOfDetermination<float>(MakeSpan(lhs), MakeSpan(rhs));
+    });
+
+    m.def("R2SCore", [](py::array_t<double> lhs, py::array_t<double> rhs) {
+        return Operon::CoefficientOfDetermination<double>(MakeSpan(lhs), MakeSpan(rhs));
     });
 
     m.def("NormalizedMeanSquaredError", [](py::array_t<float> lhs, py::array_t<float> rhs) {
@@ -155,9 +165,9 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&, Operon::Interpreter&>())
         .def("__call__", &Operon::MeanAbsoluteErrorEvaluator::operator());
 
-    py::class_<Operon::RSquaredEvaluator, Operon::EvaluatorBase>(m, "RSquaredEvaluator")
+    py::class_<Operon::R2Evaluator, Operon::EvaluatorBase>(m, "RSquaredEvaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&>())
-        .def("__call__", &Operon::RSquaredEvaluator::operator());
+        .def("__call__", &Operon::R2Evaluator::operator());
 
     py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
         .def(py::init<Operon::Problem&, std::function<typename Operon::EvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>())
