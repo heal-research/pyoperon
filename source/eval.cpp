@@ -5,14 +5,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <operon/interpreter/dispatch_table.hpp>
 #include <operon/operators/evaluator.hpp>
 #include "pyoperon/pyoperon.hpp"
 
 namespace py = pybind11;
 
 namespace detail {
-
     template<typename T>
     auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs)
     {
@@ -24,8 +22,7 @@ namespace detail {
         auto b = stats.mean_y - a * stats.mean_x;     // offset
         return std::make_pair(a, b);
     }
-
-}
+} // namespace detail
 
 void InitEval(py::module_ &m)
 {
@@ -34,7 +31,7 @@ void InitEval(py::module_ &m)
     m.def("Evaluate", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r) {
         auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(r.Size()));
         auto buf = result.request();
-        auto res = Operon::Span<Operon::Scalar>((Operon::Scalar*)buf.ptr, r.Size());
+        auto res = Operon::Span<Operon::Scalar>(static_cast<Operon::Scalar*>(buf.ptr), r.Size());
         i.Evaluate(t, d, r, res, static_cast<Operon::Scalar*>(nullptr));
         return result;
         }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"));

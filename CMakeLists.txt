@@ -5,7 +5,7 @@ include(cmake/prelude.cmake)
 project(
     pyoperon
     VERSION 0.1.0
-    DESCRIPTION "Python bindings for the Operon library"
+    DESCRIPTION "Scikit-learn module and python bindings and for the Operon library"
     HOMEPAGE_URL "https://operongp.readthedocs.io/en/latest/"
     LANGUAGES CXX
 )
@@ -21,9 +21,11 @@ include(cmake/variables.cmake)
 # ---- Find depencendies ----
 find_package(operon REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Development Interpreter)
+find_package(Threads REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Ceres REQUIRED)   # use the Ceres optimizer for coefficients tuning
+find_package(xxHash REQUIRED)
 
 # ---- Declare library ----
 
@@ -85,11 +87,11 @@ target_include_directories(
 
 target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_17)
 
-target_link_libraries(pyoperon_pyoperon PUBLIC operon::operon Python3::Module Python3::Python pybind11::pybind11 Threads::Threads fmt::fmt Ceres::ceres)
+target_link_libraries(pyoperon_pyoperon PRIVATE operon::operon Python3::Module Python3::Python pybind11::pybind11 Threads::Threads fmt::fmt Ceres::ceres xxHash::xxhash)
 
-target_compile_options(pyoperon_pyoperon PUBLIC "-march=x86-64;-mavx2;-mfma;-fPIC")
+target_compile_options(pyoperon_pyoperon PRIVATE "-march=x86-64;-mavx2;-mfma;-fPIC")
 
-target_link_options(pyoperon_pyoperon PUBLIC "-Wl,--no-undefined")
+target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
 
 # ---- Install rules ----
 

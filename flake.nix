@@ -1,6 +1,5 @@
 {
-  description = "Operon development environment";
-  #nixConfig.bash-prompt = "\n\\[\\e[93m\\e[1m\\][operon-dev:\\[\\e[92m\\e[1m\\]\\w]$\\[\\e[0m\\] ";
+  description = "pyoperon";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.nur.url = "github:nix-community/NUR";
@@ -25,58 +24,47 @@
                 sha256 = "sha256-fki0QmbD2LnOOq3jAz5YVba9SGTJ9nIcl3uzhCdJIDs=";
               };
           });
-        in
+        in rec
         {
-          devShell = pkgs.gcc11Stdenv.mkDerivation {
-            name = "operon-env";
-            hardeningDisable = [ "all" ];
-            impureUseNativeOptimizations = true;
-            nativeBuildInputs = with pkgs; [ bear cmake clang_13 clang-tools cppcheck ];
+          defaultPackage = pkgs.gcc11Stdenv.mkDerivation {
+            name = "pyoperon";
+            src = self;
+
+            cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Release" ];
+
+            nativeBuildInputs = with pkgs; [ cmake ];
+
             buildInputs = with pkgs; [
                 # python environment for bindings and scripting
                 (python39.override { stdenv = gcc11Stdenv; })
-                (python39.withPackages (ps: with ps; [ pybind11 numpy pandas scikit-learn pytest pip pyperf colorama coloredlogs grip livereload joblib graphviz sphinx recommonmark sphinx_rtd_theme ]))
+                (python39.withPackages (ps: with ps; [ pybind11 ]))
                 # Project dependencies and utils for profiling and debugging
-                ceres-solver
-                cxxopts
-                diff-so-fancy
-                doctest
-                eigen
                 fmt
-                gdb
-                glog
-                hotspot
-                hyperfine
-                jemalloc
-                linuxPackages.perf
-                mimalloc
-                ninja
-                openlibm
-                pkg-config
-                valgrind
-                xxHash
-
-                boost
-                tbb
+                ceres-solver
 
                 # Some dependencies are provided by a NUR repo
                 repo.aria-csv
-                repo.autodiff
-                repo.cmake-init
-                repo.cmaketools
-                repo.cpp-sort
                 repo.fast_float
-                repo.eli5
-                repo.pmlb
+                repo.operon
                 repo.pratt-parser
                 repo.robin-hood-hashing
                 repo.span-lite
                 repo.taskflow
                 repo.vectorclass
                 repo.vstat
+                repo.xxhash
               ];
+          };
+
+          devShell = pkgs.gcc11Stdenv.mkDerivation {
+            name = "pyoperon-dev";
+            hardeningDisable = [ "all" ];
+            impureUseNativeOptimizations = true;
+            nativeBuildInputs = defaultPackage.nativeBuildInputs ++ (with pkgs; [ bear clang_13 clang-tools cppcheck ]);
+            buildInputs = defaultPackage.buildInputs;
 
             shellHook = ''
+              PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
               LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]};
               '';
           };

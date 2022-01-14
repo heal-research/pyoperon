@@ -20,7 +20,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_
 reg = SymbolicRegressor(
         allowed_symbols='add,sub,mul,div,constant,variable',
         offspring_generator='basic',
-        local_iterations=10,
+        local_iterations=0,
         max_depth=5,
         initialization_method='koza',
         n_threads=32,
