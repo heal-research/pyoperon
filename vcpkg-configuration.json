@@ -1,0 +1,15 @@
+{
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/microsoft/vcpkg",
+    "baseline": "5568f110b509a9fd90711978a7cb76bae75bb092"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/foolnotion/vcpkg-registry",
+      "baseline": "098261267e8dfa2f25adce47988c127b12e438aa",
+      "packages": [ "aria-csv", "pratt-parser", "vstat", "operon" ]
+    }
+  ]
+}
