@@ -153,25 +153,34 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
     def __init_evaluator(self, objective, problem, interpreter):
         if objective == 'r2':
-            return op.RSquaredEvaluator(problem, interpreter)
+            err = op.R2()
+            return op.Evaluator(problem, interpreter, err, True), err
+
+        elif objective == 'c2':
+            err = op.C2()
+            return op.Evaluator(problem, interpreter, err, False), err
 
         elif objective == 'nmse':
-            return op.NormalizedMeanSquaredErrorEvaluator(problem, interpreter)
+            err = op.NMSE()
+            return op.Evaluator(problem, interpreter, err, True), err
 
         elif objective == 'rmse':
-            return op.RootMeanSquaredErrorEvaluator(problem, interpreter)
+            err = op.RMSE()
+            return op.Evaluator(problem, interpreter, err, True), err
 
         elif objective == 'mse':
-            return op.MeanSquaredErrorEvaluator(problem, interpreter)
+            err = op.MSE()
+            return op.Evaluator(problem, interpreter, err, True), err
 
         elif objective == 'mae':
-            return op.MeanAbsoluteErrorEvaluator(problem, interpreter)
+            err = op.MAE()
+            return op.Evaluator(problem, interpreter, err, True), err
 
         elif objective == 'length':
-            return op.LengthEvaluator(problem)
+            return op.LengthEvaluator(problem), None
 
         elif objective == 'shape':
-            return op.ShapeEvaluator(problem)
+            return op.ShapeEvaluator(problem), None
 
         raise ValueError('Unknown objective {}'.format(objectives))
 
@@ -284,13 +293,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         single_objective      = True if len(self.objectives) == 1 else False
 
+        error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
         for obj in self.objectives:
-            eval_        = self.__init_evaluator(obj, problem, self._interpreter)
+            eval_, err_       = self.__init_evaluator(obj, problem, self._interpreter)
             eval_.Budget = self.max_evaluations
             eval_.LocalOptimizationIterations = self.local_iterations
             evaluators.append(eval_)
+            error_metrics.append(err_)
 
         if single_objective:
             evaluator = evaluators[0]

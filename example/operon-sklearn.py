@@ -7,7 +7,6 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import r2_score, make_scorer
 from scipy.stats import pearsonr
 
-from operon import R2Score
 from operon.sklearn import SymbolicRegressor
 
 from pmlb import fetch_data, dataset_names, classification_dataset_names, regression_dataset_names
@@ -34,12 +33,10 @@ print(reg._stats)
 
 y_pred_train = reg.predict(X_train)
 print('r2 train (sklearn.r2_score): ', r2_score(y_train, y_pred_train))
-# for comparison we calculate the r2 from _operon and scipy.pearsonr
-print('r2 train (operon.r2score): ', R2Score(y_pred_train, y_train))
 r = pearsonr(y_train, y_pred_train)[0]
 print('r2 train (scipy.pearsonr): ', r * r)
 
 # crossvalidation
-sc = make_scorer(R2Score, greater_is_better=True)
+sc = make_scorer(r2_score, greater_is_better=True)
 scores = cross_val_score(reg, X, y, cv=5, scoring=sc)
 print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))

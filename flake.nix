@@ -14,16 +14,6 @@
             overlays = [ nur.overlay ];
           };
           repo = pkgs.nur.repos.foolnotion;
-
-          # ceres has to be compiled from git due to a bug in tiny solver
-          ceres-solver = pkgs.ceres-solver.overrideAttrs(old: rec {
-              src = pkgs.fetchFromGitHub {
-                repo   = "ceres-solver";
-                owner  = "ceres-solver";
-                rev    = "3f950c66d88e073d7aab42933bdadbc94169b336";
-                sha256 = "sha256-fki0QmbD2LnOOq3jAz5YVba9SGTJ9nIcl3uzhCdJIDs=";
-              };
-          });
         in rec
         {
           defaultPackage = pkgs.gcc11Stdenv.mkDerivation {
@@ -37,7 +27,7 @@
             buildInputs = with pkgs; [
                 # python environment for bindings and scripting
                 (python39.override { stdenv = gcc11Stdenv; })
-                (python39.withPackages (ps: with ps; [ pybind11 ]))
+                (python39.withPackages (ps: with ps; [ pybind11 numpy pandas scikit-learn requests ]))
                 # Project dependencies and utils for profiling and debugging
                 fmt
                 ceres-solver
@@ -53,6 +43,9 @@
                 repo.vectorclass
                 repo.vstat
                 repo.xxhash
+                # Needed for the example
+                repo.eli5
+                repo.pmlb
               ];
           };
 

@@ -14,7 +14,7 @@ void InitTree(py::module_ &m)
         //.def(py::init<Operon::Tree&&>())
         .def("UpdateNodes", &Operon::Tree::UpdateNodes)
         .def("Sort", &Operon::Tree::Sort)
-        .def("Hash", static_cast<Operon::Tree& (Operon::Tree::*)(Operon::HashFunction, Operon::HashMode)>(&Operon::Tree::Hash))
+        .def("Hash", static_cast<Operon::Tree& (Operon::Tree::*)(Operon::HashMode)>(&Operon::Tree::Hash))
         .def("Reduce", &Operon::Tree::Reduce)
         //.def("Simplify", &Operon::Tree::Simplify) // not yet implemented
         .def("ChildIndices", &Operon::Tree::ChildIndices)
