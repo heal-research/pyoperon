@@ -5,7 +5,11 @@
   inputs.nur.url = "github:nix-community/NUR";
   inputs.nixpkgs.url = "github:nixos/nixpkgs/master";
 
-  outputs = { self, flake-utils, nixpkgs, nur }:
+  inputs.operon.url = "github:heal-research/operon?rev=63c36289282067c898b8d1aa19f5d246656371da";
+  inputs.pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
+  inputs.vstat.url = "github:heal-research/vstat?rev=79b9ba2d69fe14e9e16a10f35d4335ffa984f02d";
+
+  outputs = { self, flake-utils, nixpkgs, nur, operon, pratt-parser, vstat }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -31,17 +35,17 @@
                 # Project dependencies and utils for profiling and debugging
                 fmt
                 ceres-solver
+                operon.defaultPackage.${system}
+                pratt-parser.defaultPackage.${system}
+                vstat.defaultPackage.${system}
 
                 # Some dependencies are provided by a NUR repo
                 repo.aria-csv
                 repo.fast_float
-                repo.operon
-                repo.pratt-parser
                 repo.robin-hood-hashing
                 repo.span-lite
                 repo.taskflow
                 repo.vectorclass
-                repo.vstat
                 repo.xxhash
                 # Needed for the example
                 repo.eli5
@@ -57,7 +61,6 @@
             buildInputs = defaultPackage.buildInputs;
 
             shellHook = ''
-              PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
               LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]};
               '';
           };
