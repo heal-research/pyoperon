@@ -17,7 +17,7 @@ The [examples](https://github.com/heal-research/pyoperon/examples) folder contai
 
 Currently, the easiest way to consume **pyoperon** is via the [nix package manager](https://nixos.org/). Nix can be installed on other Linux distributions in a few easy steps:
 
-1. [https://nixos.org/manual/nix/stable/installation/installing-binary.html](Install nix) and enable flake support in `~/.config/nix/nix.conf`:
+1. [Install nix](https://nixos.org/manual/nix/stable/installation/installing-binary.html) and enable flake support in `~/.config/nix/nix.conf`:
    ```
    experimental-features = nix-command flakes
    ```
