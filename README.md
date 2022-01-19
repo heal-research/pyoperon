@@ -1,5 +1,9 @@
 # pyoperon
 
+[![License](https://img.shields.io/github/license/heal-research/pyoperon?style=flat)](https://github.com/heal-research/pyoperon/blob/master/LICENSE)
+[![build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml/badge.svg)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
+[![Gitter chat](https://badges.gitter.im/operongp/gitter.png)](https://gitter.im/operongp/community)
+
 **pyoperon** is the python bindings library of [**Operon**](https://github.com/heal-research/operon), a modern C++ framework for symbolic regression developed by [Heal-Research](https://github.com/heal-research) at the University of Applied Sciences Upper Austria.
 
 A scikit-learn regressor is also available:
