@@ -57,7 +57,7 @@
               name = "pyoperon-dev";
               hardeningDisable = [ "all" ];
               impureUseNativeOptimizations = true;
-              nativeBuildInputs = defaultPackage.nativeBuildInputs ++ (with pkgs; [ bear clang_13 clang-tools cppcheck ]);
+              nativeBuildInputs = defaultPackage.nativeBuildInputs;
               buildInputs = defaultPackage.buildInputs;
 
               shellHook = ''
