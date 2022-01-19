@@ -54,15 +54,16 @@
           };
 
           devShell = pkgs.gcc11Stdenv.mkDerivation {
-            name = "pyoperon-dev";
-            hardeningDisable = [ "all" ];
-            impureUseNativeOptimizations = true;
-            nativeBuildInputs = defaultPackage.nativeBuildInputs ++ (with pkgs; [ bear clang_13 clang-tools cppcheck ]);
-            buildInputs = defaultPackage.buildInputs;
+              name = "pyoperon-dev";
+              hardeningDisable = [ "all" ];
+              impureUseNativeOptimizations = true;
+              nativeBuildInputs = defaultPackage.nativeBuildInputs ++ (with pkgs; [ bear clang_13 clang-tools cppcheck ]);
+              buildInputs = defaultPackage.buildInputs;
 
-            shellHook = ''
-              LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]};
-              '';
+              shellHook = ''
+                  PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
+                  LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]};
+                  '';
           };
         }
       );
