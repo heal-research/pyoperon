@@ -1,0 +1,21 @@
+{
+    "name": "operon",
+    "version-string": "0.3.0",
+    "description": "Modern, fast, scalable C++ framework for symbolic regression.",
+    "dependencies": [
+        "aria-csv",
+        "ceres",
+        "cxxopts",
+        "eigen3",
+        "fast-float",
+        "fmt",
+        "pratt-parser",
+        "robin-hood-hashing",
+        "scnlib",
+        "span-lite",
+        "taskflow",
+        "vectorclass",
+        "vstat",
+        "xxhash"
+    ]
+}
