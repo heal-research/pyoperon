@@ -18,10 +18,10 @@ docs_early_return()
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
-# ---- Find depencendies ----
+# ---- Find dependencies ----
 find_package(Ceres CONFIG)
 find_package(Eigen3 REQUIRED)
-find_package(Python3 REQUIRED COMPONENTS Development Interpreter)
+find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
@@ -52,6 +52,19 @@ pybind11_add_module(
     source/tree.cpp
 )
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
+
+# ---- Find python ----
+find_package(Python3 COMPONENTS Development Interpreter)
+if (Python3_FOUND)
+    target_link_libraries(pyoperon_pyoperon PRIVATE
+        Python3::Module
+        Python3::Python
+    )
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
+    target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
+endif()
 
 include(GenerateExportHeader)
 generate_export_header(
@@ -91,8 +104,6 @@ target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_17)
 
 target_link_libraries(pyoperon_pyoperon PRIVATE
     operon::operon # this will link in operon's public dependencies: fmt, ceres, etc.
-    Python3::Module
-    Python3::Python
     Eigen3::Eigen
     pybind11::pybind11)
 

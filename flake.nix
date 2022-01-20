@@ -5,7 +5,7 @@
   inputs.nur.url = "github:nix-community/NUR";
   inputs.nixpkgs.url = "github:nixos/nixpkgs/master";
 
-  inputs.operon.url = "github:heal-research/operon?rev=2c1edf616dc51c8a6eb2ff214bb63d4766b28064";
+  inputs.operon.url = "github:heal-research/operon";
   inputs.pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
   inputs.vstat.url = "github:heal-research/vstat?rev=79b9ba2d69fe14e9e16a10f35d4335ffa984f02d";
 
@@ -42,6 +42,7 @@
             # Project dependencies and utils for profiling and debugging
             ceres-solver
             fmt
+            pkg-config
             operon.defaultPackage.${system}
             pratt-parser.defaultPackage.${system}
             vstat.defaultPackage.${system}
