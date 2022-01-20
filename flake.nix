@@ -31,7 +31,7 @@
             buildInputs = with pkgs; [
                 # python environment for bindings and scripting
                 (python39.override { stdenv = gcc11Stdenv; })
-                (python39.withPackages (ps: with ps; [ pybind11 numpy pandas scikit-learn requests ]))
+                (python39.withPackages (ps: with ps; [ pybind11 numpy pandas scikit-learn requests jupyterlab seaborn ]))
                 # Project dependencies and utils for profiling and debugging
                 fmt
                 ceres-solver
