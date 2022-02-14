@@ -50,6 +50,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         brood_size                     = 10,
         tournament_size                = 5,
         irregularity_bias              = 0.0,
+        epsilon                        = 1e-5,
         n_threads                      = 1,
         time_limit                     = None,
         random_state                   = None
@@ -79,6 +80,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.brood_size                = 10 if brood_size is None else int(brood_size)
         self.tournament_size           = 5 if tournament_size is None else tournament_size # todo: set for both parent selectors
         self.irregularity_bias         = 0.0 if irregularity_bias is None else irregularity_bias
+        self.epsilon                   = 1e-5 if epsilon is None else epsilon
         self.n_threads                 = 1 if n_threads is None else int(n_threads)
         self.time_limit                = sys.maxsize if time_limit is None else int(time_limit)
         self.random_state              = random_state
@@ -364,6 +366,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                                     pool_size        = self.pool_size,
                                     p_crossover      = self.crossover_probability,
                                     p_mutation       = self.mutation_probability,
+                                    epsilon          = self.epsilon,
                                     seed             = self.random_state,
                                     time_limit       = self.time_limit
                                     )
@@ -375,7 +378,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         gp.Run(rng, None, self.n_threads)
         comp                  = op.SingleObjectiveComparison(0)
-        best                  = gp.BestModel(comp)
+        best                  = gp.BestModel()
         nodes                 = best.Genotype.Nodes
         n_vars                = len([ node for node in nodes if node.IsVariable ])
 
@@ -407,6 +410,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         return self
 
 
+    def evaluate_model(self, model, X):
+        X = check_array(X, accept_sparse=False)
+        ds = op.Dataset(X)
+        rg = op.Range(0, ds.Rows)
+        return op.Evaluate(self._interpreter, model, ds, rg)
+
+
     def predict(self, X):
         """ A reference implementation of a predicting function.
 
@@ -421,8 +431,5 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Returns an array of ones.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=False)
-        ds = op.Dataset(X)
-        rg = op.Range(0, ds.Rows)
-        return op.Evaluate(self._interpreter, self._model, ds, rg)
+        return self.evaluate_model(self._model, X)
 

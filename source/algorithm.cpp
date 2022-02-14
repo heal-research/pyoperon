@@ -18,8 +18,8 @@ void InitAlgorithm(py::module_ &m)
         .def("Run", py::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t>(&Operon::GeneticProgrammingAlgorithm::Run),
                 py::call_guard<py::gil_scoped_release>(), py::arg("rng"), py::arg("callback") = nullptr, py::arg("threads") = 0)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset)
-        .def("BestModel", [](Operon::GeneticProgrammingAlgorithm const& self, Operon::Comparison const& comparison) {
-                    auto min_elem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return comparison(a, b);});
+        .def("BestModel", [](Operon::GeneticProgrammingAlgorithm const& self) {
+                    auto min_elem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
                     return *min_elem;
                 })
         .def_property_readonly("Generation", &Operon::GeneticProgrammingAlgorithm::Generation)
@@ -33,16 +33,16 @@ void InitAlgorithm(py::module_ &m)
         .def("Run", py::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t>(&Operon::NSGA2::Run),
                 py::call_guard<py::gil_scoped_release>(), py::arg("rng"), py::arg("callback") = nullptr, py::arg("threads") = 0)
         .def("Reset", &Operon::NSGA2::Reset)
-        .def("BestModel", [](Operon::NSGA2 const& self, Operon::Comparison const& comparison) {
-                    auto min_elem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return comparison(a, b);});
+        .def("BestModel", [](Operon::NSGA2 const& self) {
+                    auto min_elem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return a[0] < b[0];});
                     return *min_elem;
                 })
         .def_property_readonly("Generation", &Operon::NSGA2::Generation)
         .def_property_readonly("Parents", static_cast<Operon::Span<Operon::Individual const> (Operon::NSGA2::*)() const>(&Operon::NSGA2::Parents))
         .def_property_readonly("Offspring", static_cast<Operon::Span<Operon::Individual const> (Operon::NSGA2::*)() const>(&Operon::NSGA2::Offspring))
         .def_property_readonly("BestFront", [](Operon::NSGA2 const& self) {
-                auto best = self.Best();
-                return std::vector<Operon::Individual>(best.begin(), best.end());
+                    auto best = self.Best();
+                    return std::vector<Operon::Individual>(best.begin(), best.end());
                 })
         .def_property_readonly("Config", &Operon::NSGA2::GetConfig);
 }

@@ -92,12 +92,11 @@ gp             = Operon.GeneticProgrammingAlgorithm(problem, config, tree_initia
 gen = 0
 max_ticks = 50
 interval = 1 if config.Generations < max_ticks else int(np.round(config.Generations / max_ticks, 0))
-comp = Operon.SingleObjectiveComparison(0)
 t0 = time.time()
 
 def report():
     global gen
-    best = gp.BestModel(comp)
+    best = gp.BestModel()
     bestfit = best.GetFitness(0)
     sys.stdout.write('\r')
     cursor = int(np.round(gen / config.Generations * max_ticks))
@@ -112,6 +111,6 @@ def report():
 gp.Run(rng, report, threads=16)
 
 # get the best solution and print it
-best = gp.BestModel(comp)
+best = gp.BestModel()
 model_string = Operon.InfixFormatter.Format(best.Genotype, ds, 6)
 print(f'\n{model_string}')

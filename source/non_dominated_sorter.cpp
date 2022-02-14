@@ -11,7 +11,7 @@ void InitNondominatedSorter(py::module_ &m)
 {
     py::class_<Operon::NondominatedSorterBase>(m, "NonDominatedSorterBase");
 
-    py::class_<Operon::RankSorter, Operon::NondominatedSorterBase>(m, "RankSorter")
+    py::class_<Operon::RankIntersectSorter, Operon::NondominatedSorterBase>(m, "RankSorter")
         .def(py::init<>())
-        .def("Sort", &Operon::RankSorter::Sort);
+        .def("Sort", &Operon::RankIntersectSorter::Sort);
 }
