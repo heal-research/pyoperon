@@ -26,13 +26,34 @@ void InitInitializer(py::module_ &m)
                 self.ParameterizeDistribution(lower, upper);
             });
 
-    py::class_<NormalDistributedCoefficientInitializer, Operon::CoefficientInitializerBase>(m, "NormalDistributedCoefficientInitializer")
+    py::class_<NormalDistributedCoefficientInitializer, Operon::CoefficientInitializerBase>(m, "NormalCoefficientInitializer")
         .def(py::init<>())
         .def("__call__", [](NormalDistributedCoefficientInitializer& self, Operon::RandomGenerator& random, Operon::Tree& tree) {
                 return self(random, tree);
             })
         .def("ParameterizeDistribution", [](NormalDistributedCoefficientInitializer& self, double mean, double stdev) {
                 self.ParameterizeDistribution(mean, stdev);
+            });
+
+    using UniformIntCoefficientInitializer = Operon::CoefficientInitializer<std::uniform_int_distribution<int>>;
+    using UniformRealCoefficientInitializer = Operon::CoefficientInitializer<std::uniform_real_distribution<double>>;
+
+    py::class_<UniformIntCoefficientInitializer, Operon::CoefficientInitializerBase>(m, "UniformIntCoefficientAnalyzer")
+        .def(py::init<>())
+        .def("__call__", [](UniformIntCoefficientInitializer& self, Operon::RandomGenerator& random, Operon::Tree& tree) {
+                return self(random, tree);
+            })
+        .def("ParameterizeDistribution", [](UniformIntCoefficientInitializer& self, int a, int b) {
+                self.ParameterizeDistribution(a, b);
+            });
+
+    py::class_<UniformRealCoefficientInitializer, Operon::CoefficientInitializerBase>(m, "UniformRealCoefficientAnalyzer")
+        .def(py::init<>())
+        .def("__call__", [](UniformRealCoefficientInitializer& self, Operon::RandomGenerator& random, Operon::Tree& tree) {
+                return self(random, tree);
+            })
+        .def("ParameterizeDistribution", [](UniformRealCoefficientInitializer& self, double a, double b) {
+                self.ParameterizeDistribution(a, b);
             });
 }
 

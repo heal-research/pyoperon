@@ -10,7 +10,7 @@ import operon as Operon
 from pmlb import fetch_data
 
 # get some training data - see https://epistasislab.github.io/pmlb/
-D = fetch_data('1027_ESL', return_X_y=False).to_numpy()
+D = fetch_data('1027_ESL', return_X_y=False, local_cache_dir='./datasets').to_numpy()
 
 # initialize a dataset from a numpy array
 ds             = Operon.Dataset(D)
@@ -32,7 +32,7 @@ rng            = Operon.RomuTrio(random.randint(1, 1000000))
 problem        = Operon.Problem(ds, inputs, target.Name, training_range, test_range)
 
 # initialize an algorithm configuration
-config         = Operon.GeneticAlgorithmConfig(generations=1000, max_evaluations=1000000, local_iterations=0, population_size=1000, pool_size=1000, p_crossover=1.0, p_mutation=0.25, seed=1, time_limit=86400)
+config         = Operon.GeneticAlgorithmConfig(generations=1000, max_evaluations=1000000, local_iterations=0, population_size=1000, pool_size=1000, p_crossover=1.0, p_mutation=0.25, epsilon=1e-5, seed=1, time_limit=86400)
 
 # use tournament selection with a group size of 5
 # we are doing single-objective optimization so the objective index is 0
@@ -54,14 +54,14 @@ tree_initializer.ParameterizeDistribution(minL, maxL)
 tree_initializer.MaxDepth = maxD
 
 # define a coefficient initializer (this will initialize the coefficients in the tree)
-coeff_initializer = Operon.NormalDistributedCoefficientInitializer()
+coeff_initializer = Operon.NormalCoefficientInitializer()
 coeff_initializer.ParameterizeDistribution(0, 1)
 
 # define several kinds of mutation
-mut_onepoint   = Operon.OnePointMutation()
+mut_onepoint   = Operon.NormalOnePointMutation()
 mut_changeVar  = Operon.ChangeVariableMutation(inputs)
 mut_changeFunc = Operon.ChangeFunctionMutation(pset)
-mut_replace    = Operon.ReplaceSubtreeMutation(btc, maxD, maxL)
+mut_replace    = Operon.ReplaceSubtreeMutation(btc, coeff_initializer, maxD, maxL)
 
 # use a multi-mutation operator to apply them at random
 mutation       = Operon.MultiMutation()

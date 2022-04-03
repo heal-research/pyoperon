@@ -13,7 +13,7 @@ from operon import R2, InfixFormatter, FitLeastSquares
 from pmlb import fetch_data, dataset_names, classification_dataset_names, regression_dataset_names
 #print(regression_dataset_names)
 
-X, y = fetch_data('192_vineyard', return_X_y=True)
+X, y = fetch_data('192_vineyard', return_X_y=True, local_cache_dir='./datasets')
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25, shuffle=True)
 
@@ -28,7 +28,8 @@ reg = SymbolicRegressor(
         epsilon = 1e-3,
         random_state=None,
         reinserter='keep-best',
-        max_evaluations=int(1e5)
+        max_evaluations=int(1e5),
+        symbolic_mode=True
         )
 
 reg.fit(X_train, y_train)

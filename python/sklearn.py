@@ -28,9 +28,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self,
         allowed_symbols                = 'add,sub,mul,div,constant,variable',
+        symbolic_mode                  = None,
         crossover_probability          = 1.0,
         crossover_internal_probability = 0.9,
-        mutation                       = { 'onepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 },
+        mutation                       = { 'onepoint' : 1.0, 'discretepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 },
         mutation_probability           = 0.25,
         offspring_generator            = 'basic',
         reinserter                     = 'replace-worst',
@@ -58,9 +59,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         # validate parameters
         self.allowed_symbols           = 'add,sub,mul,div,constant,variable' if allowed_symbols is None else allowed_symbols
+        self.symbolic_mode             = False if symbolic_mode is None else symbolic_mode
         self.crossover_probability     = 1.0 if crossover_probability is None else crossover_probability
         self.crossover_internal_probability = 0.9 if crossover_internal_probability is None else crossover_internal_probability
-        self.mutation                  = { 'onepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 } if mutation is None else mutation
+        self.mutation                  = { 'onepoint' : 1.0, 'discretepoint': 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 } if mutation is None else mutation
         self.mutation_probability      = 0.25 if mutation_probability is None else mutation_probability
         self.offspring_generator       = 'basic' if offspring_generator is None else offspring_generator
         self.reinserter                = 'replace-worst' if reinserter is None else reinserter
@@ -236,9 +238,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown reinsertion method {}'.format(reinserter_name))
 
 
-    def __init_mutation(self, mutation_name, inputs, pset, creator):
+    def __init_mutation(self, mutation_name, inputs, pset, creator, coeff_initializer):
         if mutation_name == 'onepoint':
-            return op.OnePointMutation()
+            mut = op.UniformIntOnePointMutation() if self.symbolic_mode else op.NormalOnePointMutation()
+            if self.symbolic_mode:
+                mut.ParameterizeDistribution(-5, +5)
+            else:
+                mut.ParameterizeDistribution(0, 1)
+            return mut
 
         elif mutation_name == 'changevar':
             return op.ChangeVariableMutation(inputs)
@@ -247,13 +254,19 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return op.ChangeFunctionMutation(pset)
 
         elif mutation_name == 'replacesubtree':
-            return op.ReplaceSubtreeMutation(creator, self.max_depth, self.max_length)
+            return op.ReplaceSubtreeMutation(creator, coeff_initializer, self.max_depth, self.max_length)
 
         elif mutation_name == 'insertsubtree':
-            return op.InsertSubtreeMutation(creator, self.max_depth, self.max_length, pset)
+            return op.InsertSubtreeMutation(creator, coeff_initializer, self.max_depth, self.max_length)
 
         elif mutation_name == 'removesubtree':
             return op.RemoveSubtreeMutation(pset)
+
+        elif mutation_name == 'discretepoint':
+            mut = op.DiscretePointMutation()
+            for c in op.Math.Constants:
+                mut.Add(c, 1.0)
+            return mut
 
         raise ValueError('Unknown mutation method {}'.format(mutation_name))
 
@@ -270,7 +283,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             front.append(op.InfixFormatter.Format(model, model_vars, precision))
 
         return front
-
 
 
     def fit(self, X, y):
@@ -305,6 +317,12 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         pset.SetConfig(pcfg)
 
         creator               = self.__init_creator(self.initialization_method, pset, inputs)
+        coeff_initializer     = op.UniformIntCoefficientAnalyzer() if self.symbolic_mode else op.NormalCoefficientInitializer()
+
+        if self.symbolic_mode:
+            coeff_initializer.ParameterizeDistribution(-5, +5)
+        else:
+            coeff_initializer.ParameterizeDistribution(0, 1)
 
         single_objective      = True if len(self.objectives) == 1 else False
 
@@ -312,7 +330,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         evaluators = [] # placeholder for the evaluator(s)
 
         for obj in self.objectives:
-            eval_, err_       = self.__init_evaluator(obj, problem, self._interpreter)
+            eval_, err_  = self.__init_evaluator(obj, problem, self._interpreter)
             eval_.Budget = self.max_evaluations
             eval_.LocalOptimizationIterations = self.local_iterations
             evaluators.append(eval_)
@@ -338,7 +356,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         mut_list = [] # this list is needed as a placeholder to keep alive the mutation operators objects (since the multi-mutation only stores references)
         for k in self.mutation:
             v = self.mutation[k]
-            m = self.__init_mutation(k, inputs, pset, creator)
+            m = self.__init_mutation(k, inputs, pset, creator, coeff_initializer)
             mut.Add(m, v)
             mut_list.append(m)
 
@@ -352,8 +370,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         # btc and ptc2 do not need a depth restriction
         tree_initializer.MaxDepth = self.max_depth if self.initialization_method == 'koza' else 1000
 
-        coeff_initializer = op.NormalDistributedCoefficientInitializer()
-        coeff_initializer.ParameterizeDistribution(0, 1)
 
         if self.random_state is None:
             self.random_state = random.getrandbits(64)

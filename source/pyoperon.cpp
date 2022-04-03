@@ -42,6 +42,10 @@ PYBIND11_MODULE(pyoperon, m)
     m.def("UniformInt", &Operon::Random::Uniform<Operon::RandomGenerator, int>);
     m.def("UniformReal", &Operon::Random::Uniform<Operon::RandomGenerator, double>);
 
+    // mathematical constants
+    py::module math = m.def_submodule("Math");
+    math.attr("Constants") = Operon::Math::Constants;
+
     // classes
     py::class_<Operon::Individual>(m, "Individual")
         .def(py::init<>())
