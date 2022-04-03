@@ -106,9 +106,9 @@ void InitEval(py::module_ &m)
     py::class_<Operon::EvaluatorBase>(m, "EvaluatorBase")
         .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
         .def_property("Budget",&Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
-        .def_property_readonly("FitnessEvaluations", &Operon::EvaluatorBase::FitnessEvaluations)
-        .def_property_readonly("LocalEvaluations", &Operon::EvaluatorBase::LocalEvaluations)
-        .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations);
+        .def_property_readonly("EvaluationCount", &Operon::EvaluatorBase::EvaluationCount)
+        .def_property_readonly("ResidualEvaluations", &Operon::EvaluatorBase::ResidualEvaluations)
+        .def_property_readonly("JacobianEvaluations", &Operon::EvaluatorBase::JacobianEvaluations);
 
     py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>())
