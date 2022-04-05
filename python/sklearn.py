@@ -416,8 +416,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'model_length':        self._model.Length - 4, # do not count scaling nodes?
             'model_complexity':    self._model.Length - 4 + 2 * n_vars,
             'generations':         gp.Generation,
-            'fitness_evaluations': evaluator.FitnessEvaluations,
-            'local_evaluations':   evaluator.LocalEvaluations,
+            'fitness_evaluations': evaluator.EvaluationCount,
+            'residual_evaluations': evaluator.ResidualEvaluations,
+            'jacobian_evaluations': evaluator.JacobianEvaluations,
             'random_state':        self.random_state
         }
 
