@@ -16,7 +16,7 @@ namespace detail {
     {
         auto s1 = MakeSpan(lhs);
         auto s2 = MakeSpan(rhs);
-        return Operon::FitLeastSquares(lhs, rhs);
+        return Operon::FitLeastSquares(s1, s2);
     }
 } // namespace detail
 
