@@ -10,7 +10,7 @@ project(
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 docs_early_return()
@@ -27,7 +27,6 @@ find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(robin_hood REQUIRED)
-find_package(span-lite REQUIRED)
 
 # ---- Declare library ----
 
@@ -65,6 +64,11 @@ else()
     pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
     target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
 endif()
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(eve REQUIRED IMPORTED_TARGET eve)
+target_link_libraries(pyoperon_pyoperon INTERFACE PkgConfig::eve)
+
 
 include(GenerateExportHeader)
 generate_export_header(

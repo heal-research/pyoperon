@@ -5,7 +5,7 @@
   inputs.nur.url = "github:nix-community/NUR";
   inputs.nixpkgs.url = "github:nixos/nixpkgs/master";
 
-  inputs.operon.url = "github:heal-research/operon";
+  inputs.operon.url = "github:heal-research/operon/cpp20";
   inputs.pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
   inputs.vstat.url = "github:heal-research/vstat?rev=79b9ba2d69fe14e9e16a10f35d4335ffa984f02d";
 
@@ -44,13 +44,14 @@
             fmt
             pkg-config
             operon.defaultPackage.${system}
+            openlibm
             pratt-parser.defaultPackage.${system}
             vstat.defaultPackage.${system}
             # Some dependencies are provided by a NUR repo
             repo.aria-csv
+            repo.eve
             repo.fast_float
             repo.robin-hood-hashing
-            repo.span-lite
             repo.taskflow
             repo.vectorclass
             repo.xxhash
@@ -68,10 +69,8 @@
           buildInputs = defaultPackage.buildInputs;
 
           shellHook = ''
-            PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
-            LD_LIBRARY_PATH=${
-              pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]
-            };
+            export PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
+            export LD_LIBRARY_PATH=$CMAKE_LIBRARY_PATH;
           '';
         };
       });
