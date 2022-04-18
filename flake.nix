@@ -7,7 +7,7 @@
 
   inputs.operon.url = "github:heal-research/operon/cpp20";
   inputs.pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
-  inputs.vstat.url = "github:heal-research/vstat?rev=79b9ba2d69fe14e9e16a10f35d4335ffa984f02d";
+  inputs.vstat.url = "github:heal-research/vstat/cpp20-eve";
 
   outputs = { self, flake-utils, nixpkgs, nur, operon, pratt-parser, vstat }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -22,7 +22,10 @@
           name = "pyoperon";
           src = self;
 
-          cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Release" ];
+          cmakeFlags = [
+            "-DCMAKE_BUILD_TYPE=Release"
+            "-DCMAKE_CXX_FLAGS=${if pkgs.targetPlatform.isx86_64 then "-march=haswell" else ""}"
+          ];
 
           nativeBuildInputs = with pkgs; [ cmake ];
 
@@ -31,7 +34,7 @@
             (python39.override { stdenv = gcc11Stdenv; })
             (python39.withPackages (ps:
               with ps; [
-                jupyterlab
+#                jupyterlab
                 numpy
                 pandas
                 pybind11
@@ -40,11 +43,12 @@
                 seaborn
               ]))
             # Project dependencies and utils for profiling and debugging
-            ceres-solver
+            eigen
             fmt
-            pkg-config
-            operon.defaultPackage.${system}
             openlibm
+            pkg-config
+            # flakes
+            operon.defaultPackage.${system}
             pratt-parser.defaultPackage.${system}
             vstat.defaultPackage.${system}
             # Some dependencies are provided by a NUR repo
@@ -66,11 +70,11 @@
           hardeningDisable = [ "all" ];
           impureUseNativeOptimizations = true;
           nativeBuildInputs = defaultPackage.nativeBuildInputs;
-          buildInputs = defaultPackage.buildInputs;
+          buildInputs = defaultPackage.buildInputs ++ (with pkgs; [ gdb valgrind ]);
 
           shellHook = ''
             export PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
-            export LD_LIBRARY_PATH=$CMAKE_LIBRARY_PATH;
+            export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]}:$CMAKE_LIBRARY_PATH;
           '';
         };
       });

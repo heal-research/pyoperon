@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 
 include(cmake/prelude.cmake)
 
 project(
     pyoperon
-    VERSION 0.1.1
+    VERSION 0.2.0
     DESCRIPTION "Scikit-learn module and python bindings and for the Operon library"
     HOMEPAGE_URL "https://operongp.readthedocs.io/en/latest/"
     LANGUAGES CXX
@@ -55,10 +55,7 @@ add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 # ---- Find python ----
 find_package(Python3 COMPONENTS Development Interpreter)
 if (Python3_FOUND)
-    target_link_libraries(pyoperon_pyoperon PRIVATE
-        Python3::Module
-        Python3::Python
-    )
+    target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Module Python3::Python)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
@@ -104,16 +101,18 @@ target_include_directories(
     "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>"
 )
 
-target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_17)
+target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_20)
 
 target_link_libraries(pyoperon_pyoperon PRIVATE
     operon::operon # this will link in operon's public dependencies: fmt, ceres, etc.
     Eigen3::Eigen
     pybind11::pybind11)
 
-target_compile_options(pyoperon_pyoperon PRIVATE "-march=x86-64;-mavx2;-mfma;-fPIC")
-
-target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
+if (MSVC)
+    target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
+else ()
+    target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
+endif()
 
 # ---- Install rules ----
 
