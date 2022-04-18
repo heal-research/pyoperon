@@ -17,6 +17,8 @@
           overlays = [ nur.overlay ];
         };
         repo = pkgs.nur.repos.foolnotion;
+
+        python = pkgs.python39.override { stdenv = pkgs.gcc11Stdenv; };
       in rec {
         defaultPackage = pkgs.gcc11Stdenv.mkDerivation {
           name = "pyoperon";
@@ -27,12 +29,14 @@
             "-DCMAKE_CXX_FLAGS=${if pkgs.targetPlatform.isx86_64 then "-march=haswell" else ""}"
           ];
 
-          nativeBuildInputs = with pkgs; [ cmake ];
+          nativeBuildInputs = with pkgs; [
+            cmake
+            python
+          ];
 
           buildInputs = with pkgs; [
             # python environment for bindings and scripting
-            (python39.override { stdenv = gcc11Stdenv; })
-            (python39.withPackages (ps:
+            (python.withPackages (ps:
               with ps; [
 #                jupyterlab
                 numpy
@@ -73,8 +77,8 @@
           buildInputs = defaultPackage.buildInputs ++ (with pkgs; [ gdb valgrind ]);
 
           shellHook = ''
-            export PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
-            export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]}:$CMAKE_LIBRARY_PATH;
+            PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
+            LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.gcc11Stdenv.cc.cc.lib ]}:$CMAKE_LIBRARY_PATH;
           '';
         };
       });

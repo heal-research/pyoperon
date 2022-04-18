@@ -108,7 +108,6 @@ target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_20)
 
 target_link_libraries(pyoperon_pyoperon PRIVATE
     operon::operon # this will link in operon's public dependencies: fmt, ceres, etc.
-    Eigen3::Eigen
     pybind11::pybind11)
 
 if (MSVC)
