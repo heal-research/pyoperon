@@ -92,7 +92,7 @@ void InitEval(py::module_ &m)
     // error metric
     py::class_<Operon::ErrorMetric>(m, "ErrorMetric")
         .def("__call__", [](Operon::ErrorMetric const& self, py::array_t<Operon::Scalar> lhs, py::array_t<Operon::Scalar> rhs) {
-            return self(MakeSpan<Operon::Scalar>(lhs), MakeSpan<Operon::Scalar>(rhs));
+            return self(MakeSpan<Operon::Scalar>(lhs), MakeSpan<Operon::Scalar>(rhs)); // NOLINT
         });
 
     py::class_<Operon::MSE, Operon::ErrorMetric>(m, "MSE").def(py::init<>());

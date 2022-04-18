@@ -8,13 +8,14 @@
 #include <pybind11/functional.h>
 
 #include <operon/core/dataset.hpp>
+#include <utility>
 
 #include "pyoperon/pyoperon.hpp"
 
 namespace py = pybind11;
 
 template<typename T>
-Operon::Dataset MakeDataset(py::array_t<T> array)
+auto MakeDataset(py::array_t<T> array) -> Operon::Dataset
 {
     static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type.");
 
@@ -24,33 +25,33 @@ Operon::Dataset MakeDataset(py::array_t<T> array)
     }
 
     // check if the array satisfies our data storage requirements (contiguous, column-major order)
-    if (std::is_same_v<T, Operon::Scalar> && (array.flags() & py::array::f_style)) {
+    if (std::is_same_v<T, Operon::Scalar> && (array.flags() & py::array::f_style)) { // NOLINT
         auto ref = array.template cast<Eigen::Ref<Operon::Dataset::Matrix const>>();
         return Operon::Dataset(ref);
-    } else {
-        fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
-        auto m = array.template cast<Operon::Dataset::Matrix>();
-        return Operon::Dataset(std::move(m));
     }
+
+    fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
+    auto mat = array.template cast<Operon::Dataset::Matrix>();
+    return Operon::Dataset(std::move(mat));
 }
 
 template<typename T>
-Operon::Dataset MakeDataset(std::vector<std::vector<T>> const& values)
+auto MakeDataset(std::vector<std::vector<T>> const& values) -> Operon::Dataset
 {
     static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type.");
 
     auto rows = values[0].size();
     auto cols = values.size();
 
-    Operon::Dataset::Matrix m(rows, cols);
+    Operon::Dataset::Matrix mat(rows, cols);
 
     for (size_t i = 0; i < values.size(); ++i) {
-        m.col(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1, Eigen::ColMajor> const>(values[i].data(), rows).template cast<Operon::Scalar>();
+        mat.col(static_cast<int>(i)) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1, Eigen::ColMajor> const>(values[i].data(), rows).template cast<Operon::Scalar>();
     }
-    return Operon::Dataset(std::move(m));
+    return Operon::Dataset(std::move(mat));
 }
 
-Operon::Dataset MakeDataset(py::buffer buf)
+auto MakeDataset(py::buffer buf) -> Operon::Dataset // NOLINT
 {
     auto info = buf.request();
 
@@ -61,11 +62,11 @@ Operon::Dataset MakeDataset(py::buffer buf)
     if (info.format == py::format_descriptor<Operon::Scalar>::format()) {
         auto ref = buf.template cast<Eigen::Ref<Operon::Dataset::Matrix const>>();
         return Operon::Dataset(ref);
-    } else {
-        fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
-        auto m = buf.template cast<Operon::Dataset::Matrix>();
-        return Operon::Dataset(std::move(m));
     }
+
+    fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
+    auto mat = buf.template cast<Operon::Dataset::Matrix>();
+    return Operon::Dataset(std::move(mat));
 }
 
 
@@ -76,11 +77,11 @@ void InitDataset(py::module_ &m)
         .def(py::init<std::string const&, bool>(), py::arg("filename"), py::arg("has_header"))
         .def(py::init<Operon::Dataset const&>())
         .def(py::init<std::vector<Operon::Variable> const&, const std::vector<std::vector<Operon::Scalar>>&>())
-        .def(py::init([](py::array_t<float> array){ return MakeDataset(array); }), py::arg("data").noconvert())
-        .def(py::init([](py::array_t<double> array){ return MakeDataset(array); }), py::arg("data").noconvert())
+        .def(py::init([](py::array_t<float> array){ return MakeDataset(std::move(array)); }), py::arg("data").noconvert())
+        .def(py::init([](py::array_t<double> array){ return MakeDataset(std::move(array)); }), py::arg("data").noconvert())
         .def(py::init([](std::vector<std::vector<float>> const& values) { return MakeDataset(values); }), py::arg("data").noconvert())
         .def(py::init([](std::vector<std::vector<double>> const& values) { return MakeDataset(values); }), py::arg("data").noconvert())
-        .def(py::init([](py::buffer buf) { return MakeDataset(buf); }), py::arg("data").noconvert())
+        .def(py::init([](py::buffer buf) { return MakeDataset(std::move(buf)); }), py::arg("data").noconvert())
         .def_property_readonly("Rows", &Operon::Dataset::Rows)
         .def_property_readonly("Cols", &Operon::Dataset::Cols)
         .def_property_readonly("Values", &Operon::Dataset::Values)

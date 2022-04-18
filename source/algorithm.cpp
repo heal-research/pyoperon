@@ -19,9 +19,9 @@ void InitAlgorithm(py::module_ &m)
                 py::call_guard<py::gil_scoped_release>(), py::arg("rng"), py::arg("callback") = nullptr, py::arg("threads") = 0)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset)
         .def("BestModel", [](Operon::GeneticProgrammingAlgorithm const& self) {
-                    auto min_elem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
-                    return *min_elem;
-                })
+                auto minElem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
+                return *minElem;
+            })
         .def_property_readonly("Generation", &Operon::GeneticProgrammingAlgorithm::Generation)
         .def_property_readonly("Parents", static_cast<Operon::Span<Operon::Individual const> (Operon::GeneticProgrammingAlgorithm::*)() const>(&Operon::GeneticProgrammingAlgorithm::Parents))
         .def_property_readonly("Offspring", static_cast<Operon::Span<Operon::Individual const> (Operon::GeneticProgrammingAlgorithm::*)() const>(&Operon::GeneticProgrammingAlgorithm::Offspring))
@@ -34,9 +34,9 @@ void InitAlgorithm(py::module_ &m)
                 py::call_guard<py::gil_scoped_release>(), py::arg("rng"), py::arg("callback") = nullptr, py::arg("threads") = 0)
         .def("Reset", &Operon::NSGA2::Reset)
         .def("BestModel", [](Operon::NSGA2 const& self) {
-                    auto min_elem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return a[0] < b[0];});
-                    return *min_elem;
-                })
+                auto minElem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return a[0] < b[0];});
+                return *minElem;
+            })
         .def_property_readonly("Generation", &Operon::NSGA2::Generation)
         .def_property_readonly("Parents", static_cast<Operon::Span<Operon::Individual const> (Operon::NSGA2::*)() const>(&Operon::NSGA2::Parents))
         .def_property_readonly("Offspring", static_cast<Operon::Span<Operon::Individual const> (Operon::NSGA2::*)() const>(&Operon::NSGA2::Offspring))
