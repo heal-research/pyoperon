@@ -21,6 +21,7 @@ include(cmake/variables.cmake)
 # ---- Find dependencies ----
 find_package(Ceres CONFIG)
 find_package(Eigen3 REQUIRED)
+find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(operon REQUIRED)
@@ -62,11 +63,8 @@ else()
     target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(eve REQUIRED IMPORTED_TARGET eve)
-target_link_libraries(pyoperon_pyoperon INTERFACE PkgConfig::eve)
-
 # in case operon is linked with openlibm, we wanna discover it here
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(openlibm IMPORTED_TARGET openlibm)
 
 
