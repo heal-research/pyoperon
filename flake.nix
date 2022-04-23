@@ -8,7 +8,6 @@
 
     operon.url = "github:heal-research/operon/cpp20";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
-    vstat.url = "github:heal-research/vstat/cpp20-eve";
     pypi-deps-db.url = "github:DavHau/pypi-deps-db";
 
     mach-nix = {
@@ -22,7 +21,7 @@
   };
 
   outputs =
-    { self, flake-utils, mach-nix, nixpkgs, nur, operon, pratt-parser, pypi-deps-db, vstat }:
+    { self, flake-utils, mach-nix, nixpkgs, nur, operon, pratt-parser, pypi-deps-db }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -75,7 +74,6 @@
             # flakes
             operon.defaultPackage.${system}
             pratt-parser.defaultPackage.${system}
-            vstat.defaultPackage.${system}
             repo.fast_float
             repo.robin-hood-hashing
           ];
