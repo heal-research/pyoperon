@@ -30,7 +30,9 @@ auto MakeDataset(py::array_t<T> array) -> Operon::Dataset
         return Operon::Dataset(ref);
     }
 
+#if defined(DEBUG)
     fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
+#endif
     auto mat = array.template cast<Operon::Dataset::Matrix>();
     return Operon::Dataset(std::move(mat));
 }
@@ -64,7 +66,9 @@ auto MakeDataset(py::buffer buf) -> Operon::Dataset // NOLINT
         return Operon::Dataset(ref);
     }
 
+#if defined(DEBUG)
     fmt::print(stderr, "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n");
+#endif
     auto mat = buf.template cast<Operon::Dataset::Matrix>();
     return Operon::Dataset(std::move(mat));
 }
