@@ -303,14 +303,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
 
     def get_model_string(self, precision):
-        if len(self._model_vars) == 0:
+        if len(self.model_vars_) == 0:
             print('warning: model contains no variables', file=sys.stderr)
-        return op.InfixFormatter.Format(self._model, self._model_vars, precision)
+        return op.InfixFormatter.Format(self.model_, self.model_vars_, precision)
 
 
     def get_pareto_front(self, precision):
         front = []
-        for (model, model_vars) in self._pareto_front:
+        for (model, model_vars) in self.pareto_front_:
             front.append(op.InfixFormatter.Format(model, model_vars, precision))
 
         return front
