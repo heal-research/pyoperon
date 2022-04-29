@@ -230,6 +230,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         elif objective == 'shape':
             return op.ShapeEvaluator(problem), None
 
+        elif objective == 'diversity':
+            return op.DiversityEvaluator(problem), None
+
         raise ValueError('Unknown objective {}'.format(objectives))
 
 

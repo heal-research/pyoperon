@@ -126,6 +126,10 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&>())
         .def("__call__", &Operon::ShapeEvaluator::operator());
 
+    py::class_<Operon::DiversityEvaluator, Operon::EvaluatorBase>(m, "DiversityEvaluator")
+        .def(py::init<Operon::Problem&>())
+        .def("__call__", &Operon::DiversityEvaluator::operator());
+
     py::class_<Operon::MultiEvaluator, Operon::EvaluatorBase>(m, "MultiEvaluator")
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add)
