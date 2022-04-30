@@ -39,6 +39,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
+        initialization_max_length      = 10,
+        initialization_max_depth       = 5,
         female_selector                = 'tournament',
         male_selector                  = 'tournament',
         population_size                = 1000,
@@ -70,6 +72,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.max_length                = max_length
         self.max_depth                 = max_depth
         self.initialization_method     = initialization_method
+        self.initialization_max_length = initialization_max_length
+        self.initialization_max_depth  = initialization_max_depth
         self.female_selector           = female_selector
         self.male_selector             = male_selector
         self.population_size           = population_size
@@ -91,7 +95,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
 
     def __check_parameters(self):
-
         check = lambda x,y: y if x is None else x
         self.allowed_symbols                = check(self.allowed_symbols, 'add,sub,mul,div,constant,variable')
         self.symbolic_mode                  = check(self.symbolic_mode, False)
@@ -105,6 +108,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.max_length                     = check(self.max_length, 50)
         self.max_depth                      = check(self.max_depth, 10)
         self.initialization_method          = check(self.initialization_method, 'btc')
+        self.initialization_max_length      = check(self.initialization_max_length, 10)
+        self.initialization_max_depth       = check(self.initialization_max_depth, 5)
         self.female_selector                = check(self.female_selector, 'tournament')
         self.male_selector                  = check(self.male_selector, self.female_selector)
         self.population_size                = check(self.population_size, 1000)
@@ -404,11 +409,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         min_arity, max_arity  = pset.FunctionArityLimits()
         tree_initializer      = op.UniformLengthTreeInitializer(creator)
-        tree_initializer.ParameterizeDistribution(min_arity+1, self.max_length)
+        tree_initializer.ParameterizeDistribution(min_arity+1, min(self.initialization_max_length, self.max_length))
         tree_initializer.MinDepth = 1
 
         # btc and ptc2 do not need a depth restriction
-        tree_initializer.MaxDepth = self.max_depth if self.initialization_method == 'koza' else 1000
+        tree_initializer.MaxDepth = self.initialization_max_depth if self.initialization_method == 'koza' else 1000
 
         config                = op.GeneticAlgorithmConfig(
                                     generations      = self.generations,
