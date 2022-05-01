@@ -106,9 +106,16 @@ void InitEval(py::module_ &m)
     py::class_<Operon::EvaluatorBase>(m, "EvaluatorBase")
         .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
         .def_property("Budget",&Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
-        .def_property_readonly("EvaluationCount", &Operon::EvaluatorBase::EvaluationCount)
-        .def_property_readonly("ResidualEvaluations", &Operon::EvaluatorBase::ResidualEvaluations)
-        .def_property_readonly("JacobianEvaluations", &Operon::EvaluatorBase::JacobianEvaluations);
+        .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations)
+
+        // TODO: do we need these properties to be writable?
+        //.def_property("CallCount",
+        //        [](Operon::EvaluatorBase& self) { return self.CallCount.load(); },
+        //        [](Operon::EvaluatorBase& self, size_t count) { self.CallCount.store(count); });
+
+        .def_readonly("CallCount", &Operon::EvaluatorBase::CallCount)
+        .def_readonly("ResidualEvaluations", &Operon::EvaluatorBase::ResidualEvaluations)
+        .def_readonly("JacobianEvaluations", &Operon::EvaluatorBase::JacobianEvaluations);
 
     py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>())
