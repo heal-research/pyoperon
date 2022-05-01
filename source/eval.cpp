@@ -113,9 +113,9 @@ void InitEval(py::module_ &m)
         //        [](Operon::EvaluatorBase& self) { return self.CallCount.load(); },
         //        [](Operon::EvaluatorBase& self, size_t count) { self.CallCount.store(count); });
 
-        .def_readonly("CallCount", &Operon::EvaluatorBase::CallCount)
-        .def_readonly("ResidualEvaluations", &Operon::EvaluatorBase::ResidualEvaluations)
-        .def_readonly("JacobianEvaluations", &Operon::EvaluatorBase::JacobianEvaluations);
+        .def_property_readonly("CallCount", [](Operon::EvaluatorBase& self) { return self.CallCount.load(); })
+        .def_property_readonly("ResidualEvaluations", [](Operon::EvaluatorBase& self) { return self.ResidualEvaluations.load(); })
+        .def_property_readonly("JacobianEvaluations", [](Operon::EvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>())
