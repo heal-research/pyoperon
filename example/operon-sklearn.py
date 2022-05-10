@@ -13,30 +13,33 @@ from operon import R2, InfixFormatter, FitLeastSquares
 from pmlb import fetch_data, dataset_names, classification_dataset_names, regression_dataset_names
 #print(regression_dataset_names)
 
-X, y = fetch_data('192_vineyard', return_X_y=True, local_cache_dir='./datasets')
+X, y = fetch_data('1027_ESL', return_X_y=True, local_cache_dir='./datasets')
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25, shuffle=True)
 
 reg = SymbolicRegressor(
         allowed_symbols='add,sub,mul,aq,sin,constant,variable',
         offspring_generator='basic',
-        local_iterations=0,
-        max_length=25,
+        local_iterations=10,
+        max_length=50,
         initialization_method='btc',
         n_threads=32,
-        objectives = ['c2', 'length'],
+        objectives = ['r2', 'length'],
         epsilon = 1e-3,
         random_state=None,
         reinserter='keep-best',
         max_evaluations=int(1e5),
-        symbolic_mode=True
+        symbolic_mode=False
         )
+
+print(X_train.shape, y_train.shape)
 
 reg.fit(X_train, y_train)
 print(reg.get_model_string(2))
-print(reg._stats)
+print(reg.get_model_string(names=['A', 'B', 'C', 'D' ], precision=2))
+print(reg.stats_)
 
-for model, model_vars in reg._pareto_front:
+for model, model_vars in reg.pareto_front_:
     y_pred_train = reg.evaluate_model(model, X_train)
     y_pred_test = reg.evaluate_model(model, X_test)
 
@@ -44,9 +47,10 @@ for model, model_vars in reg._pareto_front:
     y_pred_train = scale * y_pred_train + offset
     y_pred_test = scale * y_pred_test + offset
 
-    print(InfixFormatter.Format(model, model_vars, 3), model.Length, r2_score(y_train, y_pred_train), r2_score(y_train, y_pred_train))
+    variables = { v.Hash : v.Name for v in model_vars }
+    print(InfixFormatter.Format(model, variables, 3), model.Length, r2_score(y_train, y_pred_train), r2_score(y_train, y_pred_train))
 
-r2 = R2() 
+r2 = R2()
 
 y_pred_train = reg.predict(X_train)
 print('r2 train (sklearn.r2_score): ', r2_score(y_train, y_pred_train))

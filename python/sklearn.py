@@ -310,16 +310,27 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown mutation method {}'.format(mutation_name))
 
 
-    def get_model_string(self, precision):
+    def get_model_string(self, precision=3, names=None):
         if len(self.model_vars_) == 0:
             print('warning: model contains no variables', file=sys.stderr)
-        return op.InfixFormatter.Format(self.model_, self.model_vars_, precision)
+
+        names_map = {}
+        if names is None:
+            names_map = { v.Hash : v.Name for v in self.model_vars_ }
+        else:
+            if len(self.model_vars_) > len(names):
+                print('the number of names does not match the number of variables', file=sys.stderr)
+
+            names_map = { v.Hash : names[v.Index] for v in self.model_vars_ }
+
+        return op.InfixFormatter.Format(self.model_, names_map, precision)
 
 
     def get_pareto_front(self, precision):
         front = []
         for (model, model_vars) in self.pareto_front_:
-            front.append(op.InfixFormatter.Format(model, model_vars, precision))
+            names_map = { v.Hash : v.Name for v in model_vars }
+            front.append(op.InfixFormatter.Format(model, names_map, precision))
 
         return front
 
@@ -447,7 +458,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         self.model_ = op.Tree(nodes).UpdateNodes()
 
-        get_model_vars = lambda model: { node.HashValue : ds.GetVariable(node.HashValue).Name for node in model.Nodes if node.IsVariable }
+        def get_model_vars(model):
+            hashes = set(node.HashValue for node in model.Nodes if node.IsVariable)
+            return [ds.GetVariable(h) for h in hashes]
 
         # update model vars dictionary
         self.model_vars_ = get_model_vars(self.model_)
