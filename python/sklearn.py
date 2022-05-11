@@ -374,6 +374,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         coeff_initializer     = op.UniformIntCoefficientAnalyzer() if self.symbolic_mode else op.NormalCoefficientInitializer()
 
         if self.symbolic_mode:
+            self.local_iterations = 0 # do not tune coefficients in symbolic mode
             coeff_initializer.ParameterizeDistribution(-5, +5)
         else:
             coeff_initializer.ParameterizeDistribution(0, 1)
@@ -445,7 +446,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         rng                   = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
-        comp                  = op.SingleObjectiveComparison(0)
         best                  = gp.BestModel()
         nodes                 = best.Genotype.Nodes
         n_vars                = len([ node for node in nodes if node.IsVariable ])
