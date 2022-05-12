@@ -427,6 +427,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         # btc and ptc2 do not need a depth restriction
         tree_initializer.MaxDepth = self.initialization_max_depth if self.initialization_method == 'koza' else 1000
 
+        if isinstance(self.random_state, np.random.Generator):
+            self.random_state = self.random_state.bit_generator.random_raw()
+
         config                = op.GeneticAlgorithmConfig(
                                     generations      = self.generations,
                                     max_evaluations  = self.max_evaluations,
