@@ -41,6 +41,7 @@
               ]))
             # Project dependencies and utils for profiling and debugging
             ceres-solver
+            openlibm
             fmt
             pkg-config
             operon.defaultPackage.${system}

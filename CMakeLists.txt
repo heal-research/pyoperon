@@ -66,6 +66,10 @@ else()
     target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
 endif()
 
+# in case operon is linked with openlibm, we wanna discover it here
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(openlibm IMPORTED_TARGET openlibm)
+
 include(GenerateExportHeader)
 generate_export_header(
     pyoperon_pyoperon
