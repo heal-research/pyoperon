@@ -92,7 +92,7 @@ void InitEval(py::module_ &m)
     // error metric
     py::class_<Operon::ErrorMetric>(m, "ErrorMetric")
         .def("__call__", [](Operon::ErrorMetric const& self, py::array_t<Operon::Scalar> lhs, py::array_t<Operon::Scalar> rhs) {
-            return self(MakeSpan<Operon::Scalar>(lhs), MakeSpan<Operon::Scalar>(rhs));
+            return self(MakeSpan<Operon::Scalar>(lhs), MakeSpan<Operon::Scalar>(rhs)); // NOLINT
         });
 
     py::class_<Operon::MSE, Operon::ErrorMetric>(m, "MSE").def(py::init<>());
@@ -106,9 +106,10 @@ void InitEval(py::module_ &m)
     py::class_<Operon::EvaluatorBase>(m, "EvaluatorBase")
         .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
         .def_property("Budget",&Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
-        .def_property_readonly("EvaluationCount", &Operon::EvaluatorBase::EvaluationCount)
-        .def_property_readonly("ResidualEvaluations", &Operon::EvaluatorBase::ResidualEvaluations)
-        .def_property_readonly("JacobianEvaluations", &Operon::EvaluatorBase::JacobianEvaluations);
+        .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations)
+        .def_property_readonly("CallCount", [](Operon::EvaluatorBase& self) { return self.CallCount.load(); })
+        .def_property_readonly("ResidualEvaluations", [](Operon::EvaluatorBase& self) { return self.ResidualEvaluations.load(); })
+        .def_property_readonly("JacobianEvaluations", [](Operon::EvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>())
@@ -126,8 +127,13 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&>())
         .def("__call__", &Operon::ShapeEvaluator::operator());
 
+    py::class_<Operon::DiversityEvaluator, Operon::EvaluatorBase>(m, "DiversityEvaluator")
+        .def(py::init<Operon::Problem&>())
+        .def("__call__", &Operon::DiversityEvaluator::operator());
+
     py::class_<Operon::MultiEvaluator, Operon::EvaluatorBase>(m, "MultiEvaluator")
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add)
         .def("__call__", &Operon::MultiEvaluator::operator());
 }
+
