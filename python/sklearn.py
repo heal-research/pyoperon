@@ -39,12 +39,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
+        initialization_max_length      = 10,
+        initialization_max_depth       = 5,
         female_selector                = 'tournament',
         male_selector                  = 'tournament',
         population_size                = 1000,
         pool_size                      = None,
         generations                    = 1000,
-        max_evaluations                = int(1000 * 1000),
+        max_evaluations                = int(1e6),
         local_iterations               = 0,
         max_selection_pressure         = 100,
         comparison_factor              = 0,
@@ -58,38 +60,72 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         ):
 
         # validate parameters
-        self.allowed_symbols           = 'add,sub,mul,div,constant,variable' if allowed_symbols is None else allowed_symbols
-        self.symbolic_mode             = False if symbolic_mode is None else symbolic_mode
-        self.crossover_probability     = 1.0 if crossover_probability is None else crossover_probability
-        self.crossover_internal_probability = 0.9 if crossover_internal_probability is None else crossover_internal_probability
-        self.mutation                  = { 'onepoint' : 1.0, 'discretepoint': 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 } if mutation is None else mutation
-        self.mutation_probability      = 0.25 if mutation_probability is None else mutation_probability
-        self.offspring_generator       = 'basic' if offspring_generator is None else offspring_generator
-        self.reinserter                = 'replace-worst' if reinserter is None else reinserter
-        self.objectives                = ['r2'] if objectives is None else objectives
-        self.max_length                = 50 if max_length is None else int(max_length)
-        self.max_depth                 = 10 if max_depth is None else int(max_depth)
-        self.initialization_method     = 'btc' if initialization_method is None else initialization_method
-        self.female_selector           = 'tournament' if female_selector is None else female_selector
-        self.male_selector             = 'tournament' if male_selector is None else male_selector
-        self.population_size           = 1000 if population_size is None else int(population_size)
-        self.pool_size                 = population_size if pool_size is None else int(pool_size)
-        self.generations               = 1000 if generations is None else int(generations)
-        self.max_evaluations           = 1000000 if max_evaluations is None else int(max_evaluations)
-        self.local_iterations          = 0 if local_iterations is None else int(local_iterations)
-        self.max_selection_pressure    = 100 if max_selection_pressure is None else int(max_selection_pressure)
-        self.comparison_factor         = 0 if comparison_factor is None else comparison_factor
-        self.brood_size                = 10 if brood_size is None else int(brood_size)
-        self.tournament_size           = 5 if tournament_size is None else tournament_size # todo: set for both parent selectors
-        self.irregularity_bias         = 0.0 if irregularity_bias is None else irregularity_bias
-        self.epsilon                   = 1e-5 if epsilon is None else epsilon
-        self.n_threads                 = 1 if n_threads is None else int(n_threads)
-        self.time_limit                = sys.maxsize if time_limit is None else int(time_limit)
+        self.allowed_symbols           = allowed_symbols
+        self.symbolic_mode             = symbolic_mode
+        self.crossover_probability     = crossover_probability
+        self.crossover_internal_probability = crossover_internal_probability
+        self.mutation                  = mutation
+        self.mutation_probability      = mutation_probability
+        self.offspring_generator       = offspring_generator
+        self.reinserter                = reinserter
+        self.objectives                = objectives
+        self.max_length                = max_length
+        self.max_depth                 = max_depth
+        self.initialization_method     = initialization_method
+        self.initialization_max_length = initialization_max_length
+        self.initialization_max_depth  = initialization_max_depth
+        self.female_selector           = female_selector
+        self.male_selector             = male_selector
+        self.population_size           = population_size
+        self.pool_size                 = population_size if pool_size is None else pool_size
+        self.generations               = generations
+        self.max_evaluations           = max_evaluations
+        self.local_iterations          = local_iterations
+        self.max_selection_pressure    = max_selection_pressure
+        self.comparison_factor         = comparison_factor
+        self.brood_size                = brood_size
+        self.tournament_size           = tournament_size # todo: set for both parent selectors
+        self.irregularity_bias         = irregularity_bias
+        self.epsilon                   = epsilon
+        self.n_threads                 = n_threads
+        self.time_limit                = time_limit
         self.random_state              = random_state
-        self._model                    = None
-        self._model_vars               = {}
-        self._pareto_front             = [ ]
-        self._interpreter              = op.Interpreter()
+
+
+
+
+    def __check_parameters(self):
+        check = lambda x,y: y if x is None else x
+        self.allowed_symbols                = check(self.allowed_symbols, 'add,sub,mul,div,constant,variable')
+        self.symbolic_mode                  = check(self.symbolic_mode, False)
+        self.crossover_probability          = check(self.crossover_probability, 1.0)
+        self.crossover_internal_probability = check(self.crossover_internal_probability, 0.9)
+        self.mutation                       = check(self.mutation, { 'onepoint': 1.0, 'discretepoint': 1.0, 'changevar': 1.0, 'changefunc': 1.0, 'insertsubtree': 1.0, 'removesubtree': 1.0 })
+        self.mutation_probability           = check(self.mutation_probability, 0.25)
+        self.offspring_generator            = check(self.offspring_generator, 'basic')
+        self.reinserter                     = check(self.reinserter, 'replace-worst')
+        self.objectives                     = check(self.objectives, [ 'r2' ])
+        self.max_length                     = check(self.max_length, 50)
+        self.max_depth                      = check(self.max_depth, 10)
+        self.initialization_method          = check(self.initialization_method, 'btc')
+        self.initialization_max_length      = check(self.initialization_max_length, 10)
+        self.initialization_max_depth       = check(self.initialization_max_depth, 5)
+        self.female_selector                = check(self.female_selector, 'tournament')
+        self.male_selector                  = check(self.male_selector, self.female_selector)
+        self.population_size                = check(self.population_size, 1000)
+        self.pool_size                      = check(self.pool_size, self.population_size)
+        self.generations                    = check(self.generations, 1000)
+        self.max_evaluations                = check(self.max_evaluations, int(1e6))
+        self.local_iterations               = check(self.local_iterations, 0)
+        self.max_selection_pressure         = check(self.max_selection_pressure, 100)
+        self.comparison_factor              = check(self.comparison_factor, 0)
+        self.brood_size                     = check(self.brood_size, 10)
+        self.tournament_size                = check(self.tournament_size, 3)
+        self.irregularity_bias              = check(self.irregularity_bias, 0.0)
+        self.epsilon                        = check(self.epsilon, 1e-5)
+        self.n_threads                      = check(self.n_threads, 1)
+        self.time_limit                     = check(self.time_limit, sys.maxsize)
+        self.random_state                   = check(self.random_state, random.getrandbits(64))
 
 
     def __init_primitive_config(self, allowed_symbols):
@@ -199,6 +235,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         elif objective == 'shape':
             return op.ShapeEvaluator(problem), None
 
+        elif objective == 'diversity':
+            return op.DiversityEvaluator(problem), None
+
         raise ValueError('Unknown objective {}'.format(objectives))
 
 
@@ -271,16 +310,27 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown mutation method {}'.format(mutation_name))
 
 
-    def get_model_string(self, precision):
-        if len(self._model_vars) == 0:
+    def get_model_string(self, precision=3, names=None):
+        if len(self.model_vars_) == 0:
             print('warning: model contains no variables', file=sys.stderr)
-        return op.InfixFormatter.Format(self._model, self._model_vars, precision)
+
+        names_map = {}
+        if names is None:
+            names_map = { v.Hash : v.Name for v in self.model_vars_ }
+        else:
+            if len(self.model_vars_) > len(names):
+                print('the number of names does not match the number of variables', file=sys.stderr)
+
+            names_map = { v.Hash : names[v.Index] for v in self.model_vars_ }
+
+        return op.InfixFormatter.Format(self.model_, names_map, precision)
 
 
     def get_pareto_front(self, precision):
         front = []
-        for (model, model_vars) in self._pareto_front:
-            front.append(op.InfixFormatter.Format(model, model_vars, precision))
+        for (model, model_vars) in self.pareto_front_:
+            names_map = { v.Hash : v.Name for v in model_vars }
+            front.append(op.InfixFormatter.Format(model, names_map, precision))
 
         return front
 
@@ -301,6 +351,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+
+        # first make sure that the parameters are proper
+        self.__check_parameters()
+
         X, y                  = check_X_y(X, y, accept_sparse=False)
         D                     = np.column_stack((X, y))
 
@@ -320,6 +374,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         coeff_initializer     = op.UniformIntCoefficientAnalyzer() if self.symbolic_mode else op.NormalCoefficientInitializer()
 
         if self.symbolic_mode:
+            self.local_iterations = 0 # do not tune coefficients in symbolic mode
             coeff_initializer.ParameterizeDistribution(-5, +5)
         else:
             coeff_initializer.ParameterizeDistribution(0, 1)
@@ -329,8 +384,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
+        interpreter           = op.Interpreter()
+
         for obj in self.objectives:
-            eval_, err_  = self.__init_evaluator(obj, problem, self._interpreter)
+            eval_, err_  = self.__init_evaluator(obj, problem, interpreter)
             eval_.Budget = self.max_evaluations
             eval_.LocalOptimizationIterations = self.local_iterations
             evaluators.append(eval_)
@@ -364,15 +421,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         min_arity, max_arity  = pset.FunctionArityLimits()
         tree_initializer      = op.UniformLengthTreeInitializer(creator)
-        tree_initializer.ParameterizeDistribution(min_arity+1, self.max_length)
+        tree_initializer.ParameterizeDistribution(min_arity+1, min(self.initialization_max_length, self.max_length))
         tree_initializer.MinDepth = 1
 
         # btc and ptc2 do not need a depth restriction
-        tree_initializer.MaxDepth = self.max_depth if self.initialization_method == 'koza' else 1000
+        tree_initializer.MaxDepth = self.initialization_max_depth if self.initialization_method == 'koza' else 1000
 
-
-        if self.random_state is None:
-            self.random_state = random.getrandbits(64)
+        if isinstance(self.random_state, np.random.Generator):
+            self.random_state = self.random_state.bit_generator.random_raw()
 
         config                = op.GeneticAlgorithmConfig(
                                     generations      = self.generations,
@@ -393,30 +449,32 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         rng                   = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
-        comp                  = op.SingleObjectiveComparison(0)
         best                  = gp.BestModel()
         nodes                 = best.Genotype.Nodes
         n_vars                = len([ node for node in nodes if node.IsVariable ])
 
+
         # add four nodes at the top of the tree for linear scaling
-        y_pred                = op.Evaluate(self._interpreter, best.Genotype, ds, training_range)
+        y_pred                = op.Evaluate(interpreter, best.Genotype, ds, training_range)
         scale, offset         = op.FitLeastSquares(y_pred, y)
         nodes.extend([ op.Node.Constant(scale), op.Node.Mul(), op.Node.Constant(offset), op.Node.Add() ])
 
-        self._model           = op.Tree(nodes).UpdateNodes()
+        self.model_ = op.Tree(nodes).UpdateNodes()
 
-        get_model_vars = lambda model: { node.HashValue : ds.GetVariable(node.HashValue).Name for node in model.Nodes if node.IsVariable }
+        def get_model_vars(model):
+            hashes = set(node.HashValue for node in model.Nodes if node.IsVariable)
+            return [ds.GetVariable(h) for h in hashes]
 
         # update model vars dictionary
-        self._model_vars = get_model_vars(self._model)
+        self.model_vars_ = get_model_vars(self.model_)
 
-        self._pareto_front = [ (self._model, self._model_vars) ] if single_objective else [ (x.Genotype, get_model_vars(x.Genotype)) for x in gp.BestFront ]
+        self.pareto_front_ = [ (self.model_, self.model_vars_) ] if single_objective else [ (x.Genotype, get_model_vars(x.Genotype)) for x in gp.BestFront ]
 
-        self._stats = {
-            'model_length':        self._model.Length - 4, # do not count scaling nodes?
-            'model_complexity':    self._model.Length - 4 + 2 * n_vars,
+        self.stats_ = {
+            'model_length':        self.model_.Length - 4, # do not count scaling nodes?
+            'model_complexity':    self.model_.Length - 4 + 2 * n_vars,
             'generations':         gp.Generation,
-            'fitness_evaluations': evaluator.TotalEvaluations,
+            'evaluation_count': evaluator.CallCount,
             'residual_evaluations': evaluator.ResidualEvaluations,
             'jacobian_evaluations': evaluator.JacobianEvaluations,
             'random_state':        self.random_state
@@ -431,7 +489,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X, accept_sparse=False)
         ds = op.Dataset(X)
         rg = op.Range(0, ds.Rows)
-        return op.Evaluate(self._interpreter, model, ds, rg)
+        interpreter = op.Interpreter()
+        return op.Evaluate(interpreter, model, ds, rg)
 
 
     def predict(self, X):
@@ -448,5 +507,5 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Returns an array of ones.
         """
         check_is_fitted(self)
-        return self.evaluate_model(self._model, X)
+        return self.evaluate_model(self.model_, X).reshape(-1, 1)
 
