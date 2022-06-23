@@ -136,4 +136,3 @@ void InitEval(py::module_ &m)
         .def("Add", &Operon::MultiEvaluator::Add)
         .def("__call__", &Operon::MultiEvaluator::operator());
 }
-

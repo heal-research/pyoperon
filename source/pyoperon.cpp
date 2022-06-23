@@ -96,8 +96,7 @@ PYBIND11_MODULE(pyoperon, m)
 
     py::class_<Operon::InfixParser>(m, "InfixParser")
         .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& var) {
-                auto const& tok = Operon::InfixParser::DefaultTokens();
-                return Operon::InfixParser::Parse(expr, tok, var);
+                return Operon::InfixParser::ParseDefault(expr, var);
         });
 
     // genetic algorithm
