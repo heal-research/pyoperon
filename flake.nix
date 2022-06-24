@@ -70,6 +70,7 @@
           ];
 
           buildInputs = with pkgs; [
+            pkg-config
             eigen
             fmt
             openlibm
