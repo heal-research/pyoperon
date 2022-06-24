@@ -78,6 +78,11 @@ void InitEval(py::module_ &m)
         return detail::FitLeastSquares<double>(lhs, rhs);
     });
 
+    m.def("Evaluate", [](Operon::Interpreter const& interpreter, std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar, py::array::c_style | py::array::f_style> result, size_t nthread) {
+            auto span = MakeSpan(result);
+            Operon::Evaluate(interpreter, trees, ds, range, span, nthread);
+            },  py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result"), py::arg("nthread") = 1);
+
     using DispatchTable = Operon::DispatchTable<Operon::Scalar, Operon::Dual>;
 
     // dispatch table
