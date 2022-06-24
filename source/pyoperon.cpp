@@ -29,6 +29,7 @@ PYBIND11_MODULE(pyoperon, m)
     InitMutation(m);
     InitNode(m);
     InitNondominatedSorter(m);
+    InitOptimizer(m);
     InitProblem(m);
     InitPset(m);
     InitReinserter(m);
