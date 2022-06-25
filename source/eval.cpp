@@ -26,11 +26,19 @@ void InitEval(py::module_ &m)
     // we use a lambda to avoid defining a fourth arg for the defaulted C++ function arg
     m.def("Evaluate", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r) {
         auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(r.Size()));
-        auto buf = result.request();
-        auto res = Operon::Span<Operon::Scalar>(static_cast<Operon::Scalar*>(buf.ptr), r.Size());
-        i.Evaluate(t, d, r, res, static_cast<Operon::Scalar*>(nullptr));
+        auto span = MakeSpan(result);
+        py::gil_scoped_release release;
+        i.Evaluate(t, d, r, span, static_cast<Operon::Scalar*>(nullptr));
+        py::gil_scoped_acquire acquire;
         return result;
         }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"));
+
+    m.def("Evaluate", [](Operon::Interpreter const& interpreter, std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar> result, size_t nthread) {
+            auto span = MakeSpan(result);
+            py::gil_scoped_release release;
+            Operon::Evaluate(interpreter, trees, ds, range, span, nthread);
+            py::gil_scoped_acquire acquire;
+            }, py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result").noconvert(), py::arg("nthread") = 1);
 
     m.def("CalculateFitness", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
         auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
@@ -77,11 +85,6 @@ void InitEval(py::module_ &m)
     m.def("FitLeastSquares", [](py::array_t<double> lhs, py::array_t<double> rhs) -> std::pair<double, double> {
         return detail::FitLeastSquares<double>(lhs, rhs);
     });
-
-    m.def("Evaluate", [](Operon::Interpreter const& interpreter, std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar, py::array::c_style | py::array::f_style> result, size_t nthread) {
-            auto span = MakeSpan(result);
-            Operon::Evaluate(interpreter, trees, ds, range, span, nthread);
-            },  py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result"), py::arg("nthread") = 1);
 
     using DispatchTable = Operon::DispatchTable<Operon::Scalar, Operon::Dual>;
 
