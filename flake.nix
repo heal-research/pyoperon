@@ -32,6 +32,8 @@
         mach = mach-nix.lib.${system};
 
         python-env = mach.mkPython {
+          python = "python39";
+
           requirements = ''
             eli5
             joblib
