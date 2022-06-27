@@ -4,8 +4,8 @@
 #include "pyoperon/pyoperon.hpp"
 
 #include <operon/algorithms/config.hpp>
-#include <operon/core/format.hpp>
 #include <operon/core/version.hpp>
+#include <operon/formatter/formatter.hpp>
 #include <operon/parser/infix.hpp>
 
 namespace py = pybind11;
