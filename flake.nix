@@ -49,7 +49,7 @@
           ignoreDataOutdated = true;
         };
       in rec {
-        defaultPackage = pkgs.gcc11Stdenv.mkDerivation {
+        defaultPackage = pkgs.gcc12Stdenv.mkDerivation {
           name = "pyoperon";
           src = self;
 
@@ -81,7 +81,7 @@
           ];
         };
 
-        devShell = pkgs.gcc11Stdenv.mkDerivation {
+        devShell = pkgs.gcc12Stdenv.mkDerivation {
           name = "pyoperon-dev";
           hardeningDisable = [ "all" ];
           impureUseNativeOptimizations = true;
