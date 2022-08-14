@@ -3,7 +3,7 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nur.url = "github:nix-community/NUR";
+    foolnotion.url = "github:foolnotion/nur-pkg";
     nixpkgs.url = "github:nixos/nixpkgs/master";
 
     operon.url = "github:heal-research/operon/cpp20";
@@ -21,35 +21,31 @@
   };
 
   outputs =
-    { self, flake-utils, mach-nix, nixpkgs, nur, operon, pratt-parser, pypi-deps-db }:
+    { self, flake-utils, mach-nix, nixpkgs, foolnotion, operon, pratt-parser, pypi-deps-db }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ nur.overlay ];
+          overlays = [ foolnotion.overlay ];
         };
-        repo = pkgs.nur.repos.foolnotion;
         mach = mach-nix.lib.${system};
 
         python-env = mach.mkPython {
           python = "python39";
 
           requirements = ''
-            eli5
-            joblib
-            numpy
-            optuna
-            pandas
-            pmlb
-            pyyaml
             scikit-learn
             sympy
+            numpy
+            pandas
+            pmlb
+            eli5
           '';
 
           ignoreDataOutdated = true;
         };
-      in rec {
-        defaultPackage = pkgs.gcc12Stdenv.mkDerivation {
+
+        pyoperon = pkgs.gcc12Stdenv.mkDerivation {
           name = "pyoperon";
           src = self;
 
@@ -76,22 +72,22 @@
             # flakes
             operon.defaultPackage.${system}
             pratt-parser.defaultPackage.${system}
-            repo.fast_float
-            repo.robin-hood-hashing
+            # foolnotion overlay
+            fast_float
+            robin-hood-hashing
           ];
         };
+      in rec {
+        packages.${system}.default = pyoperon;
+        defaultPackage = pyoperon;
 
         devShell = pkgs.gcc12Stdenv.mkDerivation {
           name = "pyoperon-dev";
           hardeningDisable = [ "all" ];
           impureUseNativeOptimizations = true;
-          nativeBuildInputs = defaultPackage.nativeBuildInputs;
-          buildInputs = defaultPackage.buildInputs
+          nativeBuildInputs = pyoperon.nativeBuildInputs;
+          buildInputs = pyoperon.buildInputs
             ++ (with pkgs; [ gdb valgrind ]);
-
-          shellHook = ''
-            PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
-          '';
         };
       });
 }
