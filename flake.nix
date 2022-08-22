@@ -7,7 +7,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/master";
 
     operon.url = "github:heal-research/operon/cpp20";
-    pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
+    pratt-parser.url =
+      "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
     pypi-deps-db.url = "github:DavHau/pypi-deps-db";
 
     mach-nix = {
@@ -20,18 +21,18 @@
     };
   };
 
-  outputs =
-    { self, flake-utils, mach-nix, nixpkgs, foolnotion, operon, pratt-parser, pypi-deps-db }:
+  outputs = { self, flake-utils, mach-nix, nixpkgs, foolnotion, operon
+    , pratt-parser, pypi-deps-db }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ foolnotion.overlay ];
         };
-        mach = mach-nix.lib.${system};
+        python = "python39";
+        mach = import mach-nix { inherit pkgs python; };
 
-        python-env = mach.mkPython {
-          python = "python39";
+        pyEnv = mach.mkPython {
 
           requirements = ''
             scikit-learn
@@ -45,22 +46,22 @@
           ignoreDataOutdated = true;
         };
 
-        pyoperon = pkgs.gcc12Stdenv.mkDerivation {
+        pyoperon = mach.nixpkgs.stdenv.mkDerivation {
           name = "pyoperon";
           src = self;
 
           cmakeFlags = [
             "-DCMAKE_BUILD_TYPE=Release"
             "-DCMAKE_CXX_FLAGS=${
-              if pkgs.targetPlatform.isx86_64 then "-march=haswell" else ""
+              if pkgs.hostPlatform.isx86_64 then "-march=x86-64-v3" else ""
             }"
           ];
 
           nativeBuildInputs = with pkgs; [
             cmake
             pkg-config
-            python-env.python
-            python-env.python.pkgs.pybind11
+            pyEnv.python
+            pyEnv.python.pkgs.pybind11
           ];
 
           buildInputs = with pkgs; [
@@ -68,9 +69,9 @@
             fmt
             openlibm
             # python environment for bindings and scripting
-            python-env
+            pyEnv
             # flakes
-            operon.defaultPackage.${system}
+            operon.packages.${system}.default
             pratt-parser.defaultPackage.${system}
             # foolnotion overlay
             fast_float
@@ -78,16 +79,23 @@
           ];
         };
       in rec {
-        packages.${system}.default = pyoperon;
-        defaultPackage = pyoperon;
+        packages = {
+          default = pyoperon;
+          pyoperon-generic = pyoperon.overrideAttrs (old: {
+            cmakeFlags = [
+              "-DCMAKE_BUILD_TYPE=Release"
+              "-DCMAKE_CXX_FLAGS=${
+                if pkgs.hostPlatform.isx86_64 then "-march=x86-64" else ""
+              }"
+            ];
+          });
+          pyoperon-debug = pyoperon.overrideAttrs (old: {
+            cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Debug" ]; });
+        };
 
-        devShell = pkgs.gcc12Stdenv.mkDerivation {
-          name = "pyoperon-dev";
-          hardeningDisable = [ "all" ];
-          impureUseNativeOptimizations = true;
+        devShells.default = mach.nixpkgs.mkShell {
           nativeBuildInputs = pyoperon.nativeBuildInputs;
-          buildInputs = pyoperon.buildInputs
-            ++ (with pkgs; [ gdb valgrind ]);
+          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
         };
       });
 }
