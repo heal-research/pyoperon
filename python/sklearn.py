@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 import sys
+import random
 import numpy as np
+import operon.pyoperon as op
+
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-import random
-import operon.pyoperon as op
+from sklearn.metrics import mean_squared_error
 
 class SymbolicRegressor(BaseEstimator, RegressorMixin):
     """ Builds a symbolic regression model.
@@ -449,35 +451,47 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         rng                   = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
-        best                  = gp.BestModel()
-        nodes                 = best.Genotype.Nodes
-        n_vars                = len([ node for node in nodes if node.IsVariable ])
 
+
+        def get_objective_values(model):
+            return evaluator(rng, model)
+
+
+        def get_variables(tree):
+            hashes = set(node.HashValue for node in tree.Nodes if node.IsVariable)
+            return [ds.GetVariable(h) for h in hashes]
+
+
+        def get_bic(model):
+            y_ = op.Evaluate(interpreter, model.Genotype, ds, training_range)
+            s_, o_ = op.FitLeastSquares(y_, y)
+            mse = mean_squared_error(y, y_ * s_ + o_)
+            n = X.shape[0]
+            k = sum(1 for x in model.Genotype.Nodes if x.IsVariable)
+            return 2 * mse + k * np.log(n) / n
+
+
+        best   = gp.BestModel if single_objective else min(gp.BestFront, key=lambda x: get_bic(x))
+        nodes  = best.Genotype.Nodes
 
         # add four nodes at the top of the tree for linear scaling
         y_pred                = op.Evaluate(interpreter, best.Genotype, ds, training_range)
         scale, offset         = op.FitLeastSquares(y_pred, y)
         nodes.extend([ op.Node.Constant(scale), op.Node.Mul(), op.Node.Constant(offset), op.Node.Add() ])
-
         self.model_ = op.Tree(nodes).UpdateNodes()
-
-        def get_model_vars(model):
-            hashes = set(node.HashValue for node in model.Nodes if node.IsVariable)
-            return [ds.GetVariable(h) for h in hashes]
-
+        self.model_vars_ = get_variables(self.model_)
         # update model vars dictionary
-        self.model_vars_ = get_model_vars(self.model_)
+        self.pareto_front_ = [ (best.Genotype, get_variables(best.Genotype), get_objective_values(best), get_bic(best)) ] if single_objective else [ (x.Genotype, get_variables(x.Genotype), get_objective_values(x), get_bic(x)) for x in gp.BestFront ]
 
-        self.pareto_front_ = [ (self.model_, self.model_vars_) ] if single_objective else [ (x.Genotype, get_model_vars(x.Genotype)) for x in gp.BestFront ]
-
+        n_vars = len(self.model_vars_)
         self.stats_ = {
-            'model_length':        self.model_.Length - 4, # do not count scaling nodes?
-            'model_complexity':    self.model_.Length - 4 + 2 * n_vars,
-            'generations':         gp.Generation,
+            'model_length': self.model_.Length - 4, # do not count scaling nodes?
+            'model_complexity': self.model_.Length - 4 + 2 * n_vars,
+            'generations': gp.Generation,
             'evaluation_count': evaluator.CallCount,
             'residual_evaluations': evaluator.ResidualEvaluations,
             'jacobian_evaluations': evaluator.JacobianEvaluations,
-            'random_state':        self.random_state
+            'random_state': self.random_state
         }
 
         self.is_fitted_ = True
