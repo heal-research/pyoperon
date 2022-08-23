@@ -21,7 +21,7 @@ void InitTree(py::module_ &m)
             tree.SetCoefficients(MakeSpan(coefficients));
         }, py::arg("coefficients"))
         .def("GetCoefficients", &Operon::Tree::GetCoefficients)
-        .def("CoefficientsCount", &Operon::Tree::CoefficientsCount)
+        .def_property_readonly("CoefficientsCount", &Operon::Tree::CoefficientsCount)
         .def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node>& (Operon::Tree::*)()&>(&Operon::Tree::Nodes))
         .def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node> const& (Operon::Tree::*)() const&>(&Operon::Tree::Nodes))
         //.def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node>&& (Operon::Tree::*)() &&>(&Operon::Tree::Nodes))
