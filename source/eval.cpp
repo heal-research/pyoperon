@@ -115,38 +115,28 @@ void InitEval(py::module_ &m)
         .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
         .def_property("Budget",&Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
         .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations)
-
-        // TODO: do we need these properties to be writable?
-        //.def_property("CallCount",
-        //        [](Operon::EvaluatorBase& self) { return self.CallCount.load(); },
-        //        [](Operon::EvaluatorBase& self, size_t count) { self.CallCount.store(count); });
-
+        .def("__call__", &Operon::EvaluatorBase::operator())
+        .def("__call__", [](Operon::EvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
         .def_property_readonly("CallCount", [](Operon::EvaluatorBase& self) { return self.CallCount.load(); })
         .def_property_readonly("ResidualEvaluations", [](Operon::EvaluatorBase& self) { return self.ResidualEvaluations.load(); })
         .def_property_readonly("JacobianEvaluations", [](Operon::EvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
-        .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>())
-        .def("__call__", &Operon::Evaluator::operator());
+        .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>());
 
     py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
-        .def(py::init<Operon::Problem&, std::function<typename Operon::EvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>())
-        .def("__call__", &Operon::UserDefinedEvaluator::operator());
+        .def(py::init<Operon::Problem&, std::function<typename Operon::EvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>());
 
     py::class_<Operon::LengthEvaluator, Operon::EvaluatorBase>(m, "LengthEvaluator")
-        .def(py::init<Operon::Problem&>())
-        .def("__call__", &Operon::LengthEvaluator::operator());
+        .def(py::init<Operon::Problem&>());
 
     py::class_<Operon::ShapeEvaluator, Operon::EvaluatorBase>(m, "ShapeEvaluator")
-        .def(py::init<Operon::Problem&>())
-        .def("__call__", &Operon::ShapeEvaluator::operator());
+        .def(py::init<Operon::Problem&>());
 
     py::class_<Operon::DiversityEvaluator, Operon::EvaluatorBase>(m, "DiversityEvaluator")
-        .def(py::init<Operon::Problem&>())
-        .def("__call__", &Operon::DiversityEvaluator::operator());
+        .def(py::init<Operon::Problem&>());
 
     py::class_<Operon::MultiEvaluator, Operon::EvaluatorBase>(m, "MultiEvaluator")
         .def(py::init<Operon::Problem&>())
-        .def("Add", &Operon::MultiEvaluator::Add)
-        .def("__call__", &Operon::MultiEvaluator::operator());
+        .def("Add", &Operon::MultiEvaluator::Add);
 }
