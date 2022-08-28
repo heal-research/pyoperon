@@ -4,7 +4,7 @@
 import sys
 import random
 import numpy as np
-import operon.pyoperon as op
+import pyoperon as op
 
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -312,29 +312,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown mutation method {}'.format(mutation_name))
 
 
-    def get_model_string(self, precision=3, names=None):
-        if len(self.model_vars_) == 0:
+    def get_model_string(self, model, precision=3, names=None):
+        """Returns an infix string representation of an operon tree model"""
+        hashes = set(x.HashValue for x in model.Nodes if x.IsVariable)
+        if len(hashes) == 0:
             print('warning: model contains no variables', file=sys.stderr)
 
-        names_map = {}
-        if names is None:
-            names_map = { v.Hash : v.Name for v in self.model_vars_ }
-        else:
-            if len(self.model_vars_) > len(names):
-                print('the number of names does not match the number of variables', file=sys.stderr)
-
-            names_map = { v.Hash : names[v.Index] for v in self.model_vars_ }
-
+        model_vars = [self.inputs_[h] for h in hashes]
+        names_map = {v.Hash : v.Name for v in model_vars} if names is None else {v.Hash : names[v.Index] for v in model_vars}
         return op.InfixFormatter.Format(self.model_, names_map, precision)
-
-
-    def get_pareto_front(self, precision):
-        front = []
-        for (model, model_vars) in self.pareto_front_:
-            names_map = { v.Hash : v.Name for v in model_vars }
-            front.append(op.InfixFormatter.Format(model, names_map, precision))
-
-        return front
 
 
     def fit(self, X, y):
@@ -362,8 +348,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         ds                    = op.Dataset(D)
         target                = max(ds.Variables, key=lambda x: x.Index) # last column is the target
-
         inputs                = op.VariableCollection(v for v in ds.Variables if v.Index != target.Index)
+        self.inputs_          = {v.Hash : v for v in inputs} 
         training_range        = op.Range(0, ds.Rows)
         test_range            = op.Range(ds.Rows-1, ds.Rows) # hackish, because it can't be empty
         problem               = op.Problem(ds, inputs, target.Name, training_range, test_range)
@@ -453,40 +439,35 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         gp.Run(rng, None, self.n_threads)
 
 
-        def get_objective_values(model):
-            return evaluator(rng, model)
+        def get_solution_stats(solution):
+            """Takes a solution (operon individual) and computes a set of stats"""
+            # perform linear scaling
+            y_pred = op.Evaluate(interpreter, solution.Genotype, ds, training_range)
+            scale, offset = op.FitLeastSquares(y_pred, y)
+            nodes = solution.Genotype.Nodes + [ op.Node.Constant(scale), op.Node.Mul(), op.Node.Constant(offset), op.Node.Add() ]
+            solution.Genotype = op.Tree(nodes).UpdateNodes()
 
+            # get solution variables
+            solution_vars = [ds.GetVariable(x.HashValue) for x in solution.Genotype.Nodes if x.IsVariable]
 
-        def get_variables(tree):
-            hashes = set(node.HashValue for node in tree.Nodes if node.IsVariable)
-            return [ds.GetVariable(h) for h in hashes]
+            # get objective values
+            objs = evaluator(rng, solution)
 
-
-        def get_bic(model):
-            y_ = op.Evaluate(interpreter, model.Genotype, ds, training_range)
-            s_, o_ = op.FitLeastSquares(y_, y)
-            mse = mean_squared_error(y, y_ * s_ + o_)
+            # compute bic
+            mse = mean_squared_error(y, y_pred * scale + offset)
             n = X.shape[0]
-            k = sum(1 for x in model.Genotype.Nodes if x.IsVariable)
-            return 2 * mse + k * np.log(n) / n
+            bic = 2 * mse + len(solution_vars) * np.log(n) / n
+            return solution.Genotype, solution_vars, objs, bic 
 
 
-        best   = gp.BestModel if single_objective else min(gp.BestFront, key=lambda x: get_bic(x))
-        nodes  = best.Genotype.Nodes
+        front = [gp.BestModel] if single_objective else gp.BestFront
+        self.pareto_front_ = [get_solution_stats(m) for m in front] 
+        tree, tree_vars, objectives, bic = min(self.pareto_front_, key=lambda x: x[3]) # get the model that minimizez the bic
+        self.model_ = tree 
 
-        # add four nodes at the top of the tree for linear scaling
-        y_pred                = op.Evaluate(interpreter, best.Genotype, ds, training_range)
-        scale, offset         = op.FitLeastSquares(y_pred, y)
-        nodes.extend([ op.Node.Constant(scale), op.Node.Mul(), op.Node.Constant(offset), op.Node.Add() ])
-        self.model_ = op.Tree(nodes).UpdateNodes()
-        self.model_vars_ = get_variables(self.model_)
-        # update model vars dictionary
-        self.pareto_front_ = [ (best.Genotype, get_variables(best.Genotype), get_objective_values(best), get_bic(best)) ] if single_objective else [ (x.Genotype, get_variables(x.Genotype), get_objective_values(x), get_bic(x)) for x in gp.BestFront ]
-
-        n_vars = len(self.model_vars_)
         self.stats_ = {
             'model_length': self.model_.Length - 4, # do not count scaling nodes?
-            'model_complexity': self.model_.Length - 4 + 2 * n_vars,
+            'model_complexity': self.model_.Length - 4 + 2 * sum(1 for x in self.model_.Nodes if x.IsVariable),
             'generations': gp.Generation,
             'evaluation_count': evaluator.CallCount,
             'residual_evaluations': evaluator.ResidualEvaluations,
