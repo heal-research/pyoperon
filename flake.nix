@@ -79,8 +79,6 @@
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
 
           shellHook = ''
-            export PYPI_USERNAME=__token__
-            export PYPI_PASSWORD=pypi-AgEIcHlwaS5vcmcCJDhhM2UyNjZmLWI0YjUtNDQ0Yy1iNjk0LTZkZTNhM2M2MzFjNAACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgu-HuQLnvx_TUfmdNEAmW4pnX5v2ycYaQCg6RCcUuHsg
           '';
         };
       });
