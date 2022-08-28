@@ -5,48 +5,35 @@
     flake-utils.url = "github:numtide/flake-utils";
     foolnotion.url = "github:foolnotion/nur-pkg";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-
-    operon.url = "github:heal-research/operon/cpp20";
     pratt-parser.url =
       "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
-    pypi-deps-db.url = "github:DavHau/pypi-deps-db";
-
-    mach-nix = {
-      url = "github:DavHau/mach-nix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-        pypi-deps-db.follows = "pypi-deps-db";
-      };
-    };
   };
 
-  outputs = { self, flake-utils, mach-nix, nixpkgs, foolnotion, operon
-    , pratt-parser, pypi-deps-db }:
+  outputs = { self, flake-utils, nixpkgs, foolnotion, pratt-parser }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ foolnotion.overlay ];
+          overlays = [
+            foolnotion.overlay
+            # next we need to override stdenv to lower the ABI requirements
+            # (to be more compatible with older distros / python envs)
+            (final: prev: {
+              glibc = prev.glibc.overrideAttrs (old: { version = "2.34"; });
+            })
+          ];
         };
-        python = "python39";
-        mach = import mach-nix { inherit pkgs python; };
+        enableShared = false;
+        stdenv = pkgs.stdenv;
+        python = pkgs.python39;
 
-        pyEnv = mach.mkPython {
-
-          requirements = ''
-            scikit-learn
-            sympy
-            numpy
-            pandas
-            pmlb
-            eli5
-          '';
-
-          ignoreDataOutdated = true;
+        operon = pkgs.callPackage ./nix/operon {
+          enableShared = enableShared;
+          useOpenLibm = false;
+          vstat = pkgs.callPackage ./nix/vstat { };
         };
 
-        pyoperon = mach.nixpkgs.stdenv.mkDerivation {
+        pyoperon = stdenv.mkDerivation {
           name = "pyoperon";
           src = self;
 
@@ -59,24 +46,18 @@
 
           nativeBuildInputs = with pkgs; [
             cmake
+            ninja
             pkg-config
-            pyEnv.python
-            pyEnv.python.pkgs.pybind11
+            python
+            python.pkgs.pybind11
           ];
 
           buildInputs = with pkgs; [
-            eigen
-            fmt
-            openlibm
-            # python environment for bindings and scripting
-            pyEnv
-            # flakes
-            operon.packages.${system}.default
-            pratt-parser.defaultPackage.${system}
-            # foolnotion overlay
-            fast_float
-            robin-hood-hashing
-          ];
+            python.pkgs.poetry
+            python.pkgs.setuptools
+            python.pkgs.wheel
+            operon
+          ] ++ operon.buildInputs;
         };
       in rec {
         packages = {
@@ -89,13 +70,18 @@
               }"
             ];
           });
-          pyoperon-debug = pyoperon.overrideAttrs (old: {
-            cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Debug" ]; });
+          pyoperon-debug = pyoperon.overrideAttrs
+            (old: { cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Debug" ]; });
         };
 
-        devShells.default = mach.nixpkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
+
+          shellHook = ''
+            export PYPI_USERNAME=__token__
+            export PYPI_PASSWORD=pypi-AgEIcHlwaS5vcmcCJDhhM2UyNjZmLWI0YjUtNDQ0Yy1iNjk0LTZkZTNhM2M2MzFjNAACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgu-HuQLnvx_TUfmdNEAmW4pnX5v2ycYaQCg6RCcUuHsg
+          '';
         };
       });
 }
