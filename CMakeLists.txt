@@ -4,7 +4,7 @@ include(cmake/prelude.cmake)
 
 project(
     pyoperon
-    VERSION 0.2.0
+    VERSION 0.3.1
     DESCRIPTION "Scikit-learn module and python bindings and for the Operon library"
     HOMEPAGE_URL "https://operongp.readthedocs.io/en/latest/"
     LANGUAGES CXX
@@ -23,7 +23,6 @@ find_package(Ceres CONFIG)
 find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
-find_package(fmt REQUIRED)
 find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
@@ -55,19 +54,38 @@ pybind11_add_module(
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
 # ---- Find python ----
-find_package(Python3 COMPONENTS Development Interpreter)
+set(Python_USE_STATIC_LIBS ON)
+find_package(Python3 COMPONENTS Development)
 if (Python3_FOUND)
-    target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Module Python3::Python)
+    target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Python)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
     target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
 endif()
 
-# in case operon is linked with openlibm, we wanna discover it here
+# when operon is statically linked, dependency information will not be available
+# via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
+# all of the below will be added to INTERFACE_LINK_LIBRARIES, therefore we try to find them
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(openlibm IMPORTED_TARGET openlibm)
-
+find_package(Taskflow)
+find_package(cpp-sort)
+find_package(fmt)
+find_package(vstat)
+find_package(xxHash)
+if (NOT xxHash_FOUND)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(xxhash IMPORTED_TARGET xxhash)
+    if (NOT xxhash_FOUND)
+        pkg_check_modules(xxhash IMPORTED_TARGET libxxhash)
+    endif()
+endif ()
+find_package(aria-csv)
+if (NOT aria-csv_FOUND)
+    find_path(ARIA_CSV_INCLUDE_DIRS "aria-csv/parser.hpp")
+endif()
+pkg_check_modules(eve IMPORTED_TARGET eve)
 
 include(GenerateExportHeader)
 generate_export_header(
