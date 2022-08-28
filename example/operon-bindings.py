@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-import operon as Operon
+import pyoperon as Operon
 from pmlb import fetch_data
 
 # get some training data - see https://epistasislab.github.io/pmlb/
