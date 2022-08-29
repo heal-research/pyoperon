@@ -8,14 +8,20 @@
 
 A scikit-learn regressor is also available:
 ```python
-from operon.sklearn import SymbolicRegressor
+from pyoperon.sklearn import SymbolicRegressor
 ```
 
-The [examples](https://github.com/heal-research/pyoperon/examples) folder contains sample code for using either the Python bindings directly or the operon.sklearn module.
+The [examples](https://github.com/heal-research/pyoperon/examples) folder contains sample code for using either the Python bindings directly or the **pyoperon.sklearn** module.
 
-# Building and installing
+# Installation
 
-Currently, the easiest way to consume **pyoperon** is via the [nix package manager](https://nixos.org/). Nix can be installed on other Linux distributions in a few easy steps:
+The easiest way to install **pyoperon** is with **pip**:
+```
+pip install pyoperon
+```
+Note that the pyoperon python module links against the shared python interpreter library (libpython.so), so it's important that this library is in the path (e.g., `LD_LIBRARY_PATH` on linux).
+
+Another way to get **pyoperon** is via the [nix package manager](https://nixos.org/). Nix can be installed on other Linux distributions in a few easy steps:
 
 1. [Install nix](https://nixos.org/manual/nix/stable/installation/installing-binary.html) and enable flake support in `~/.config/nix/nix.conf`:
    ```
@@ -26,9 +32,9 @@ Currently, the easiest way to consume **pyoperon** is via the [nix package manag
    nix develop github:heal-research/pyoperon --no-write-lock-file
    ```
 
-Upon completion of the last command, the `$PYTHONPATH` will be updated and **pyoperon** will pe available for use.
+Upon completion of the last command, the `$PYTHONPATH` will be updated and **pyoperon** will pe available for use. Note that as opposed to PyPI releases, the nix flake will always build the latest development version from github.
 
-Alternatively, one can also clone this repo and run `nix develop` from within the cloned path.
+Alternatively, one can also clone https://github.com/heal-research/pyoperon.git and run `nix develop` from within the cloned path.
 
 # Contributing
 
