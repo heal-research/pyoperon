@@ -5,8 +5,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     foolnotion.url = "github:foolnotion/nur-pkg";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-    pratt-parser.url =
-      "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
+    pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
   };
 
   outputs = { self, flake-utils, nixpkgs, foolnotion, pratt-parser }:
@@ -18,9 +17,9 @@
             foolnotion.overlay
             # next we need to override stdenv to lower the ABI requirements
             # (to be more compatible with older distros / python envs)
-            (final: prev: {
-              glibc = prev.glibc.overrideAttrs (old: { version = "2.34"; });
-            })
+            #(final: prev: {
+            #  glibc = prev.glibc.overrideAttrs (old: { version = "2.34"; });
+            #})
           ];
         };
         enableShared = false;

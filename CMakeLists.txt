@@ -54,7 +54,6 @@ pybind11_add_module(
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
 # ---- Find python ----
-set(Python_USE_STATIC_LIBS ON)
 find_package(Python3 COMPONENTS Development)
 if (Python3_FOUND)
     target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Python)
