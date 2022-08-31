@@ -80,5 +80,9 @@
           shellHook = ''
           '';
         };
+
+        # backwards compatibility
+        defaultPackage = packages.default;
+        defaultShell = devShells.default;
       });
 }
