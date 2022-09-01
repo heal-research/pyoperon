@@ -25,7 +25,7 @@ install(
 install(
     FILES "${CMAKE_SOURCE_DIR}/pyoperon/__init__.py"
     FILES "${CMAKE_SOURCE_DIR}/pyoperon/sklearn.py"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/pyoperon"
     )
 
 write_basic_package_version_file(
