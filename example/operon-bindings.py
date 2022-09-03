@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-import operon as Operon
+import pyoperon as Operon
 from pmlb import fetch_data
 
 # get some training data - see https://epistasislab.github.io/pmlb/
@@ -96,7 +96,7 @@ t0 = time.time()
 
 def report():
     global gen
-    best = gp.BestModel()
+    best = gp.BestModel
     bestfit = best.GetFitness(0)
     sys.stdout.write('\r')
     cursor = int(np.round(gen / config.Generations * max_ticks))
@@ -111,6 +111,6 @@ def report():
 gp.Run(rng, report, threads=16)
 
 # get the best solution and print it
-best = gp.BestModel()
+best = gp.BestModel
 model_string = Operon.InfixFormatter.Format(best.Genotype, ds, 6)
 print(f'\n{model_string}')

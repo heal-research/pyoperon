@@ -3,100 +3,83 @@
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nur.url = "github:nix-community/NUR";
+    foolnotion.url = "github:foolnotion/nur-pkg";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-
-    operon.url = "github:heal-research/operon/";
-    pratt-parser.url = "github:foolnotion/pratt-parser-calculator?rev=a15528b1a9acfe6adefeb41334bce43bdb8d578c";
-    pypi-deps-db.url = "github:DavHau/pypi-deps-db";
-
-    mach-nix = {
-      url = "github:DavHau/mach-nix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-        pypi-deps-db.follows = "pypi-deps-db";
-      };
-    };
+    pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
   };
 
-  outputs =
-    { self, flake-utils, mach-nix, nixpkgs, nur, operon, pratt-parser, pypi-deps-db }:
+  outputs = { self, flake-utils, nixpkgs, foolnotion, pratt-parser }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ nur.overlay ];
+          overlays = [
+            foolnotion.overlay
+            # next we need to override stdenv to lower the ABI requirements
+            # (to be more compatible with older distros / python envs)
+            #(final: prev: {
+            #  glibc = prev.glibc.overrideAttrs (old: { version = "2.28"; });
+            #})
+          ];
         };
-        repo = pkgs.nur.repos.foolnotion;
-        mach = mach-nix.lib.${system};
+        enableShared = false;
+        stdenv = pkgs.stdenv;
+        python = pkgs.python310;
 
-        python-env = mach.mkPython {
-          python = "python39";
-          requirements = ''
-            eli5
-            joblib
-            numpy
-            optuna
-            pandas
-            pmlb
-            psutil
-            pyyaml
-            scikit-learn
-            sympy
-            matplotlib
-            pathos
-          '';
-
-          ignoreDataOutdated = true;
+        operon = pkgs.callPackage ./nix/operon {
+          enableShared = enableShared;
+          useOpenLibm = false;
+          vstat = pkgs.callPackage ./nix/vstat { };
         };
-      in rec {
-        defaultPackage = pkgs.gcc12Stdenv.mkDerivation {
+
+        pyoperon = stdenv.mkDerivation {
           name = "pyoperon";
           src = self;
 
           cmakeFlags = [
             "-DCMAKE_BUILD_TYPE=Release"
             "-DCMAKE_CXX_FLAGS=${
-              if pkgs.targetPlatform.isx86_64 then "-march=haswell" else ""
+              if pkgs.hostPlatform.isx86_64 then "-march=x86-64-v3" else ""
             }"
           ];
 
           nativeBuildInputs = with pkgs; [
             cmake
+            ninja
             pkg-config
-            python-env.python
-            python-env.python.pkgs.pybind11
+            python
+            python.pkgs.pybind11
           ];
 
           buildInputs = with pkgs; [
-            pkg-config
-            eigen
-            fmt
-            openlibm
-            # python environment for bindings and scripting
-            python-env
-            # flakes
-            operon.defaultPackage.${system}
-            pratt-parser.defaultPackage.${system}
-            repo.fast_float
-            repo.robin-hood-hashing
-            repo.span-lite
-          ];
+            python.pkgs.poetry
+            python.pkgs.setuptools
+            python.pkgs.wheel
+            operon
+          ] ++ operon.buildInputs;
+        };
+      in rec {
+        packages = {
+          default = pyoperon;
+          pyoperon-generic = pyoperon.overrideAttrs (old: {
+            cmakeFlags = [
+              "-DCMAKE_BUILD_TYPE=Release"
+              "-DCMAKE_CXX_FLAGS=${
+                if pkgs.hostPlatform.isx86_64 then "-march=x86-64" else ""
+              }"
+            ];
+          });
+          pyoperon-debug = pyoperon.overrideAttrs
+            (old: { cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Debug" ]; });
         };
 
-        devShell = pkgs.gcc12Stdenv.mkDerivation {
-          name = "pyoperon-dev";
-          hardeningDisable = [ "all" ];
-          impureUseNativeOptimizations = true;
-          nativeBuildInputs = defaultPackage.nativeBuildInputs;
-          buildInputs = defaultPackage.buildInputs
-            ++ (with pkgs; [ gdb valgrind ]);
-
-          shellHook = ''
-            PYTHONPATH=$PYTHONPATH:${defaultPackage.out}
-          '';
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = pyoperon.nativeBuildInputs;
+          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
         };
+
+        # backwards compatibility
+        defaultPackage = packages.default;
+        defaultShell = devShells.default;
       });
 }
-

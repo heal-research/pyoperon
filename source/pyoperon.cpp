@@ -4,8 +4,8 @@
 #include "pyoperon/pyoperon.hpp"
 
 #include <operon/algorithms/config.hpp>
-#include <operon/core/format.hpp>
 #include <operon/core/version.hpp>
+#include <operon/formatter/formatter.hpp>
 #include <operon/parser/infix.hpp>
 
 namespace py = pybind11;
@@ -29,6 +29,7 @@ PYBIND11_MODULE(pyoperon, m)
     InitMutation(m);
     InitNode(m);
     InitNondominatedSorter(m);
+    InitOptimizer(m);
     InitProblem(m);
     InitPset(m);
     InitReinserter(m);

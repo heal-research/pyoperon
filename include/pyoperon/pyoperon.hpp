@@ -31,8 +31,8 @@ auto MakeView(Operon::Span<T const> view) -> py::array_t<T const>
     return arr;
 }
 
-template<typename T>
-auto MakeSpan(py::array_t<T> arr) -> Operon::Span<T>
+template<typename T, int F/*ExtraFlags*/>
+auto MakeSpan(py::array_t<T, F> arr) -> Operon::Span<T>
 {
     py::buffer_info info = arr.request();
     return Operon::Span<T>(static_cast<T*>(info.ptr), static_cast<typename Operon::Span<T>::size_type>(info.size));
@@ -46,8 +46,9 @@ void InitEval(py::module_&);
 void InitGenerator(py::module_&);
 void InitInitializer(py::module_&);
 void InitMutation(py::module_&);
-void InitNondominatedSorter(py::module_&);
 void InitNode(py::module_&);
+void InitNondominatedSorter(py::module_&);
+void InitOptimizer(py::module_&);
 void InitProblem(py::module_&);
 void InitPset(py::module_&);
 void InitReinserter(py::module_&m);

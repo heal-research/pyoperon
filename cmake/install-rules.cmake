@@ -19,31 +19,14 @@ install(
     TARGETS pyoperon_pyoperon
     EXPORT pyoperonTargets
     RUNTIME COMPONENT pyoperon_Runtime
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/operon"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/pyoperon"
     )
 
 install(
-    FILES "${CMAKE_SOURCE_DIR}/python/__init__.py"
-    FILES "${CMAKE_SOURCE_DIR}/python/sklearn.py"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/operon"
+    FILES "${CMAKE_SOURCE_DIR}/pyoperon/__init__.py"
+    FILES "${CMAKE_SOURCE_DIR}/pyoperon/sklearn.py"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/pyoperon"
     )
-
-#install(
-#    TARGETS pyoperon_pyoperon
-#    EXPORT pyoperonTargets
-#    RUNTIME #
-#    COMPONENT pyoperon_Runtime
-#    LIBRARY #
-#    DESTINATION "${CMAKE_INSTALL_PREFIX}/operon"
-#    COMPONENT pyoperon_Runtime
-#    NAMELINK_COMPONENT pyoperon_Development
-#    ARCHIVE #
-#    COMPONENT python
-#    DESTINATION "${CMAKE_INSTALL_PREFIX}/operon"
-#    #COMPONENT pyoperon_Development
-#    #INCLUDES #
-#    #DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-#)
 
 write_basic_package_version_file(
     "${package}ConfigVersion.cmake"
