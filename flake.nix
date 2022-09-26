@@ -17,14 +17,14 @@
             foolnotion.overlay
             # next we need to override stdenv to lower the ABI requirements
             # (to be more compatible with older distros / python envs)
-            #(final: prev: {
-            #  glibc = prev.glibc.overrideAttrs (old: { version = "2.34"; });
-            #})
+            (final: prev: {
+              glibc = prev.glibc.overrideAttrs (old: { version = "2.28"; });
+            })
           ];
         };
         enableShared = false;
         stdenv = pkgs.stdenv;
-        python = pkgs.python39;
+        python = pkgs.python310;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
@@ -76,9 +76,6 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
-
-          shellHook = ''
-          '';
         };
 
         # backwards compatibility
