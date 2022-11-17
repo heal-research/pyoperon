@@ -89,15 +89,15 @@ PYBIND11_MODULE(pyoperon, m)
     // tree format
     py::class_<Operon::TreeFormatter>(m, "TreeFormatter")
         .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Dataset const&, int>(&Operon::TreeFormatter::Format))
-        .def_static("Format", py::overload_cast<Operon::Tree const&, std::unordered_map<Operon::Hash, std::string> const&, int>(&Operon::TreeFormatter::Format));
+        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Map<Operon::Hash, std::string> const&, int>(&Operon::TreeFormatter::Format));
 
     py::class_<Operon::InfixFormatter>(m, "InfixFormatter")
         .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Dataset const&, int>(&Operon::InfixFormatter::Format))
-        .def_static("Format", py::overload_cast<Operon::Tree const&, std::unordered_map<Operon::Hash, std::string> const&, int>(&Operon::InfixFormatter::Format));
+        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Map<Operon::Hash, std::string> const&, int>(&Operon::InfixFormatter::Format));
 
     py::class_<Operon::InfixParser>(m, "InfixParser")
-        .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& var) {
-                return Operon::InfixParser::ParseDefault(expr, var);
+        .def_static("Parse", [](std::string const& expr, Operon::Map<std::string, Operon::Hash> const& var) {
+                return Operon::InfixParser::Parse(expr, var);
         });
 
     // genetic algorithm

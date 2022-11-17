@@ -20,13 +20,15 @@ include(cmake/variables.cmake)
 
 # ---- Find dependencies ----
 find_package(Ceres CONFIG)
+find_package(AriaCsvParser REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
 find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
-find_package(robin_hood REQUIRED)
+find_package(unordered_dense REQUIRED)
+find_package(xxhash_cpp REQUIRED)
 
 # ---- Declare library ----
 
@@ -72,19 +74,8 @@ find_package(Taskflow)
 find_package(cpp-sort)
 find_package(fmt)
 find_package(vstat)
-find_package(xxHash)
 find_package(eve)
-if (NOT xxHash_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(xxhash IMPORTED_TARGET xxhash)
-    if (NOT xxhash_FOUND)
-        pkg_check_modules(xxhash IMPORTED_TARGET libxxhash)
-    endif()
-endif ()
-find_package(aria-csv)
-if (NOT aria-csv_FOUND)
-    find_path(ARIA_CSV_INCLUDE_DIRS "aria-csv/parser.hpp")
-endif()
+find_package(openlibm)
 
 include(GenerateExportHeader)
 generate_export_header(

@@ -13,14 +13,7 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            foolnotion.overlay
-            # next we need to override stdenv to lower the ABI requirements
-            # (to be more compatible with older distros / python envs)
-            (final: prev: {
-              glibc = prev.glibc.overrideAttrs (old: { version = "2.28"; });
-            })
-          ];
+          overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
         stdenv = pkgs.stdenv;
