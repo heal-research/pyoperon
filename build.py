@@ -134,7 +134,7 @@ def build(setup_kwargs):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pyoperon",
-    version="0.3.0",
+    version="0.3.4",
     author="Bogdan Burlacu",
     author_email="bogdan.burlacu@pm.me",
     description="Python bindings for the Operon library",

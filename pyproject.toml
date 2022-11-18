@@ -1,7 +1,7 @@
 [tool.poetry]
 build = "build.py"
 name = "pyoperon"
-version = "0.3.3"
+version = "0.3.4"
 description = "Scikit-learn module and python bindings and for the Operon library"
 readme = "README.md"
 repository = "https://github.com/heal-research/pyoperon"
