@@ -39,6 +39,7 @@ auto MakeSpan(py::array_t<T, F> arr) -> Operon::Span<T>
 }
 
 void InitAlgorithm(py::module_&);
+void InitBenchmark(py::module_&);
 void InitCreator(py::module_&);
 void InitCrossover(py::module_&);
 void InitDataset(py::module_&);

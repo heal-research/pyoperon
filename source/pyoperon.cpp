@@ -20,6 +20,7 @@ PYBIND11_MODULE(pyoperon, m)
     py::bind_vector<std::vector<Operon::Individual>>(m, "IndividualCollection");
 
     InitAlgorithm(m);
+    InitBenchmark(m);
     InitCreator(m);
     InitCrossover(m);
     InitDataset(m);

@@ -36,6 +36,7 @@ pybind11_add_module(
     pyoperon_pyoperon
     MODULE
     source/algorithm.cpp
+    source/benchmark.cpp
     source/creator.cpp
     source/crossover.cpp
     source/dataset.cpp
