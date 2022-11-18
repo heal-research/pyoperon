@@ -35,8 +35,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "ea6ed41e2b6839d2788319f0a6fa05731cbd2d4f";
-    sha256 = "sha256-UHOyHSj0/P6k/FqggVCcB1wRTEYFL8WfZQkG6zMmGrs=";
+    rev = "6870c2a46ce4c76a969d238ab7a6beb9b427a735";
+    sha256 = "sha256-uqbwFGGsx6plilJvBSZ76ofFVkDZsiph1h4ClOhNYNc=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -65,6 +65,7 @@ stdenv.mkDerivation rec {
     "-DUSE_SINGLE_PRECISION=${if useSinglePrecision then "ON" else "OFF"}"
     "-DBUILD_CLI_PROGRAMS=${if buildCliPrograms then "ON" else "OFF"}"
     "-DBUILD_SHARED_LIBS=${if enableShared then "ON" else "OFF"}"
+    "-DCMAKE_POSITION_INDEPENDENT_CODE=${if enableShared then "OFF" else "ON"}"
     "-DUSE_OPENLIBM=${if useOpenLibm then "ON" else "OFF"}"
     "-DCMAKE_CXX_FLAGS=${if stdenv.targetPlatform.isx86_64 then "-march=x86-64-v3" else ""}"
   ];
