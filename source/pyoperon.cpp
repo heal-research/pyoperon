@@ -89,16 +89,27 @@ PYBIND11_MODULE(pyoperon, m)
 
     // tree format
     py::class_<Operon::TreeFormatter>(m, "TreeFormatter")
-        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Dataset const&, int>(&Operon::TreeFormatter::Format))
-        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Map<Operon::Hash, std::string> const&, int>(&Operon::TreeFormatter::Format));
+        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return Operon::TreeFormatter::Format(tree, dataset, decimalPrecision);
+        })
+        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
+            return Operon::TreeFormatter::Format(tree, map, decimalPrecision);
+        });
 
     py::class_<Operon::InfixFormatter>(m, "InfixFormatter")
-        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Dataset const&, int>(&Operon::InfixFormatter::Format))
-        .def_static("Format", py::overload_cast<Operon::Tree const&, Operon::Map<Operon::Hash, std::string> const&, int>(&Operon::InfixFormatter::Format));
+        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return Operon::InfixFormatter::Format(tree, dataset, decimalPrecision);
+        })
+        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
+            return Operon::InfixFormatter::Format(tree, map, decimalPrecision);
+        });
 
     py::class_<Operon::InfixParser>(m, "InfixParser")
-        .def_static("Parse", [](std::string const& expr, Operon::Map<std::string, Operon::Hash> const& var) {
-                return Operon::InfixParser::Parse(expr, var);
+        .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& variables) {
+            Operon::Map<std::string, Operon::Hash> map(variables.begin(), variables.end());
+            return Operon::InfixParser::Parse(expr, map);
         });
 
     // genetic algorithm
