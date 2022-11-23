@@ -320,7 +320,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         model_vars = [self.inputs_[h] for h in hashes]
         names_map = {v.Hash : v.Name for v in model_vars} if names is None else {v.Hash : names[v.Index] for v in model_vars}
-        return op.InfixFormatter.Format(self.model_, names_map, precision)
+        return op.InfixFormatter.Format(model, names_map, precision)
 
 
     def fit(self, X, y):
@@ -474,6 +474,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'jacobian_evaluations': evaluator.JacobianEvaluations,
             'random_state': self.random_state
         }
+
+        self.individuals_ = gp.Individuals
 
         self.is_fitted_ = True
         # `fit` should always return `self`
