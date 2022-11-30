@@ -33,12 +33,12 @@ void InitEval(py::module_ &m)
         return result;
         }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"));
 
-    m.def("Evaluate", [](Operon::Interpreter const& interpreter, std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar> result, size_t nthread) {
+    m.def("EvaluateTrees", [](std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar> result, size_t nthread) {
             auto span = MakeSpan(result);
             py::gil_scoped_release release;
-            Operon::Evaluate(interpreter, trees, ds, range, span, nthread);
+            Operon::EvaluateTrees(trees, ds, range, span, nthread);
             py::gil_scoped_acquire acquire;
-            }, py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result").noconvert(), py::arg("nthread") = 1);
+            }, py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result").noconvert(), py::arg("nthread") = 1);
 
     m.def("CalculateFitness", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
         auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
