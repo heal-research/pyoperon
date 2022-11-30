@@ -1,9 +1,9 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO heal-research/operon
-    REF 2c1edf616dc51c8a6eb2ff214bb63d4766b28064
-    SHA512 e6cc0efe0c11bc95163c36c0ba9b95e3bf44dbf113112b23539ce1a0b76e4ecb7f38575c43a6c4d6583ae7ad95824f9b8931594c6db268d0669ce0fce7771080
-    HEAD_REF main
+    REF 686e356065487b517ffc7d5f070e2ff625eac85c
+    SHA512 ef453b6fac43374c62ecf81a08355f89d31256a6b553a13f52fa388f3889dcc718981967b0c583c29036dabf6d2987d1d2c578093bc3411a0af7ab631a641643
+    HEAD_REF master
 )
 
 include("${VCPKG_ROOT_DIR}/ports/vcpkg-cmake/vcpkg_cmake_build.cmake")

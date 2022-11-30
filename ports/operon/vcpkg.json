@@ -1,21 +1,24 @@
 {
-    "name": "operon",
-    "version-string": "0.3.0",
-    "description": "Modern, fast, scalable C++ framework for symbolic regression.",
-    "dependencies": [
-        "aria-csv",
-        "ceres",
-        "cxxopts",
-        "eigen3",
-        "fast-float",
-        "fmt",
-        "pratt-parser",
-        "robin-hood-hashing",
-        "scnlib",
-        "span-lite",
-        "taskflow",
-        "vectorclass",
-        "vstat",
-        "xxhash"
-    ]
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "operon",
+  "version": "0.3.1",
+  "dependencies": [
+    "aria-csv",
+    "cxxopts",
+    "doctest",
+    "eigen3",
+    "fast-float",
+    "fmt",
+    "pratt-parser",
+    "robin-hood-hashing",
+    "scnlib",
+    "span-lite",
+    "taskflow",
+    "unordered-dense",
+    "vectorclass",
+    "vstat",
+    "xxhash-cpp"
+  ],
+  "builtin-baseline": "266e4910c6c6a2fe1b20a1bdb5cec4e16f190f01"
 }
+

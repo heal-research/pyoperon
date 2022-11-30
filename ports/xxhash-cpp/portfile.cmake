@@ -1,9 +1,9 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO heal-research/vstat
-    REF c1c15c0be911d0fc7a4f9a4cd645977202356812
-    SHA512 870429946a91ede227a0c7e54481f29fd65ae44f0e8a54213ad5969066a406cce6dcdb445812d8a6f2498648015b6d3c7f6d275bd3b72acfd39a2424c15cfd9d
-    HEAD_REF main
+    REPO RedSpah/xxhash_cpp
+    REF 2400ea5adc1156b586ee988ea7850be45d9011b5
+    SHA512 e889e4df3c2416fdc1d7b44528349652538d5e1e8e581f476d931d5db76f8b6c67aedd81cd33f284c4f2e7f8ce305aec59755454cd0d5ce2432ff67f2f4ed2cb
+    HEAD_REF master
 )
 
 include("${VCPKG_ROOT_DIR}/ports/vcpkg-cmake/vcpkg_cmake_build.cmake")
@@ -16,17 +16,20 @@ vcpkg_configure_cmake(
   SOURCE_PATH "${SOURCE_PATH}"
   PREFER_NINJA
   OPTIONS
-        -DBUILD_TESTING=OFF
-        -DBUILD_EXAMPLES=OFF
+      -DBUILD_TESTING=OFF
 )
+
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(PACKAGE_NAME vstat CONFIG_PATH lib/cmake/vstat DO_NOT_DELETE_PARENT_CONFIG_PATH)
+#vcpkg_cmake_config_fixup(PACKAGE_NAME xxhash_cpp CONFIG_PATH lib/cmake/xxhash_cpp DO_NOT_DELETE_PARENT_CONFIG_PATH)
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include"
                     "${CURRENT_PACKAGES_DIR}/debug/share"
                     "${CURRENT_PACKAGES_DIR}/lib")
 
+vcpkg_fixup_pkgconfig()
+
 file(
   INSTALL "${SOURCE_PATH}/LICENSE"
   DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
   RENAME copyright)
+

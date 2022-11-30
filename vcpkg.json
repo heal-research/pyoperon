@@ -3,7 +3,6 @@
     "version-string": "0.1.0",
     "dependencies": [
         "aria-csv",
-        "ceres",
         "eigen3",
         "fast-float",
         "operon",
