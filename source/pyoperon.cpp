@@ -69,7 +69,22 @@ PYBIND11_MODULE(pyoperon, m)
     py::class_<Operon::Variable>(m, "Variable")
         .def_readwrite("Name", &Operon::Variable::Name)
         .def_readwrite("Hash", &Operon::Variable::Hash)
-        .def_readwrite("Index", &Operon::Variable::Index);
+        .def_readwrite("Index", &Operon::Variable::Index)
+        .def(py::pickle(
+            [](Operon::Variable const& variable) {
+                return py::make_tuple(variable.Name, variable.Hash, variable.Index);
+            },
+            [](py::tuple t) {
+                if (t.size() != 3) {
+                    throw std::runtime_error("Invalid state!");
+                }
+                return Operon::Variable{
+                    t[0].cast<std::string>(),
+                    t[1].cast<Operon::Hash>(),
+                    t[2].cast<std::size_t>()
+                };
+            }
+        ));
 
     py::class_<Operon::Range>(m, "Range")
         .def(py::init<size_t, size_t>())

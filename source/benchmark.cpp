@@ -55,7 +55,7 @@ void InitBenchmark(py::module_ &m)
         tf::Taskflow taskflow;
         taskflow.for_each(trees.begin(), trees.end(), [&](auto const& tree) {
             auto& val = values[executor.this_worker_id()];
-            interpreter.Evaluate<Operon::Scalar>(tree, ds, range, val);
+            interpreter.operator()<Operon::Scalar>(tree, ds, range, val);
         });
         executor.run(taskflow).wait();
         return nTotal * range.Size();

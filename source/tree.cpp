@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 #include "pyoperon/pyoperon.hpp"
+#include <operon/core/subtree.hpp>
 #include <operon/core/tree.hpp>
 
 void InitTree(py::module_ &m)
@@ -15,7 +16,6 @@ void InitTree(py::module_ &m)
         .def("Sort", &Operon::Tree::Sort)
         .def("Hash", &Operon::Tree::Hash)
         .def("Reduce", &Operon::Tree::Reduce)
-        .def("ChildIndices", &Operon::Tree::ChildIndices)
         .def("SetEnabled", &Operon::Tree::SetEnabled)
         .def("SetCoefficients", [](Operon::Tree& tree, py::array_t<Operon::Scalar const> coefficients){
             tree.SetCoefficients(MakeSpan(coefficients));
@@ -25,6 +25,9 @@ void InitTree(py::module_ &m)
         .def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node>& (Operon::Tree::*)()&>(&Operon::Tree::Nodes))
         .def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node> const& (Operon::Tree::*)() const&>(&Operon::Tree::Nodes))
         //.def_property_readonly("Nodes", static_cast<Operon::Vector<Operon::Node>&& (Operon::Tree::*)() &&>(&Operon::Tree::Nodes))
+        .def_property_readonly("Indices", &Operon::Tree::Indices)
+        .def_property_readonly("Children", py::overload_cast<std::size_t>(&Operon::Tree::Children))
+        .def_property_readonly("Children", py::overload_cast<std::size_t>(&Operon::Tree::Children, py::const_))
         .def_property_readonly("Length", &Operon::Tree::Length)
         .def_property_readonly("VisitationLength", &Operon::Tree::VisitationLength)
         .def_property_readonly("Depth", static_cast<size_t (Operon::Tree::*)() const>(&Operon::Tree::Depth))

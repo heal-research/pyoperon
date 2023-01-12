@@ -352,7 +352,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.inputs_          = {v.Hash : v for v in inputs} 
         training_range        = op.Range(0, ds.Rows)
         test_range            = op.Range(ds.Rows-1, ds.Rows) # hackish, because it can't be empty
-        problem               = op.Problem(ds, inputs, target.Name, training_range, test_range)
+        problem               = op.Problem(ds, inputs, target, training_range, test_range)
 
         pset                  = op.PrimitiveSet()
         pcfg                  = self.__init_primitive_config(self.allowed_symbols)

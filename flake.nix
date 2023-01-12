@@ -17,7 +17,7 @@
         };
         enableShared = false;
         stdenv = pkgs.stdenv;
-        python = pkgs.python310;
+        python = pkgs.python39;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
@@ -45,7 +45,7 @@
           ];
 
           buildInputs = with pkgs; [
-            python.pkgs.poetry
+            (poetry.override { python = pkgs.python39; })
             python.pkgs.setuptools
             python.pkgs.wheel
             operon

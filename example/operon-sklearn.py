@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import r2_score, make_scorer
-from scipy.stats import pearsonr
 
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, InfixFormatter, FitLeastSquares

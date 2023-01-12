@@ -28,7 +28,7 @@ void InitEval(py::module_ &m)
         auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(r.Size()));
         auto span = MakeSpan(result);
         py::gil_scoped_release release;
-        i.Evaluate(t, d, r, span, static_cast<Operon::Scalar*>(nullptr));
+        i.operator()<Operon::Scalar>(t, d, r, span);
         py::gil_scoped_acquire acquire;
         return result;
         }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"));
@@ -41,7 +41,7 @@ void InitEval(py::module_ &m)
             }, py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result").noconvert(), py::arg("nthread") = 1);
 
     m.def("CalculateFitness", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
-        auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
+        auto estimated = i.operator()<Operon::Scalar>(t, d, r);
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
         if (metric == "c2") { return Operon::C2{}(estimated, values); }
@@ -70,7 +70,7 @@ void InitEval(py::module_ &m)
 
         // TODO: make this run in parallel with taskflow
         std::transform(trees.begin(), trees.end(), static_cast<double*>(buf.ptr), [&](auto const& t) -> double {
-            auto estimated = i.Evaluate(t, d, r, static_cast<Operon::Scalar*>(nullptr));
+            auto estimated = i.operator()<Operon::Scalar>(t, d, r);
             return (*error)(estimated, values);
         });
 
