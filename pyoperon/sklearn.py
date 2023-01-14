@@ -475,7 +475,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'random_state': self.random_state
         }
 
-        self.individuals_ = gp.Individuals
+        self.individuals_ = [x for x in gp.Individuals]
 
         self.is_fitted_ = True
         # `fit` should always return `self`

@@ -56,7 +56,22 @@ PYBIND11_MODULE(pyoperon, m)
         .def("__getitem__", py::overload_cast<size_t>(&Operon::Individual::operator[], py::const_))
         .def_readwrite("Genotype", &Operon::Individual::Genotype)
         .def("SetFitness", [](Operon::Individual& self, Operon::Scalar f, size_t i) { self[i] = f; })
-        .def("GetFitness", [](Operon::Individual& self, size_t i) { return self[i]; });
+        .def("GetFitness", [](Operon::Individual& self, size_t i) { return self[i]; })
+        .def(py::pickle(
+            [](Operon::Individual const& ind) {
+                return py::make_tuple(ind.Genotype, ind.Fitness, ind.Rank, ind.Distance);
+            },
+            [](py::tuple t) {
+                if (t.size() != 4) { throw std::runtime_error("Invalid state!"); }
+                auto fit { t[1].cast<Operon::Vector<Operon::Scalar>>() };
+                Operon::Individual ind(fit.size());
+                ind.Genotype = std::move(t[0].cast<Operon::Tree>());
+                ind.Fitness = std::move(fit);
+                ind.Rank     = t[2].cast<std::size_t>();
+                ind.Distance = t[3].cast<Operon::Scalar>();
+                return ind;
+            }
+        ));
 
     py::class_<Operon::SingleObjectiveComparison>(m, "SingleObjectiveComparison")
         .def(py::init<size_t>())
