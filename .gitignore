@@ -9,3 +9,8 @@ prefix/
 CMakeLists.txt.user
 CMakeUserPresets.json
 project-include-after.cmake
+results
+_skbuild
+build
+datasets
+__pycache__

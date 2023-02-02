@@ -35,8 +35,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "cf9f1e15b44b008fb82c315ff72dc9703437a7bd";
-    sha256 = "sha256-Ubq0k1Jn3VKMzKRya3ZGTv8euu3RDaRxT7AFN1l0cg0=";
+    rev = "b9383ae91425b6c9f83303b13fa2a5e8b8e00217";
+    sha256 = "sha256-K+G0HOdG3MOfEePNGuMJmAep4uKvi85gX66zLOMWpFc=";
   };
 
   nativeBuildInputs = [ cmake git ];

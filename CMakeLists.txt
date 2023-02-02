@@ -4,7 +4,7 @@ include(cmake/prelude.cmake)
 
 project(
     pyoperon
-    VERSION 0.3.3
+    VERSION 0.3.5
     DESCRIPTION "Scikit-learn module and python bindings and for the Operon library"
     HOMEPAGE_URL "https://operongp.readthedocs.io/en/latest/"
     LANGUAGES CXX

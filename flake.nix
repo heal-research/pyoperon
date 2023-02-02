@@ -16,16 +16,19 @@
           overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
-        stdenv = pkgs.stdenv;
-        python = pkgs.python39;
+        stdenv_ = pkgs.overrideCC pkgs.llvmPackages_15.stdenv (
+          pkgs.clang_15.override { gccForLibs = pkgs.gcc12.cc; }
+        );
+        python = pkgs.python310;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
           useOpenLibm = false;
           vstat = pkgs.callPackage ./nix/vstat { };
+          stdenv = stdenv_;
         };
 
-        pyoperon = stdenv.mkDerivation {
+        pyoperon = stdenv_.mkDerivation {
           name = "pyoperon";
           src = self;
 
@@ -45,7 +48,6 @@
           ];
 
           buildInputs = with pkgs; [
-            (poetry.override { python = pkgs.python39; })
             python.pkgs.setuptools
             python.pkgs.wheel
             operon
@@ -66,9 +68,13 @@
             (old: { cmakeFlags = [ "-DCMAKE_BUILD_TYPE=Debug" ]; });
         };
 
-        devShells.default = pkgs.mkShell {
+        devShells.default = stdenv_.mkDerivation {
+          name = "pyoperon-dev";
           nativeBuildInputs = pyoperon.nativeBuildInputs;
-          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ]);
+          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ])
+                          ++ (with python.pkgs; [ scikit-build ] ) # cmake integration and release preparation
+                          ++ (with python.pkgs; [ numpy scikit-learn pandas seaborn jupyterlab ipdb ])
+                          ++ (with pkgs; [ (pmlb.override { pythonPackages = python.pkgs; }) ]);
         };
 
         # backwards compatibility
