@@ -153,7 +153,7 @@ cmake -S . -B build \
     -DCMAKE_CXX_FLAGS="-march=x86-64-v3 -fno-math-errno" \
     -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}/lib64/cmake
-cmake --build build -j -t operon_operon -- VERBOSE=1
+cmake --build build -j -t operon_operon
 cmake --install build
 popd
 rm -rf operon
