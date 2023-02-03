@@ -1,5 +1,6 @@
 [build-system]
 requires = [
+    "scikit-build>=0.16",
     "setuptools>=42",
     "cmake>=3.18",
 ]
