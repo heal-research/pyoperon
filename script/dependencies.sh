@@ -12,11 +12,8 @@ if [[ -z "${INSTALL_PREFIX}" ]]; then
     exit
 fi
 
-export CC=gcc
-export CXX=g++
-
 # aria-csv
-git clone  https://github.com/AriaFallah/csv-parser csv-parser
+git clone https://github.com/AriaFallah/csv-parser csv-parser
 mkdir -p ${CONDA_PREFIX}/include/aria-csv
 pushd csv-parser
 git checkout 4965c9f320d157c15bc1f5a6243de116a4caf101
