@@ -96,7 +96,7 @@ PYBIND11_MODULE(pyoperon, m)
                 return Operon::Variable{
                     t[0].cast<std::string>(),
                     t[1].cast<Operon::Hash>(),
-                    t[2].cast<std::size_t>()
+                    t[2].cast<std::int64_t>()
                 };
             }
         ));

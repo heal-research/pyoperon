@@ -36,8 +36,8 @@ void InitMutation(py::module_ &m)
         .def("Add", &Operon::DiscretePointMutation::Add);
 
     py::class_<Operon::ChangeVariableMutation, Operon::MutatorBase>(m, "ChangeVariableMutation")
-        .def(py::init([](std::vector<Operon::Variable> const& variables) {
-                    return Operon::ChangeVariableMutation(Operon::Span<const Operon::Variable>(variables.data(), variables.size()));
+        .def(py::init([](std::vector<Operon::Hash> const& variables) {
+                    return Operon::ChangeVariableMutation(Operon::Span<Operon::Hash const>(variables.data(), variables.size()));
                 }),
             py::arg("variables"))
         .def("__call__", &Operon::ChangeVariableMutation::operator());

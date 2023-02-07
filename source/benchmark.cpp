@@ -25,10 +25,10 @@ void InitBenchmark(py::module_ &m)
         for (auto& v : data.reshaped()) { v = dist(rng); }
         Operon::Dataset ds(data);
 
-        auto const* target = "Y";
-        auto variables = ds.Variables();
-        std::vector<Operon::Variable> inputs;
-        std::copy_if(variables.begin(), variables.end(), std::back_inserter(inputs), [&](const auto& v) { return v.Name != target; });
+        auto const* targetName = "Y";
+        auto inputs = ds.VariableHashes();
+        auto target = ds.GetVariable(targetName);
+        std::erase(inputs, target->Hash);
 
         Operon::PrimitiveSet pset;
         pset.SetConfig(Operon::PrimitiveSet::Arithmetic);
@@ -38,7 +38,7 @@ void InitBenchmark(py::module_ &m)
 
         if (nThreads == 0) { nThreads = std::thread::hardware_concurrency(); }
 
-        Operon::Range range{0, ds.Rows()};
+        Operon::Range range{0, ds.Rows<std::size_t>()};
 
         std::vector<Operon::Scalar> result(range.Size() * nTrees);
         std::vector<Operon::Tree> trees(nTrees);
