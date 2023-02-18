@@ -56,6 +56,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         tournament_size                = 5,
         irregularity_bias              = 0.0,
         epsilon                        = 1e-5,
+        model_selection_criterion      = 'minimum_description_length',
         n_threads                      = 1,
         time_limit                     = None,
         random_state                   = None
@@ -90,10 +91,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.irregularity_bias         = irregularity_bias
         self.epsilon                   = epsilon
         self.n_threads                 = n_threads
+        self.model_selection_criterion = 'minimum_description_length'
         self.time_limit                = time_limit
         self.random_state              = random_state
-
-
 
 
     def __check_parameters(self):
@@ -125,6 +125,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.tournament_size                = check(self.tournament_size, 3)
         self.irregularity_bias              = check(self.irregularity_bias, 0.0)
         self.epsilon                        = check(self.epsilon, 1e-5)
+        self.model_selection_criterion      = check(self.model_selection_criterion, 'minimum_description_length')
         self.n_threads                      = check(self.n_threads, 1)
         self.time_limit                     = check(self.time_limit, sys.maxsize)
         self.random_state                   = check(self.random_state, random.getrandbits(64))
@@ -317,10 +318,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         hashes = set(x.HashValue for x in model.Nodes if x.IsVariable)
         if len(hashes) == 0:
             print('warning: model contains no variables', file=sys.stderr)
-
-        model_vars = [self.inputs_[h] for h in hashes]
-        names_map = {v.Hash : v.Name for v in model_vars} if names is None else {v.Hash : names[v.Index] for v in model_vars}
-        return op.InfixFormatter.Format(model, names_map, precision)
+        return op.InfixFormatter.Format(model, self.variables_, precision)
 
 
     def fit(self, X, y):
@@ -348,17 +346,18 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         ds                    = op.Dataset(D)
         target                = max(ds.Variables, key=lambda x: x.Index) # last column is the target
-        inputs                = op.VariableCollection(v for v in ds.Variables if v.Index != target.Index)
-        self.inputs_          = {v.Hash : v for v in inputs} 
+        self.inputs_          = [ h for h in ds.VariableHashes if h != target.Hash ]
+        self.variables_       = { v.Hash : v.Name for v in ds.Variables }
         training_range        = op.Range(0, ds.Rows)
         test_range            = op.Range(ds.Rows-1, ds.Rows) # hackish, because it can't be empty
-        problem               = op.Problem(ds, inputs, target, training_range, test_range)
-
-        pset                  = op.PrimitiveSet()
+        problem               = op.Problem(ds, training_range, test_range)
+        problem.Target        = target
+        problem.InputHashes   = self.inputs_
         pcfg                  = self.__init_primitive_config(self.allowed_symbols)
-        pset.SetConfig(pcfg)
+        problem.ConfigurePrimitiveSet(pcfg)
+        pset = problem.PrimitiveSet
 
-        creator               = self.__init_creator(self.initialization_method, pset, inputs)
+        creator               = self.__init_creator(self.initialization_method, pset, self.inputs_)
         coeff_initializer     = op.UniformIntCoefficientAnalyzer() if self.symbolic_mode else op.NormalCoefficientInitializer()
 
         if self.symbolic_mode:
@@ -369,10 +368,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         single_objective      = True if len(self.objectives) == 1 else False
 
+        interpreter = op.Interpreter()
+
+        # these lists are used as placeholders in order to extend the lifetimes of the objects
         error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
-        interpreter           = op.Interpreter()
+        # evaluators for minimum description length and information criteria
+        mld_eval = op.MinimumDescriptionLengthEvaluator(problem, interpreter)
+        bic_eval = op.BayesianInformationCriterionEvaluator(problem, interpreter)
+        aik_eval = op.AkaikeInformationCriterionEvaluator(problem, interpreter)
 
         for obj in self.objectives:
             eval_, err_  = self.__init_evaluator(obj, problem, interpreter)
@@ -398,10 +403,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         cx                    = op.SubtreeCrossover(self.crossover_internal_probability, self.max_depth, self.max_length)
 
         mut                   = op.MultiMutation()
-        mut_list = [] # this list is needed as a placeholder to keep alive the mutation operators objects (since the multi-mutation only stores references)
+        mut_list = [] # this list is needed as a placeholder to prolong the lifetimes of the mutation operators (since the multi-mutation only stores references)
         for k in self.mutation:
             v = self.mutation[k]
-            m = self.__init_mutation(k, inputs, pset, creator, coeff_initializer)
+            m = self.__init_mutation(k, self.inputs_, pset, creator, coeff_initializer)
             mut.Add(m, v)
             mut_list.append(m)
 
@@ -438,7 +443,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         gp.Run(rng, None, self.n_threads)
 
-
         def get_solution_stats(solution):
             """Takes a solution (operon individual) and computes a set of stats"""
             # perform linear scaling
@@ -448,22 +452,25 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             solution.Genotype = op.Tree(nodes).UpdateNodes()
 
             # get solution variables
-            solution_vars = [ds.GetVariable(x.HashValue) for x in solution.Genotype.Nodes if x.IsVariable]
+            solution_vars = [self.variables_[x.HashValue] for x in solution.Genotype.Nodes if x.IsVariable]
 
-            # get objective values
-            objs = evaluator(rng, solution)
+            stats = {
+                'model' : op.InfixFormatter.Format(solution.Genotype, self.variables_, 6),
+                'variables' : set(solution_vars),
+                'tree' : solution.Genotype,
+                'objective_values' : evaluator(rng, solution),
+                'minimum_description_length' : mld_eval(rng, solution)[0],
+                'bayesian_information_criterion' : bic_eval(rng, solution)[0],
+                'akaike_information_criterion' : aik_eval(rng, solution)[0],
+            }
 
-            # compute bic
-            mse = mean_squared_error(y, y_pred * scale + offset)
-            n = X.shape[0]
-            bic = 2 * mse + len(solution_vars) * np.log(n) / n
-            return solution.Genotype, solution_vars, objs, bic 
+            return stats
 
 
         front = [gp.BestModel] if single_objective else gp.BestFront
         self.pareto_front_ = [get_solution_stats(m) for m in front] 
-        tree, tree_vars, objectives, bic = min(self.pareto_front_, key=lambda x: x[3]) # get the model that minimizez the bic
-        self.model_ = tree 
+        best = min(self.pareto_front_, key=lambda x: x[self.model_selection_criterion])
+        self.model_ = best['tree']
 
         self.stats_ = {
             'model_length': self.model_.Length - 4, # do not count scaling nodes?

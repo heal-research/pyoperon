@@ -113,9 +113,9 @@ void InitEval(py::module_ &m)
     // evaluator
     py::class_<Operon::EvaluatorBase>(m, "EvaluatorBase")
         .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
-        .def_property("Budget",&Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
+        .def_property("Budget", &Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
         .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations)
-        .def("__call__", &Operon::EvaluatorBase::operator())
+        // .def("__call__", &Operon::EvaluatorBase::operator())
         .def("__call__", [](Operon::EvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
         .def_property_readonly("CallCount", [](Operon::EvaluatorBase& self) { return self.CallCount.load(); })
         .def_property_readonly("ResidualEvaluations", [](Operon::EvaluatorBase& self) { return self.ResidualEvaluations.load(); })
@@ -139,4 +139,25 @@ void InitEval(py::module_ &m)
     py::class_<Operon::MultiEvaluator, Operon::EvaluatorBase>(m, "MultiEvaluator")
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add);
+
+    py::class_<Operon::MinimumDescriptionLengthEvaluator, Operon::Evaluator>(m, "MinimumDescriptionLengthEvaluator")
+        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
+        .def_property("LocalOptimizationIterations",
+                &Operon::MinimumDescriptionLengthEvaluator::LocalOptimizationIterations,   // getter
+                &Operon::MinimumDescriptionLengthEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
+        );
+
+    py::class_<Operon::BayesianInformationCriterionEvaluator, Operon::Evaluator>(m, "BayesianInformationCriterionEvaluator")
+        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
+        .def_property("LocalOptimizationIterations",
+                &Operon::BayesianInformationCriterionEvaluator::LocalOptimizationIterations,   // getter
+                &Operon::BayesianInformationCriterionEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
+        );
+
+    py::class_<Operon::AkaikeInformationCriterionEvaluator, Operon::Evaluator>(m, "AkaikeInformationCriterionEvaluator")
+        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
+        .def_property("LocalOptimizationIterations",
+                &Operon::AkaikeInformationCriterionEvaluator::LocalOptimizationIterations,   // getter
+                &Operon::AkaikeInformationCriterionEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
+        );
 }

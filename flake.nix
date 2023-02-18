@@ -4,7 +4,7 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     foolnotion.url = "github:foolnotion/nur-pkg";
-    nixpkgs.url = "github:nixos/nixpkgs/master";
+    nixpkgs.url = "github:nixos/nixpkgs/staging-next";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
   };
 
@@ -73,7 +73,7 @@
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ])
                           ++ (with python.pkgs; [ scikit-build ] ) # cmake integration and release preparation
-                          ++ (with python.pkgs; [ numpy scikit-learn pandas seaborn jupyterlab ipdb ])
+                          ++ (with python.pkgs; [ numpy scikit-learn pandas seaborn ipdb sympy ])
                           ++ (with pkgs; [ (pmlb.override { pythonPackages = python.pkgs; }) ]);
         };
 
