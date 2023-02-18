@@ -23,13 +23,15 @@ test_range     = Operon.Range(ds.Rows // 2, ds.Rows)
 target         = ds.Variables[-1] # take the last column in the dataset as the target
 
 # take all other variables as inputs
-inputs         = Operon.VariableCollection(v for v in ds.Variables if v.Name != target.Name)
+inputs         = [ h for h in ds.VariableHashes if h != target.Hash ]
 
 # initialize a rng
 rng            = Operon.RomuTrio(random.randint(1, 1000000))
 
 # initialize a problem object which encapsulates the data, input, target and training/test ranges
-problem        = Operon.Problem(ds, inputs, target.Name, training_range, test_range)
+problem        = Operon.Problem(ds, training_range, test_range)
+problem.Target = target
+problem.InputHashes = inputs
 
 # initialize an algorithm configuration
 config         = Operon.GeneticAlgorithmConfig(generations=1000, max_evaluations=1000000, local_iterations=0, population_size=1000, pool_size=1000, p_crossover=1.0, p_mutation=0.25, epsilon=1e-5, seed=1, time_limit=86400)
@@ -40,15 +42,15 @@ selector       = Operon.TournamentSelector(objective_index=0)
 selector.TournamentSize = 5
 
 # initialize the primitive set (add, sub, mul, div, exp, log, sin, cos), constants and variables are implicitly added
-pset           = Operon.PrimitiveSet()
-pset.SetConfig(Operon.PrimitiveSet.Arithmetic | Operon.NodeType.Exp | Operon.NodeType.Log | Operon.NodeType.Sin | Operon.NodeType.Cos)
+problem.ConfigurePrimitiveSet(Operon.PrimitiveSet.Arithmetic | Operon.NodeType.Exp | Operon.NodeType.Log | Operon.NodeType.Sin | Operon.NodeType.Cos)
+pset = problem.PrimitiveSet
 
 # define tree length and depth limits
 minL, maxL     = 1, 50
 maxD           = 10
 
 # define a tree creator (responsible for producing trees of given lengths)
-btc            = Operon.BalancedTreeCreator(pset, inputs, bias=0.0)
+btc            = Operon.BalancedTreeCreator(pset, problem.InputHashes, bias=0.0)
 tree_initializer = Operon.UniformLengthTreeInitializer(btc)
 tree_initializer.ParameterizeDistribution(minL, maxL)
 tree_initializer.MaxDepth = maxD
@@ -108,7 +110,7 @@ def report():
     gen += 1
 
 # run the algorithm
-gp.Run(rng, report, threads=16)
+gp.Run(rng, report, threads=0)
 
 # get the best solution and print it
 best = gp.BestModel

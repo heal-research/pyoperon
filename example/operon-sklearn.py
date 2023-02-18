@@ -21,13 +21,13 @@ reg = SymbolicRegressor(
         local_iterations=10,
         max_length=50,
         initialization_method='btc',
-        n_threads=32,
+        n_threads=16,
         objectives = ['r2', 'length'],
         epsilon = 1e-3,
-        random_state=None,
         reinserter='keep-best',
         max_evaluations=int(1e5),
-        symbolic_mode=False
+        symbolic_mode=False,
+        random_state=1234
         )
 
 print(X_train.shape, y_train.shape)
@@ -36,17 +36,6 @@ reg.fit(X_train, y_train)
 print(reg.get_model_string(reg.model_, 2))
 print(reg.get_model_string(reg.model_, names=['A', 'B', 'C', 'D' ], precision=2))
 print(reg.stats_)
-
-for model, model_vars, model_obj, bic in reg.pareto_front_:
-    y_pred_train = reg.evaluate_model(model, X_train)
-    y_pred_test = reg.evaluate_model(model, X_test)
-
-    scale, offset = FitLeastSquares(y_pred_train, y_train)
-    y_pred_train = scale * y_pred_train + offset
-    y_pred_test = scale * y_pred_test + offset
-
-    variables = { v.Hash : v.Name for v in model_vars }
-    print(f'{bic:.3f}', InfixFormatter.Format(model, variables, 3), model.Length, r2_score(y_train, y_pred_train), r2_score(y_train, y_pred_train))
 
 r2 = R2()
 
@@ -57,7 +46,19 @@ print('r2 train (operon.r2): ', -r2(y_pred_train, y_train))
 y_pred_test = reg.predict(X_test)
 print('r2 test (sklearn.r2_score): ', r2_score(y_test, y_pred_test))
 
-# crossvalidation
-sc = make_scorer(r2_score, greater_is_better=True)
-scores = cross_val_score(reg, X, y, cv=5, scoring=sc)
-print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+print('Pareto front')
+for model_stats in reg.pareto_front_:
+    model = model_stats['tree']
+    y_pred_train = reg.evaluate_model(model, X_train)
+    y_pred_test = reg.evaluate_model(model, X_test)
+
+    scale, offset = FitLeastSquares(y_pred_train, y_train)
+    y_pred_train = scale * y_pred_train + offset
+    y_pred_test = scale * y_pred_test + offset
+    print('r2 train (operon.r2): ', -r2(y_pred_train, y_train))
+    print('r2 test (sklearn.r2_score): ', r2_score(y_test, y_pred_test))
+    print('minimum description length', model_stats['minimum_description_length'])
+    print('bayesian information criterion', model_stats['bayesian_information_criterion'])
+    print('akaike information criterion', model_stats['akaike_information_criterion'])
+    print('')
+
