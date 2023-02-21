@@ -5,7 +5,10 @@
     flake-utils.url = "github:numtide/flake-utils";
     foolnotion.url = "github:foolnotion/nur-pkg";
     nixpkgs.url = "github:nixos/nixpkgs/staging-next";
-    pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
+    pratt-parser = {
+      url = "github:foolnotion/pratt-parser-calculator";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, flake-utils, nixpkgs, foolnotion, pratt-parser }:
