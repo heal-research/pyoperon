@@ -28,7 +28,7 @@ git clone https://github.com/jfalcou/eve eve
 mkdir -p ${CONDA_PREFIX}/include/eve
 mkdir -p ${CONDA_PREFIX}/lib
 pushd eve
-git checkout e6a52275248f48800341c5764267925aeef87169
+git checkout 3d5821fe770a62c01328b78bb55880b39b8a0a26
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -139,7 +139,7 @@ rm -rf fmt
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout 0640506aeb3d222545870ee8dc6d7a37f5841848
+git checkout ea41902f0be9a4e1217f9f61f7ce4c203eddbf3e1
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
