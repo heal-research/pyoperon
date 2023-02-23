@@ -27,6 +27,7 @@ reg = SymbolicRegressor(
         reinserter='keep-best',
         max_evaluations=int(1e5),
         symbolic_mode=False,
+        model_selection_criterion='mean_squared_error',
         random_state=1234
         )
 
@@ -57,6 +58,7 @@ for model_stats in reg.pareto_front_:
     y_pred_test = scale * y_pred_test + offset
     print('r2 train (operon.r2): ', -r2(y_pred_train, y_train))
     print('r2 test (sklearn.r2_score): ', r2_score(y_test, y_pred_test))
+    print('mean squared error', model_stats['mean_squared_error'])
     print('minimum description length', model_stats['minimum_description_length'])
     print('bayesian information criterion', model_stats['bayesian_information_criterion'])
     print('akaike information criterion', model_stats['akaike_information_criterion'])

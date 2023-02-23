@@ -459,6 +459,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'variables' : set(solution_vars),
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
+                'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),
                 'minimum_description_length' : mld_eval(rng, solution)[0],
                 'bayesian_information_criterion' : bic_eval(rng, solution)[0],
                 'akaike_information_criterion' : aik_eval(rng, solution)[0],
