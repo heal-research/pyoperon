@@ -1,0 +1,13 @@
+name: pyoperon
+channels:
+  - conda-forge
+dependencies:
+  - cmake
+  - eigen
+  - git
+  - gxx_linux-64
+  - ninja
+  - pkg-config
+  - pybind11
+  - scikit-build
+  - taskflow
