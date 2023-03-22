@@ -2,16 +2,31 @@ name: build-linux
 
 on:
   push:
-    branches: [ main ]
+    branches: [ cpp20 ]
   pull_request:
-    branches: [ main ]
+    branches: [ cpp20 ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
-  build:
+  mamba-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/provision-with-micromamba@main
+
+      # Linux and macOS
+      - name: Run Python
+        shell: bash -l {0}
+        run: |
+          python setup.py sdist
+          python setup.py install
+
+  nix-build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
