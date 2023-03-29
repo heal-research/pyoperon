@@ -73,6 +73,7 @@ void InitNode(py::module_ &m)
         .def_readwrite("Parent", &Operon::Node::Parent)
         .def_readwrite("Type", &Operon::Node::Type)
         .def_readwrite("IsEnabled", &Operon::Node::IsEnabled)
+        .def_readwrite("Optimize", &Operon::Node::Optimize)
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def(py::self < py::self)
@@ -117,18 +118,21 @@ void InitNode(py::module_ &m)
                     n.Arity,
                     n.Length,
                     n.Depth,
+                    n.Level,
                     n.Parent,
                     n.Type,
-                    n.IsEnabled
+                    n.IsEnabled,
+                    n.Optimize
                 );
             },
             [](py::tuple t) { // __setstate__
-                if (t.size() != 9) {
+                auto constexpr tupleSize{ 11 };
+                if (t.size() != tupleSize) {
                     throw std::runtime_error("Invalid state!");
                 }
 
                 /* Create a new C++ instance */
-                Operon::Node n(t[7].cast<Operon::NodeType>());
+                Operon::Node n(t[8].cast<Operon::NodeType>());
 
                 /* Assign any additional state */
                 n.HashValue           = t[0].cast<Operon::Hash>();
@@ -137,8 +141,11 @@ void InitNode(py::module_ &m)
                 n.Arity               = t[3].cast<uint16_t>();
                 n.Length              = t[4].cast<uint16_t>();
                 n.Depth               = t[5].cast<uint16_t>();
-                n.Parent              = t[6].cast<uint16_t>();
-                n.IsEnabled           = t[8].cast<bool>();
+                n.Level               = t[6].cast<uint16_t>();
+                n.Parent              = t[7].cast<uint16_t>();
+                //n.Type                = t[8].cast<uint16_t>(); // type set above
+                n.IsEnabled           = t[9].cast<bool>();
+                n.Optimize            = t[10].cast<bool>();
 
                 return n;
             }
