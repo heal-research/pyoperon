@@ -140,6 +140,14 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add);
 
+    py::enum_<Operon::AggregateEvaluator::AggregateType>(m, "AggregateType")
+        .value("Min", Operon::AggregateEvaluator::AggregateType::Min)
+        .value("Max", Operon::AggregateEvaluator::AggregateType::Max)
+        .value("Median", Operon::AggregateEvaluator::AggregateType::Median)
+        .value("Mean", Operon::AggregateEvaluator::AggregateType::Mean)
+        .value("HarmonicMean", Operon::AggregateEvaluator::AggregateType::HarmonicMean)
+        .value("Sum", Operon::AggregateEvaluator::AggregateType::Sum);
+
     py::class_<Operon::AggregateEvaluator, Operon::EvaluatorBase>(m, "AggregateEvaluator")
         .def(py::init<Operon::EvaluatorBase&>())
         .def_property("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
