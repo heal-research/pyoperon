@@ -140,6 +140,10 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add);
 
+    py::class_<Operon::AggregateEvaluator, Operon::EvaluatorBase>(m, "AggregateEvaluator")
+        .def(py::init<Operon::EvaluatorBase&>())
+        .def_property("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
+
     py::class_<Operon::MinimumDescriptionLengthEvaluator, Operon::Evaluator>(m, "MinimumDescriptionLengthEvaluator")
         .def(py::init<Operon::Problem&, Operon::Interpreter&>())
         .def_property("LocalOptimizationIterations",
