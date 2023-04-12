@@ -91,7 +91,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.irregularity_bias         = irregularity_bias
         self.epsilon                   = epsilon
         self.n_threads                 = n_threads
-        self.model_selection_criterion = 'minimum_description_length'
+        self.model_selection_criterion = model_selection_criterion
         self.time_limit                = time_limit
         self.random_state              = random_state
 
