@@ -53,6 +53,8 @@
           buildInputs = with pkgs; [
             python.pkgs.setuptools
             python.pkgs.wheel
+            python.pkgs.twine
+            auditwheel
             operon
           ] ++ operon.buildInputs;
         };
