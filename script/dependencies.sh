@@ -83,7 +83,7 @@ rm -rf pratt-parser-calculator
 ## unordered_dense
 git clone https://github.com/martinus/unordered_dense.git
 pushd unordered_dense
-git checkout 8f10dcc28669abbf45d95fd3af4c00c617af489c
+git checkout ec970e960629cd061f574ba213abd1f5ad45ba36
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
