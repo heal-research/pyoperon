@@ -9,7 +9,7 @@ namespace py = pybind11;
 
 void InitOptimizer(py::module_ &m)
 {
-    using DerivativeCalculator = Operon::Autodiff::Reverse::DerivativeCalculator<Operon::Interpreter>;
+    using DerivativeCalculator = Operon::Autodiff::DerivativeCalculator<Operon::Interpreter>;
     using EigenOptimizer = Operon::NonlinearLeastSquaresOptimizer<DerivativeCalculator, Operon::OptimizerType::Eigen>;
     using TinyOptimizer = Operon::NonlinearLeastSquaresOptimizer<DerivativeCalculator, Operon::OptimizerType::Tiny>;
     using CeresOptimizer = Operon::NonlinearLeastSquaresOptimizer<DerivativeCalculator, Operon::OptimizerType::Ceres>;

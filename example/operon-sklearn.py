@@ -9,58 +9,71 @@ from sklearn.metrics import r2_score, make_scorer
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, InfixFormatter, FitLeastSquares
 
-from pmlb import fetch_data, dataset_names, classification_dataset_names, regression_dataset_names
+df_train = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
+df_test = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
 
-X, y = fetch_data('1027_ESL', return_X_y=True, local_cache_dir='./datasets')
+print(df_train.columns)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25, shuffle=True)
+D_train = np.asarray(df_train)
+D_test = np.asarray(df_test)
+
+X_train, y_train = D_train[:,:-1], D_train[:,-1]
+X_test, y_test = D_train[:,:-1], D_train[:,-1]
+
+from sympy import parse_expr
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 reg = SymbolicRegressor(
-        allowed_symbols='add,sub,mul,aq,sin,constant,variable',
-        offspring_generator='basic',
-        local_iterations=10,
-        max_length=50,
-        initialization_method='btc',
-        n_threads=16,
-        objectives = ['r2', 'length'],
-        epsilon = 1e-3,
-        reinserter='keep-best',
-        max_evaluations=int(1e5),
-        symbolic_mode=False,
-        model_selection_criterion='mean_squared_error',
-        random_state=1234
+        allowed_symbols= "add,sub,mul,div,constant,variable",
+        brood_size= 10,
+        comparison_factor= 0,
+        crossover_internal_probability= 0.9,
+        crossover_probability= 1.0,
+        epsilon= 1e-05,
+        female_selector= "tournament",
+        generations= 1000,
+        initialization_max_depth= 5,
+        initialization_max_length= 10,
+        initialization_method= "btc",
+        irregularity_bias= 0.0,
+        local_iterations= 0,
+        male_selector= "tournament",
+        max_depth= 10,
+        max_evaluations= 1000000,
+        max_length= 50,
+        max_selection_pressure= 100,
+        model_selection_criterion= "minimum_description_length",
+        mutation_probability= 0.25,
+        n_threads= 32,
+        objectives= [ 'r2', 'length' ],
+        offspring_generator= "basic",
+        pool_size= 1000,
+        population_size= 1000,
+        random_state= None,
+        reinserter= "keep-best",
+        time_limit= 900,
+        tournament_size= 3,
         )
 
 print(X_train.shape, y_train.shape)
 
 reg.fit(X_train, y_train)
-print(reg.get_model_string(reg.model_, 2))
-print(reg.get_model_string(reg.model_, names=['A', 'B', 'C', 'D' ], precision=2))
-print(reg.stats_)
+values = [s['objective_values'] for s in reg.pareto_front_]
+for v in values:
+    print(v)
 
-r2 = R2()
+m = reg.model_
+s = reg.get_model_string(m, 3, ['a'])
+print(s)
 
-y_pred_train = reg.predict(X_train)
-print('r2 train (sklearn.r2_score): ', r2_score(y_train, y_pred_train))
-print('r2 train (operon.r2): ', -r2(y_pred_train, y_train))
 
-y_pred_test = reg.predict(X_test)
-print('r2 test (sklearn.r2_score): ', r2_score(y_test, y_pred_test))
+fig, ax = plt.subplots(figsize=(18,8))
+ax.grid(True, linestyle='dotted')
+ax.set(xlabel='Obj 1', ylabel='Obj 2')
+sns.scatterplot(ax=ax, x=[x[1] for x in values], y=[x[0] for x in values])
 
-print('Pareto front')
-for model_stats in reg.pareto_front_:
-    model = model_stats['tree']
-    y_pred_train = reg.evaluate_model(model, X_train)
-    y_pred_test = reg.evaluate_model(model, X_test)
-
-    scale, offset = FitLeastSquares(y_pred_train, y_train)
-    y_pred_train = scale * y_pred_train + offset
-    y_pred_test = scale * y_pred_test + offset
-    print('r2 train (operon.r2): ', -r2(y_pred_train, y_train))
-    print('r2 test (sklearn.r2_score): ', r2_score(y_test, y_pred_test))
-    print('mean squared error', model_stats['mean_squared_error'])
-    print('minimum description length', model_stats['minimum_description_length'])
-    print('bayesian information criterion', model_stats['bayesian_information_criterion'])
-    print('akaike information criterion', model_stats['akaike_information_criterion'])
-    print('')
-
+from pyoperon import RankSorter 
+rs = RankSorter()
+fronts = rs.Sort(values)
+print(fronts)

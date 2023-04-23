@@ -318,7 +318,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         hashes = set(x.HashValue for x in model.Nodes if x.IsVariable)
         if len(hashes) == 0:
             print('warning: model contains no variables', file=sys.stderr)
-        return op.InfixFormatter.Format(model, self.variables_, precision)
+
+        if names is None:
+            return op.InfixFormatter.Format(model, self.variables_, precision)
+
+        else:
+            assert(len(names) == len(self.variables_))
+            names_map = { k : names[i] for i, k in enumerate(self.variables_) }
+            return op.InfixFormatter.Format(model, names_map, precision)
 
 
     def fit(self, X, y):
@@ -346,8 +353,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         ds                    = op.Dataset(D)
         target                = max(ds.Variables, key=lambda x: x.Index) # last column is the target
-        self.inputs_          = [ h for h in ds.VariableHashes if h != target.Hash ]
-        self.variables_       = { v.Hash : v.Name for v in ds.Variables }
+        self.variables_       = { v.Hash : v.Name for v in sorted(ds.Variables, key=lambda x: x.Index) if v.Hash != target.Hash }
+        self.inputs_          = [ k for k in self.variables_ ]
         training_range        = op.Range(0, ds.Rows)
         test_range            = op.Range(ds.Rows-1, ds.Rows) # hackish, because it can't be empty
         problem               = op.Problem(ds, training_range, test_range)
@@ -469,7 +476,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
 
         front = [gp.BestModel] if single_objective else gp.BestFront
-        self.pareto_front_ = [get_solution_stats(m) for m in front] 
+        self.pareto_front_ = [get_solution_stats(m) for m in front]
         best = min(self.pareto_front_, key=lambda x: x[self.model_selection_criterion])
         self.model_ = best['tree']
 
