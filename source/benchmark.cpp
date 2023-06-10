@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <taskflow/taskflow.hpp>
+#include <taskflow/algorithm/for_each.hpp>
 #if TF_MINOR_VERSION > 2
 #include <taskflow/algorithm/reduce.hpp>
 #endif
