@@ -139,7 +139,7 @@ rm -rf fmt
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout a3e8178040e76631ac325d53174123aef98370e0
+git checkout 147f4097e704f2dc3eb567095ccfb2e03ce7e888
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
