@@ -20,7 +20,7 @@
   scnlib,
   taskflow,
   vstat,
-  xxhash_cpp,
+  xxHash,
   # build options
   useSinglePrecision ? true,
   buildCliPrograms ? false,
@@ -35,8 +35,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev="147f4097e704f2dc3eb567095ccfb2e03ce7e888";
-    sha256 = "sha256-Gc/ji/6MEupeWXr6rsUEQ0BzPGuZFzaCo6WWvzNGPZg=";
+    rev="4ad586625169b999f7be65f65ca0508357d19fd3";
+    sha256 = "sha256-xSZE6ib3Guifeay+DtVo/MTUocHPkU1eHu9iacatEk0=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -53,7 +53,7 @@ stdenv.mkDerivation rec {
     unordered_dense
     taskflow
     vstat
-    xxhash_cpp
+    xxHash
     (scnlib.override { enableShared = enableShared; })
     (fmt_9.override { enableShared = enableShared; })
   ] ++ lib.optionals buildCliPrograms [ cxxopts ]

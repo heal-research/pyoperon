@@ -28,7 +28,7 @@ find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(unordered_dense REQUIRED)
-find_package(xxhash_cpp REQUIRED)
+find_package(xxHash REQUIRED)
 
 # ---- Declare library ----
 
