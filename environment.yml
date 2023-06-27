@@ -6,6 +6,7 @@ dependencies:
   - eigen
   - git
   - gxx_linux-64
+  - make
   - ninja
   - pkg-config
   - pybind11

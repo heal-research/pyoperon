@@ -44,7 +44,7 @@ rm -rf eve
 git clone https://github.com/heal-research/vstat.git
 pushd vstat
 git switch cpp20-eve
-git checkout 97af7dc11f6899472e49296a409467f4f163b589
+git checkout 42a34f7d940e6df9dd32a7d83ab6d88a3efac747
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -83,7 +83,7 @@ rm -rf pratt-parser-calculator
 ## unordered_dense
 git clone https://github.com/martinus/unordered_dense.git
 pushd unordered_dense
-git checkout ec970e960629cd061f574ba213abd1f5ad45ba36
+git checkout e88dd1ce6e9dc5b3fe84a7d93ac1d7f6f7653dbf
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -106,18 +106,6 @@ cmake --install build
 popd
 rm -rf cpp-sort
 
-## xxhash_cpp
-git clone https://github.com/RedSpah/xxhash_cpp.git
-pushd xxhash_cpp
-git checkout 2400ea5adc1156b586ee988ea7850be45d9011b5
-mkdir build
-cmake -S . -B build \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
-cmake --install build
-popd
-rm -rf xxhash_cpp
-
 ## fmt (conda only includes the shared library and we want the static)
 git clone https://github.com/fmtlib/fmt.git
 pushd fmt
@@ -139,7 +127,7 @@ rm -rf fmt
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout 147f4097e704f2dc3eb567095ccfb2e03ce7e888
+git checkout df52d75ec26cbd07ea5e24208f1cb08b5e943790
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
