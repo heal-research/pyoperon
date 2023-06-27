@@ -20,7 +20,7 @@ void InitAutodiff(py::module_ &m)
 
     py::class_<ReverseDerivativeCalculator>(m, "ReverseDerivativeCalculator")
         .def(py::init([](Operon::Interpreter const& interpreter) {
-                return ReverseDerivativeCalculator(interpreter, Operon::Autodiff::AutodiffMode::Reverse);
+                return ReverseDerivativeCalculator(interpreter, false);
             }))
         .def("__call__", [](ReverseDerivativeCalculator const& self, Operon::Tree const& tree, Operon::Dataset const& dataset, Operon::Range const range) {
                 auto coeff = tree.GetCoefficients();
@@ -38,7 +38,7 @@ void InitAutodiff(py::module_ &m)
 
     py::class_<ForwardDerivativeCalculator>(m, "ForwardDerivativeCalculator")
         .def(py::init([](Operon::Interpreter const& interpreter) {
-                return ForwardDerivativeCalculator(interpreter, Operon::Autodiff::AutodiffMode::Forward);
+                return ForwardDerivativeCalculator(interpreter, false);
             }))
         .def("__call__", [](ForwardDerivativeCalculator const& self, Operon::Tree const& tree, Operon::Dataset const& dataset, Operon::Range const range) {
                 auto coeff = tree.GetCoefficients();
