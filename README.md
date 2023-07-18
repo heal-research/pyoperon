@@ -15,26 +15,45 @@ The [examples](https://github.com/heal-research/pyoperon/examples) folder contai
 
 # Installation
 
-The easiest way to install **pyoperon** is with **pip**:
+Due to ABI incompatiblity, the PyOperon version on PyPI is outdated. The wheels are instead released on github: https://github.com/heal-research/pyoperon/releases/
+
+## Building from source
+
+### Conda/Mamba
+
+1. Clone the repo and switch to the `cpp20` branch
 ```
-pip install pyoperon
+git clone https://github.com/heal-research/pyoperon.git
+cd pyoperon
+git switch cpp20
 ```
-Note that the pyoperon python module links against the shared python interpreter library (libpython.so), so it's important that this library is in the path (e.g., `LD_LIBRARY_PATH` on linux).
 
-Another way to get **pyoperon** is via the [nix package manager](https://nixos.org/). Nix can be installed on other Linux distributions in a few easy steps:
+2. Install and activate the environment (replace micromamba with your actual program)
+```
+micromamba env create -f environment.yml
+micromamba activate pyoperon
+```
 
-1. [Install nix](https://nixos.org/manual/nix/stable/installation/installing-binary.html) and enable flake support in `~/.config/nix/nix.conf`:
-   ```
-   experimental-features = nix-command flakes
-   ```
-2. Install **pyoperon**:
-   ```
-   nix develop github:heal-research/pyoperon --no-write-lock-file
-   ```
+3. Install the dependencies
+```
+./scripts/dependencies.sh
+```
 
-Upon completion of the last command, the `$PYTHONPATH` will be updated and **pyoperon** will pe available for use. Note that as opposed to PyPI releases, the nix flake will always build the latest development version from github.
+4. Install `pyoperon`
+```
+pip install .
+```
 
-Alternatively, one can also clone https://github.com/heal-research/pyoperon.git and run `nix develop` from within the cloned path.
+### Nix
+
+Use this [environment](https://github.com/foolnotion/poetryenv) created with [poetry2nix](https://github.com/nix-community/poetry2nix)
+
+```
+nix develop github:foolnotion/poetryenv --no-write-lock-file
+```
+
+This will install operon and dependencies. Modify the flake file if you need additional python libraries (see https://github.com/nix-community/poetry2nix#how-to-guides)
+
 
 # Contributing
 
