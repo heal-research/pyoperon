@@ -13,6 +13,10 @@
   fast_float,
   fmt_9,
   git,
+  lbfgs,
+  ned14-outcome,
+  ned14-quickcpplib,
+  ned14-status-code,
   openlibm,
   pkg-config,
   pratt-parser,
@@ -35,8 +39,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev="4ad586625169b999f7be65f65ca0508357d19fd3";
-    sha256 = "sha256-xSZE6ib3Guifeay+DtVo/MTUocHPkU1eHu9iacatEk0=";
+    rev = "f894241c7ce7605a72637b8f7f9b6be3fb16c487";
+    sha256 = "sha256-lrz06ohHyPjQzHcBFCEtpcwwXen1yXuAnyuII7eYs48=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -48,12 +52,16 @@ stdenv.mkDerivation rec {
     eve
     fast_float
     git
+    lbfgs
     pkg-config
     pratt-parser
     unordered_dense
     taskflow
     vstat
     xxHash
+    ned14-quickcpplib
+    ned14-outcome
+    ned14-status-code
     (scnlib.override { enableShared = enableShared; })
     (fmt_9.override { enableShared = enableShared; })
   ] ++ lib.optionals buildCliPrograms [ cxxopts ]

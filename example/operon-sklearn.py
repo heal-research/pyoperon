@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import r2_score, make_scorer
 
 from pyoperon.sklearn import SymbolicRegressor
-from pyoperon import R2, InfixFormatter, FitLeastSquares
+from pyoperon import R2, MSE, InfixFormatter, FitLeastSquares, Interpreter
 
 df_train = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
 df_test = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
