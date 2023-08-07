@@ -39,8 +39,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "a1e70d0ce03c1b69eb67aa7f8a5ed1eb98b39154";
-    sha256 = "sha256-YwEHx6AS7tdPlGF8HkGkNxuCcLmBMKYAop/bmlyl5q0=";
+    rev = "0e359494b0239f4427d9518097bb304641ea7990";
+    sha256 = "sha256-WXV295CF1fqG7KrOS+uSi7S7+yLAQ6r44rU+RTGivxA=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -52,17 +52,12 @@ stdenv.mkDerivation rec {
     eve
     fast_float
     git
-    lbfgs
     pkg-config
     pratt-parser
     unordered_dense
     taskflow
     vstat
     xxHash
-    lbfgs
-    ned14-quickcpplib
-    ned14-outcome
-    ned14-status-code
     (scnlib.override { enableShared = enableShared; })
     (fmt_9.override { enableShared = enableShared; })
   ] ++ lib.optionals buildCliPrograms [ cxxopts ]
