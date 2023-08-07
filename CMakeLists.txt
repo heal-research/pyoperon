@@ -19,11 +19,12 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
 # ---- Find dependencies ----
-find_package(Ceres CONFIG)
 find_package(AriaCsvParser REQUIRED)
+find_package(Ceres CONFIG)
 find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
+find_package(lbfgs REQUIRED)
 find_package(operon REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
