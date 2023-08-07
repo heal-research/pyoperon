@@ -59,6 +59,7 @@ stdenv.mkDerivation rec {
     taskflow
     vstat
     xxHash
+    lbfgs
     ned14-quickcpplib
     ned14-outcome
     ned14-status-code
