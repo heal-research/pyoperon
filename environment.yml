@@ -2,8 +2,7 @@ name: pyoperon
 channels:
   - conda-forge
 dependencies:
-  - binutils
-  - clangxx
+  - cxx-compiler
   - cmake
   - eigen
   - git
