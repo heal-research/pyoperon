@@ -44,7 +44,7 @@ rm -rf eve
 git clone https://github.com/heal-research/vstat.git
 pushd vstat
 git switch cpp20-eve
-git checkout 42a34f7d940e6df9dd32a7d83ab6d88a3efac747
+git checkout 4ed22ae344c6a2a6e4522ad8b2c40070dd760600
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -127,7 +127,7 @@ rm -rf fmt
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout df52d75ec26cbd07ea5e24208f1cb08b5e943790
+git checkout a4b83e9b1bf886da86aff2cfb3acd373bc90b8c9
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
