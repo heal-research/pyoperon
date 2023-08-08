@@ -129,7 +129,9 @@ target_link_libraries(pyoperon_pyoperon PRIVATE
 if (MSVC)
     target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
 else ()
-    target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
+    if (UNIX AND NOT MAC)
+        target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
+    endif()
 endif()
 
 # ---- Install rules ----
