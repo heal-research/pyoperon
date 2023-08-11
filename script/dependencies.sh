@@ -12,6 +12,8 @@ if [[ -z "${INSTALL_PREFIX}" ]]; then
     exit
 fi
 
+set -e
+
 # aria-csv
 git clone https://github.com/AriaFallah/csv-parser csv-parser
 mkdir -p ${CONDA_PREFIX}/include/aria-csv
@@ -109,9 +111,9 @@ rm -rf cpp-sort
 ## fmt (conda only includes the shared library and we want the static)
 git clone https://github.com/fmtlib/fmt.git
 pushd fmt
-git checkout a33701196adfad74917046096bf5a2aa0ab0bb50
 mkdir build
 pushd build
+git checkout a33701196adfad74917046096bf5a2aa0ab0bb50
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -123,11 +125,63 @@ popd
 popd
 rm -rf fmt
 
-# operon
+## quickcpplib
+git clone https://github.com/ned14/quickcpplib.git
+pushd quickcpplib
+git checkout 5f33a37e9686b87b10f560958e7f78aff64624e4
+cmake -S . -B build \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+    -DCMAKE_BUILD_TYPE=Release
+cmake --install build
+popd
+rm -rf quickcpplib
+
+## status-code
+git clone https://github.com/ned14/status-code.git
+pushd status-code
+git checkout 6bd2d565fd4377e16614c6c5beb495c33bfa835b
+cmake -S . -B build \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+    -DCMAKE_BUILD_TYPE=Release
+cmake --install build
+popd
+rm -rf status-code
+
+## outcome
+git clone https://github.com/ned14/outcome.git
+pushd outcome
+git checkout 11a18c85ca7ae16af34ea309da5a0fe90024e3c3
+cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DPROJECT_IS_DEPENDENCY=ON \
+    -DOUTCOME_BUNDLE_EMBEDDED_QUICKCPPLIB=OFF \
+    -Dquickcpplib_DIR=${CONDA_PREFIX}/quickcpplib \
+    -DOUTCOME_BUNDLE_EMBEDDED_STATUS_CODE=OFF \
+    -Dstatus-code_DIR=${CONDA_PREFXI}/status-code \
+    -DOUTCOME_ENABLE_DEPENDENCY_SMOKE_TEST=OFF \
+    -DCMAKE_DISABLE_FIND_PACKAGE_Git=ON \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf outcome
+
+## lbfgs
+git clone https://github.com/foolnotion/lbfgs.git
+pushd lbfgs
+git checkout 0ac2cb5b8ffea5e3e71f264d8e2d37d585449512
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_TESTING=OFF \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf lbfgs
+
+## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout a4b83e9b1bf886da86aff2cfb3acd373bc90b8c9
+git checkout 382b68d83a6c693dca5852d251e7991250f09b3f
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -142,3 +196,5 @@ cmake --build build -j -t operon_operon
 cmake --install build
 popd
 rm -rf operon
+
+set +e

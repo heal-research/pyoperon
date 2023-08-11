@@ -127,6 +127,10 @@ target_link_libraries(pyoperon_pyoperon PRIVATE
     operon::operon # this will link in operon's public dependencies: fmt, ceres, etc.
     pybind11::pybind11)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(pyoperon_pyoperon PRIVATE "-fsized-deallocation")
+endif()
+
 if (MSVC)
     target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
 else ()
