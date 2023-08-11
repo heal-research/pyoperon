@@ -527,8 +527,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X, accept_sparse=False)
         ds = op.Dataset(X)
         rg = op.Range(0, ds.Rows)
-        interpreter = op.Interpreter()
-        return op.Evaluate(interpreter, model, ds, rg)
+        return op.Evaluate(model, ds, rg)
 
 
     def predict(self, X):

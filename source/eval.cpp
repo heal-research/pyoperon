@@ -216,8 +216,8 @@ void InitEval(py::module_ &m)
     // interpreter
     py::class_<TInterpreter, TInterpreterBase>(m, "Interpreter")
         .def(py::init<TDispatch const&, Operon::Dataset const&, Operon::Tree const&>())
-        .def("Evaluate", [](TInterpreter const& self, Operon::Span<Operon::Scalar const> coeff, Operon::Range range, Operon::Span<Operon::Scalar> result){
-            return self.Evaluate(coeff, range, result);
+        .def("Evaluate", [](TInterpreter const& self, Operon::Range range){
+            return self.Evaluate({}, range);
         });
 
     // error metric
