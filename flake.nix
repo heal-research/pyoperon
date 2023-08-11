@@ -24,7 +24,7 @@
         stdenv_ = pkgs.overrideCC pkgs.llvmPackages_16.stdenv (
           pkgs.clang_16.override { gccForLibs = pkgs.gcc13.cc; }
         );
-        python = pkgs.python310;
+        python_ = pkgs.python310;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
@@ -49,14 +49,14 @@
             cmake
             ninja
             pkg-config
-            python
-            python.pkgs.pybind11
+            python_
+            python_.pkgs.pybind11
           ];
 
           buildInputs = with pkgs; [
-            python.pkgs.setuptools
-            python.pkgs.wheel
-            python.pkgs.requests
+            python_.pkgs.setuptools
+            python_.pkgs.wheel
+            python_.pkgs.requests
             operon
           ] ++ operon.buildInputs;
         };
@@ -78,10 +78,10 @@
         devShells.default = stdenv_.mkDerivation {
           name = "pyoperon-dev";
           nativeBuildInputs = pyoperon.nativeBuildInputs;
-          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind ])
-                          ++ (with python.pkgs; [ scikit-build ] ) # cmake integration and release preparation
-                          ++ (with python.pkgs; [ numpy scikit-learn pandas ipdb sympy requests ])
-                          ++ (with pkgs; [ (pmlb.override { pythonPackages = python.pkgs; }) ]);
+          buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 ])
+                          ++ (with python_.pkgs; [ scikit-build ] ) # cmake integration and release preparation
+                          ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib ])
+                          ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
         };
 
         # backwards compatibility

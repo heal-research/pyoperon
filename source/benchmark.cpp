@@ -15,6 +15,9 @@
 
 #include "pyoperon/pyoperon.hpp"
 
+using TDispatch    = Operon::DispatchTable<Operon::Scalar>;
+using TInterpreter = Operon::Interpreter<Operon::Scalar, TDispatch>;
+
 void InitBenchmark(py::module_ &m)
 {
     // benchmark functionality
@@ -48,15 +51,16 @@ void InitBenchmark(py::module_ &m)
         auto nTotal = std::reduce(trees.begin(), trees.end(), 0UL, [](size_t partial, const auto& t) { return partial + t.Length(); });
 #else
         auto nTotal = std::transform_reduce(trees.begin(), trees.end(), 0UL, std::plus<> {}, [](auto& tree) { return tree.Length(); });
+
+        TDispatch dtable;
 #endif
-        Operon::Interpreter interpreter;
         tf::Executor executor(nThreads);
         std::vector<std::vector<Operon::Scalar>> values(executor.num_workers());
         for (auto& val : values) { val.resize(range.Size()); }
         tf::Taskflow taskflow;
         taskflow.for_each(trees.begin(), trees.end(), [&](auto const& tree) {
             auto& val = values[executor.this_worker_id()];
-            interpreter.operator()<Operon::Scalar>(tree, ds, range, val);
+            TInterpreter{dtable, ds, tree}.Evaluate({}, range, val);
         });
         executor.run(taskflow).wait();
         return nTotal * range.Size();

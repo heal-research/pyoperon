@@ -38,6 +38,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         offspring_generator            = 'basic',
         reinserter                     = 'replace-worst',
         objectives                     = ['r2'],
+        optimizer                      = 'lbfgs',
+        optimizer_likelihood           = 'gaussian',
+        optimizer_likelihood_loginput  = False,
+        optimizer_batch_size           = 0,
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
@@ -57,6 +61,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         irregularity_bias              = 0.0,
         epsilon                        = 1e-5,
         model_selection_criterion      = 'minimum_description_length',
+        uncertainty                    = [1],
         n_threads                      = 1,
         time_limit                     = None,
         random_state                   = None
@@ -72,6 +77,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.offspring_generator       = offspring_generator
         self.reinserter                = reinserter
         self.objectives                = objectives
+        self.optimizer                 = optimizer
+        self.optimizer_likelihood      = optimizer_likelihood
+        self.optimizer_likelihood_loginput = optimizer_likelihood_loginput
+        self.optimizer_batch_size      = optimizer_batch_size
         self.max_length                = max_length
         self.max_depth                 = max_depth
         self.initialization_method     = initialization_method
@@ -92,6 +101,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.epsilon                   = epsilon
         self.n_threads                 = n_threads
         self.model_selection_criterion = model_selection_criterion
+        self.uncertainty               = uncertainty
         self.time_limit                = time_limit
         self.random_state              = random_state
 
@@ -107,6 +117,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.offspring_generator            = check(self.offspring_generator, 'basic')
         self.reinserter                     = check(self.reinserter, 'replace-worst')
         self.objectives                     = check(self.objectives, [ 'r2' ])
+        self.optimizer                      = check(self.optimizer, 'lbfgs')
+        self.optimizer_likelihood           = check(self.optimizer_likelihood, 'gaussian')
+        self.optimizer_likelihood_loginput  = check(self.optimizer_likelihood_loginput, False)
+        self.optimizer_batch_size           = check(self.optimizer_batch_size, 0)
         self.max_length                     = check(self.max_length, 50)
         self.max_depth                      = check(self.max_depth, 10)
         self.initialization_method          = check(self.initialization_method, 'btc')
@@ -126,6 +140,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.irregularity_bias              = check(self.irregularity_bias, 0.0)
         self.epsilon                        = check(self.epsilon, 1e-5)
         self.model_selection_criterion      = check(self.model_selection_criterion, 'minimum_description_length')
+        self.uncertainty                    = check(self.uncertainty, [1])
         self.n_threads                      = check(self.n_threads, 1)
         self.time_limit                     = check(self.time_limit, sys.maxsize)
         self.random_state                   = check(self.random_state, random.getrandbits(64))
@@ -207,30 +222,30 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown selection method {}'.format(selection_method))
 
 
-    def __init_evaluator(self, objective, problem, interpreter):
+    def __init_evaluator(self, objective, problem, dtable):
         if objective == 'r2':
             err = op.R2()
-            return op.Evaluator(problem, interpreter, err, True), err
+            return op.Evaluator(problem, dtable, err, True), err
 
         elif objective == 'c2':
             err = op.C2()
-            return op.Evaluator(problem, interpreter, err, False), err
+            return op.Evaluator(problem, dtable, err, False), err
 
         elif objective == 'nmse':
             err = op.NMSE()
-            return op.Evaluator(problem, interpreter, err, True), err
+            return op.Evaluator(problem, dtable, err, True), err
 
         elif objective == 'rmse':
             err = op.RMSE()
-            return op.Evaluator(problem, interpreter, err, True), err
+            return op.Evaluator(problem, dtable, err, True), err
 
         elif objective == 'mse':
             err = op.MSE()
-            return op.Evaluator(problem, interpreter, err, True), err
+            return op.Evaluator(problem, dtable, err, True), err
 
         elif objective == 'mae':
             err = op.MAE()
-            return op.Evaluator(problem, interpreter, err, True), err
+            return op.Evaluator(problem, dtable, err, True), err
 
         elif objective == 'length':
             return op.LengthEvaluator(problem), None
@@ -241,7 +256,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         elif objective == 'diversity':
             return op.DiversityEvaluator(problem), None
 
-        raise ValueError('Unknown objective {}'.format(objectives))
+        raise ValueError('Unknown objective {}'.format(objective))
 
 
     def __init_generator(self, generator_name, evaluator, crossover, mutator, female_selector, male_selector):
@@ -375,23 +390,31 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         single_objective      = True if len(self.objectives) == 1 else False
 
-        interpreter = op.Interpreter()
+        dtable = op.DispatchTable()
 
         # these lists are used as placeholders in order to extend the lifetimes of the objects
         error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
+        optimizer = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=self.local_iterations, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
+
         # evaluators for minimum description length and information criteria
-        mld_eval = op.MinimumDescriptionLengthEvaluator(problem, interpreter)
-        bic_eval = op.BayesianInformationCriterionEvaluator(problem, interpreter)
-        aik_eval = op.AkaikeInformationCriterionEvaluator(problem, interpreter)
+        mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable)
+        mdl_eval.Sigma = self.uncertainty
+
+        bic_eval = op.BayesianInformationCriterionEvaluator(problem, dtable)
+        aik_eval = op.AkaikeInformationCriterionEvaluator(problem, dtable)
+
+        for eval in [mdl_eval, bic_eval, aik_eval]:
+            eval.Optimizer = optimizer
 
         for obj in self.objectives:
-            eval_, err_  = self.__init_evaluator(obj, problem, interpreter)
+            eval_, err_  = self.__init_evaluator(obj, problem, dtable)
             eval_.Budget = self.max_evaluations
-            eval_.LocalOptimizationIterations = self.local_iterations
             evaluators.append(eval_)
             error_metrics.append(err_)
+
+        evaluators[0].Optimizer = optimizer
 
         if single_objective:
             evaluator = evaluators[0]
@@ -399,7 +422,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             evaluator = op.MultiEvaluator(problem)
             for eval_ in evaluators:
                 evaluator.Add(eval_)
-            evaluator.LocalOptimizationIterations = self.local_iterations
             evaluator.Budget = self.max_evaluations
 
         comparison            = op.SingleObjectiveComparison(0) if single_objective else op.CrowdedComparison()
@@ -453,9 +475,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         def get_solution_stats(solution):
             """Takes a solution (operon individual) and computes a set of stats"""
             # perform linear scaling
-            y_pred = op.Evaluate(interpreter, solution.Genotype, ds, training_range)
+            y_pred = op.Evaluate(dtable, solution.Genotype, ds, training_range)
             scale, offset = op.FitLeastSquares(y_pred, y)
-            nodes = solution.Genotype.Nodes + [ op.Node.Constant(scale), op.Node.Mul(), op.Node.Constant(offset), op.Node.Add() ]
+            nodes = solution.Genotype.Nodes
+            if scale != 1:
+                nodes += [ op.Node.Constant(scale), op.Node.Mul() ]
+            if offset != 0:
+                nodes += [ op.Node.Constant(offset), op.Node.Add() ]
             solution.Genotype = op.Tree(nodes).UpdateNodes()
 
             # get solution variables
@@ -467,7 +493,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
                 'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),
-                'minimum_description_length' : mld_eval(rng, solution)[0],
+                'minimum_description_length' : mdl_eval(rng, solution)[0],
                 'bayesian_information_criterion' : bic_eval(rng, solution)[0],
                 'akaike_information_criterion' : aik_eval(rng, solution)[0],
             }

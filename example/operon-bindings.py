@@ -77,11 +77,12 @@ crossover_internal_probability = 0.9 # probability to pick an internal node as a
 crossover      = Operon.SubtreeCrossover(crossover_internal_probability, maxD, maxL)
 
 # define fitness evaluation
-interpreter    = Operon.Interpreter() # tree interpreter
+dtable         = Operon.DispatchTable()
 error_metric   = Operon.R2()          # use the coefficient of determination as fitness
-evaluator      = Operon.Evaluator(problem, interpreter, error_metric, True) # initialize evaluator, use linear scaling = True
+evaluator      = Operon.Evaluator(problem, dtable, error_metric, True) # initialize evaluator, use linear scaling = True
 evaluator.Budget = 1000 * 1000             # computational budget
-evaluator.LocalOptimizationIterations = 0  # number of local optimization iterations (coefficient tuning using gradient descent)
+
+optimizer      = Operon.Optimizer(dtable, problem, optimizer="lbfgs", likelihood="gaussian", iterations=10, batchsize=50)
 
 # define how new offspring are created
 generator      = Operon.BasicOffspringGenerator(evaluator, crossover, mutation, selector, selector)

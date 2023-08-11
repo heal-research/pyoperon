@@ -24,7 +24,9 @@ find_package(Ceres CONFIG)
 find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
+find_package(lbfgs REQUIRED)
 find_package(operon REQUIRED)
+find_package(outcome REQUIRED)
 find_package(pratt-parser REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(unordered_dense REQUIRED)
@@ -43,7 +45,6 @@ pybind11_add_module(
     pyoperon_pyoperon
     MODULE
     source/algorithm.cpp
-    source/autodiff.cpp
     source/benchmark.cpp
     source/creator.cpp
     source/crossover.cpp
@@ -129,8 +130,8 @@ target_link_libraries(pyoperon_pyoperon PRIVATE
 if (MSVC)
     target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
 else ()
-    if (UNIX AND NOT MAC)
-        target_link_options(pyoperon_pyoperon PRIVATE "-Wl,--no-undefined")
+    if (UNIX AND NOT APPLE)
+        target_link_options(pyoperon_pyoperon PUBLIC "-Wl,--no-undefined")
     endif()
 endif()
 

@@ -4,25 +4,30 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score, make_scorer
+from sklearn.metrics import r2_score, make_scorer, mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
 
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, MSE, InfixFormatter, FitLeastSquares, Interpreter
 
-df_train = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
-df_test = pd.read_csv('/home/bogdb/src/poetryenv/notebooks/sr-workshop/postprocessing/data/stage1/data/3946_extrapolation_easy_data_train.csv')
+df = pd.read_csv('/home/bogdb/src/operon/data/Poly-10.csv')
+X = df.iloc[:,:-1]
+y = df.iloc[:, -1]
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5)
 
-print(df_train.columns)
+y_pred = RandomForestRegressor(n_estimators=100).fit(X_train, y_train).predict(X_train)
+sErr = np.sqrt(mean_squared_error(y_train,  y_pred))
 
-D_train = np.asarray(df_train)
-D_test = np.asarray(df_test)
+# print(df_train.columns)
 
-X_train, y_train = D_train[:,:-1], D_train[:,-1]
-X_test, y_test = D_train[:,:-1], D_train[:,-1]
+# D_train = np.asarray(df_train)
+# D_test = np.asarray(df_test)
+
+# X_train, y_train = D_train[:,:-1], D_train[:,-1]
+# X_test, y_test = D_train[:,:-1], D_train[:,-1]
 
 from sympy import parse_expr
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 reg = SymbolicRegressor(
         allowed_symbols= "add,sub,mul,div,constant,variable",
@@ -37,7 +42,8 @@ reg = SymbolicRegressor(
         initialization_max_length= 10,
         initialization_method= "btc",
         irregularity_bias= 0.0,
-        local_iterations= 0,
+        local_iterations= 5,
+        optimizer='lm',
         male_selector= "tournament",
         max_depth= 10,
         max_evaluations= 1000000,
@@ -54,26 +60,16 @@ reg = SymbolicRegressor(
         reinserter= "keep-best",
         time_limit= 900,
         tournament_size= 3,
+        uncertainty= [sErr]
         )
 
 print(X_train.shape, y_train.shape)
 
 reg.fit(X_train, y_train)
-values = [s['objective_values'] for s in reg.pareto_front_]
-for v in values:
-    print(v)
+res = [(s['objective_values'], s['tree'], s['minimum_description_length']) for s in reg.pareto_front_]
+for obj, expr, mdl in res:
+    print(obj, mdl, reg.get_model_string(expr, 16))
 
 m = reg.model_
-s = reg.get_model_string(m, 3, ['a'])
+s = reg.get_model_string(m, 3)
 print(s)
-
-
-fig, ax = plt.subplots(figsize=(18,8))
-ax.grid(True, linestyle='dotted')
-ax.set(xlabel='Obj 1', ylabel='Obj 2')
-sns.scatterplot(ax=ax, x=[x[1] for x in values], y=[x[0] for x in values])
-
-from pyoperon import RankSorter 
-rs = RankSorter()
-fronts = rs.Sort(values)
-print(fronts)

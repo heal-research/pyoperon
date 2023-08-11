@@ -10,28 +10,145 @@
 
 namespace py = pybind11;
 
+using TDispatch        = Operon::DefaultDispatch;
+using TInterpreter     = Operon::Interpreter<Operon::Scalar, TDispatch>;
+using TInterpreterBase = Operon::InterpreterBase<Operon::Scalar>;
+
+using TEvaluatorBase   = Operon::EvaluatorBase;
+using TEvaluator       = Operon::Evaluator<TDispatch>;
+using TMDLEvaluator    = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
+using TBICEvaluator    = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
+using TAIKEvaluator    = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
+
+// likelihood
+using TGaussianLikelihood      = Operon::GaussianLikelihood<Operon::Scalar>;
+using TPoissonLikelihood       = Operon::PoissonLikelihood<Operon::Scalar, false>;
+using TPoissonLikelihoodLog    = Operon::PoissonLikelihood<Operon::Scalar, true>;
+
+// optimizer
+using TOptimizerBase           = Operon::OptimizerBase<TDispatch>;
+using TLMOptimizerTiny         = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Tiny>;
+using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
+using TLMOptimizerCeres        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Ceres>;
+
+using TLBGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLikelihood>;
+using TLBGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihood>;
+using TLBGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihoodLog>;
+
 namespace detail {
-    template<typename T>
-    auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double, double>
-    {
-        auto s1 = MakeSpan(lhs);
-        auto s2 = MakeSpan(rhs);
-        return Operon::FitLeastSquares(s1, s2);
-    }
+template<typename T>
+auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double, double>
+{
+    auto s1 = MakeSpan(lhs);
+    auto s2 = MakeSpan(rhs);
+    return Operon::FitLeastSquares(s1, s2);
+}
+
+class Optimizer {
+    std::unique_ptr<TOptimizerBase> impl_;
+
+    public:
+        Optimizer(TDispatch const& dtable, Operon::Problem const& problem, std::string const& optName, std::string const& likName, std::size_t iter, std::size_t bsize, bool loginput = true) {
+            if (optName == "lm") {
+                impl_ = std::make_unique<TLMOptimizerEigen>(dtable, problem);
+            } else if (optName == "lbfgs") {
+                if (likName == "gaussian") {
+                    impl_ = std::make_unique<TLBGSOptimizerGauss>(dtable, problem);
+                } else if (likName == "poisson") {
+                    if (loginput) {
+                        impl_ = std::make_unique<TLBGSOptimizerPoissonLog>(dtable, problem);
+                    } else {
+                        impl_ = std::make_unique<TLBGSOptimizerPoisson>(dtable, problem);
+                    }
+                }
+            } else if (optName == "sgd") {
+                // TODO: add SGD optimizer
+            }
+            impl_->SetIterations(iter);
+            impl_->SetBatchSize(bsize);
+        }
+
+        auto SetBatchSize(std::size_t value) const { impl_->SetBatchSize(value); }
+        [[nodiscard]] auto BatchSize() const { return impl_->BatchSize(); }
+
+        auto SetIterations(std::size_t value) const { impl_->SetIterations(value); }
+        [[nodiscard]] auto Iterations() const { return impl_->Iterations(); }
+
+        [[nodiscard]] auto GetDispatchTable() const { return impl_->GetDispatchTable(); }
+        [[nodiscard]] auto GetProblem() const { return impl_->GetProblem(); }
+
+        [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
+            return impl_->Optimize(rng, tree);
+        }
+
+        [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
+            return impl_->ComputeLikelihood(x, y, w);
+        }
+
+        [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
+            return impl_->ComputeFisherMatrix(pred, jac, sigma);
+        }
+
+        [[nodiscard]] auto OptimizerImpl() const { return impl_.get(); }
+};
 } // namespace detail
+
+void InitOptimizer(py::module_ &m)
+{
+    using detail::Optimizer;
+    using Operon::Problem;
+    using std::string;
+    using std::size_t;
+
+    py::class_<Operon::OptimizerSummary>(m, "OptimizerSummary")
+        .def_readwrite("InitialCost", &Operon::OptimizerSummary::InitialCost)
+        .def_readwrite("FinalCost", &Operon::OptimizerSummary::FinalCost)
+        .def_readwrite("Iterations", &Operon::OptimizerSummary::Iterations)
+        .def_readwrite("FunctionEvaluations", &Operon::OptimizerSummary::FunctionEvaluations)
+        .def_readwrite("JacobianEvaluations", &Operon::OptimizerSummary::JacobianEvaluations)
+        .def_readwrite("Success", &Operon::OptimizerSummary::Success);
+
+    py::class_<detail::Optimizer>(m, "Optimizer")
+        .def(py::init<TDispatch const&, Problem const&, string const&, string const, size_t, size_t, bool>()
+                , py::arg("dtable")
+                , py::arg("problem")
+                , py::arg("optimizer") = "lbfgs"
+                , py::arg("likelihood") = "gaussian"
+                , py::arg("iterations") = 10
+                , py::arg("batchsize") = TDispatch::BatchSize<Operon::Scalar>
+                , py::arg("loginput") = false)
+        .def_property("BatchSize", &Optimizer::SetBatchSize, &Optimizer::BatchSize)
+        .def_property("Iterations", &Optimizer::SetIterations, &Optimizer::Iterations)
+        .def_property_readonly("DispatchTable", &Optimizer::GetDispatchTable)
+        .def_property_readonly("Problem", &Optimizer::GetProblem)
+        .def_property_readonly("OptimizerImpl", &Optimizer::OptimizerImpl)
+        .def("Optimize", &Optimizer::Optimize)
+        .def("ComputeLikelihood", &Optimizer::ComputeLikelihood)
+        .def("ComputeFisherMatrix", &Optimizer::ComputeFisherMatrix);
+}
 
 void InitEval(py::module_ &m)
 {
     // free functions
     // we use a lambda to avoid defining a fourth arg for the defaulted C++ function arg
-    m.def("Evaluate", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r) {
+    m.def("Evaluate", [](Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r) {
         auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(r.Size()));
         auto span = MakeSpan(result);
         py::gil_scoped_release release;
-        i.operator()<Operon::Scalar>(t, d, r, span);
+        TDispatch dtable;
+        TInterpreter{dtable, d, t}.Evaluate({}, r, span);
         py::gil_scoped_acquire acquire;
         return result;
-        }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"));
+        }, py::arg("tree"), py::arg("dataset"), py::arg("range"));
+
+    m.def("Evaluate", [](TDispatch const& dtable, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r) {
+        auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(r.Size()));
+        auto span = MakeSpan(result);
+        py::gil_scoped_release release;
+        TInterpreter{dtable, d, t}.Evaluate({}, r, span);
+        py::gil_scoped_acquire acquire;
+        return result;
+        }, py::arg("dtable"), py::arg("tree"), py::arg("dataset"), py::arg("range"));
 
     m.def("EvaluateTrees", [](std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, py::array_t<Operon::Scalar> result, size_t nthread) {
             auto span = MakeSpan(result);
@@ -40,9 +157,11 @@ void InitEval(py::module_ &m)
             py::gil_scoped_acquire acquire;
             }, py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("result").noconvert(), py::arg("nthread") = 1);
 
-    m.def("CalculateFitness", [](Operon::Interpreter const& i, Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
-        auto estimated = i.operator()<Operon::Scalar>(t, d, r);
+    m.def("CalculateFitness", [](Operon::Tree const& t, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
+
+        TDispatch dtable;
+        auto estimated = TInterpreter{dtable, d, t}.Evaluate({}, r);
 
         if (metric == "c2") { return Operon::C2{}(estimated, values); }
         if (metric == "r2") { return Operon::R2{}(estimated, values); }
@@ -52,9 +171,9 @@ void InitEval(py::module_ &m)
         if (metric == "mae") { return Operon::MAE{}(estimated, values); }
         throw std::runtime_error("Invalid fitness metric"); 
 
-    }, py::arg("interpreter"), py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
+    }, py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
 
-    m.def("CalculateFitness", [](Operon::Interpreter const& i, std::vector<Operon::Tree> const& trees, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
+    m.def("CalculateFitness", [](std::vector<Operon::Tree> const& trees, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
         std::unique_ptr<Operon::ErrorMetric> error;
         if (metric == "c2") { error = std::make_unique<Operon::C2>(); }
         else if (metric == "r2") { error = std::make_unique<Operon::R2>(); }
@@ -64,18 +183,20 @@ void InitEval(py::module_ &m)
         else if (metric == "mae") { error = std::make_unique<Operon::MAE>(); }
         else { throw std::runtime_error("Unsupported error metric"); }
 
+        TDispatch dtable;
+
         auto result = py::array_t<double>(static_cast<pybind11::ssize_t>(trees.size()));
         auto buf = result.request();
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
         // TODO: make this run in parallel with taskflow
         std::transform(trees.begin(), trees.end(), static_cast<double*>(buf.ptr), [&](auto const& t) -> double {
-            auto estimated = i.operator()<Operon::Scalar>(t, d, r);
+            auto estimated = TInterpreter{dtable, d, t}.Evaluate({}, r);
             return (*error)(estimated, values);
         });
 
         return result;
-    }, py::arg("interpreter"), py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
+    }, py::arg("trees"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
 
 
     m.def("FitLeastSquares", [](py::array_t<float> lhs, py::array_t<float> rhs) -> std::pair<double, double> {
@@ -86,16 +207,18 @@ void InitEval(py::module_ &m)
         return detail::FitLeastSquares<double>(lhs, rhs);
     });
 
-    using DispatchTable = Operon::DispatchTable<Operon::Scalar, Operon::Dual>;
-
     // dispatch table
-    py::class_<DispatchTable>(m, "DispatchTable")
+    py::class_<TDispatch>(m, "DispatchTable")
         .def(py::init<>());
 
+    py::class_<TInterpreterBase>(m, "InterpreterBase");
+
     // interpreter
-    py::class_<Operon::Interpreter>(m, "Interpreter")
-        .def(py::init<>())
-        .def(py::init<DispatchTable>());
+    py::class_<TInterpreter, TInterpreterBase>(m, "Interpreter")
+        .def(py::init<TDispatch const&, Operon::Dataset const&, Operon::Tree const&>())
+        .def("Evaluate", [](TInterpreter const& self, Operon::Span<Operon::Scalar const> coeff, Operon::Range range, Operon::Span<Operon::Scalar> result){
+            return self.Evaluate(coeff, range, result);
+        });
 
     // error metric
     py::class_<Operon::ErrorMetric>(m, "ErrorMetric")
@@ -111,18 +234,21 @@ void InitEval(py::module_ &m)
     py::class_<Operon::C2, Operon::ErrorMetric>(m, "C2").def(py::init<>());
 
     // evaluator
-    py::class_<Operon::EvaluatorBase>(m, "EvaluatorBase")
-        .def_property("LocalOptimizationIterations", &Operon::EvaluatorBase::LocalOptimizationIterations, &Operon::EvaluatorBase::SetLocalOptimizationIterations)
-        .def_property("Budget", &Operon::EvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
-        .def_property_readonly("TotalEvaluations", &Operon::EvaluatorBase::TotalEvaluations)
-        // .def("__call__", &Operon::EvaluatorBase::operator())
+    py::class_<TEvaluatorBase>(m, "EvaluatorBase")
+        .def_property("Budget", &TEvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
+        .def_property_readonly("TotalEvaluations", &TEvaluatorBase::TotalEvaluations)
+        //.def("__call__", &TEvaluatorBase::operator())
         .def("__call__", [](Operon::EvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
-        .def_property_readonly("CallCount", [](Operon::EvaluatorBase& self) { return self.CallCount.load(); })
-        .def_property_readonly("ResidualEvaluations", [](Operon::EvaluatorBase& self) { return self.ResidualEvaluations.load(); })
-        .def_property_readonly("JacobianEvaluations", [](Operon::EvaluatorBase& self) { return self.JacobianEvaluations.load(); });
+        .def_property_readonly("CallCount", [](TEvaluatorBase& self) { return self.CallCount.load(); })
+        .def_property_readonly("ResidualEvaluations", [](TEvaluatorBase& self) { return self.ResidualEvaluations.load(); })
+        .def_property_readonly("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
-    py::class_<Operon::Evaluator, Operon::EvaluatorBase>(m, "Evaluator")
-        .def(py::init<Operon::Problem&, Operon::Interpreter&, Operon::ErrorMetric const&, bool>());
+    py::class_<TEvaluator, Operon::EvaluatorBase>(m, "Evaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>())
+        //.def_property("Optimizer", &TEvaluator::GetOptimizer, &TEvaluator::SetOptimizer);
+        .def_property("Optimizer", nullptr, [](TEvaluator& self, detail::Optimizer const& opt) {
+           self.SetOptimizer(opt.OptimizerImpl()); 
+        });
 
     py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
         .def(py::init<Operon::Problem&, std::function<typename Operon::EvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>());
@@ -152,24 +278,14 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::EvaluatorBase&>())
         .def_property("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
-    py::class_<Operon::MinimumDescriptionLengthEvaluator, Operon::Evaluator>(m, "MinimumDescriptionLengthEvaluator")
-        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
-        .def_property("LocalOptimizationIterations",
-                &Operon::MinimumDescriptionLengthEvaluator::LocalOptimizationIterations,   // getter
-                &Operon::MinimumDescriptionLengthEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
-        );
+    py::class_<TMDLEvaluator, TEvaluator>(m, "MinimumDescriptionLengthEvaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&>())
+        .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);
+        // .def("__call__", &TMDLEvaluator::operator());
 
-    py::class_<Operon::BayesianInformationCriterionEvaluator, Operon::Evaluator>(m, "BayesianInformationCriterionEvaluator")
-        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
-        .def_property("LocalOptimizationIterations",
-                &Operon::BayesianInformationCriterionEvaluator::LocalOptimizationIterations,   // getter
-                &Operon::BayesianInformationCriterionEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
-        );
+    py::class_<TBICEvaluator, TEvaluator>(m, "BayesianInformationCriterionEvaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&>());
 
-    py::class_<Operon::AkaikeInformationCriterionEvaluator, Operon::Evaluator>(m, "AkaikeInformationCriterionEvaluator")
-        .def(py::init<Operon::Problem&, Operon::Interpreter&>())
-        .def_property("LocalOptimizationIterations",
-                &Operon::AkaikeInformationCriterionEvaluator::LocalOptimizationIterations,   // getter
-                &Operon::AkaikeInformationCriterionEvaluator::SetLocalOptimizationIterations<std::size_t> // setter
-        );
+    py::class_<TAIKEvaluator, TEvaluator>(m, "AkaikeInformationCriterionEvaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&>());
 }
