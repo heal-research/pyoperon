@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - cxx-compiler
+  - clangxx
   - cmake
   - eigen
   - git
