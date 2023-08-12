@@ -55,7 +55,6 @@ pybind11_add_module(
     source/mutation.cpp
     source/node.cpp
     source/non_dominated_sorter.cpp
-    source/optimizer.cpp
     source/problem.cpp
     source/pset.cpp
     source/pyoperon.cpp
