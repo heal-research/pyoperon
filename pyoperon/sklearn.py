@@ -398,6 +398,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         optimizer = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=self.local_iterations, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
 
+        mdl_opt = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=100, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
+
         # evaluators for minimum description length and information criteria
         mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable)
         mdl_eval.Sigma = self.uncertainty
@@ -406,7 +408,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         aik_eval = op.AkaikeInformationCriterionEvaluator(problem, dtable)
 
         for eval in [mdl_eval, bic_eval, aik_eval]:
-            eval.Optimizer = optimizer
+            eval.Optimizer = mdl_opt
 
         for obj in self.objectives:
             eval_, err_  = self.__init_evaluator(obj, problem, dtable)
