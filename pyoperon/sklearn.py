@@ -38,7 +38,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         offspring_generator            = 'basic',
         reinserter                     = 'replace-worst',
         objectives                     = ['r2'],
-        optimizer                      = 'lbfgs',
+        optimizer                      = 'lm',
         optimizer_likelihood           = 'gaussian',
         optimizer_likelihood_loginput  = False,
         optimizer_batch_size           = 0,
