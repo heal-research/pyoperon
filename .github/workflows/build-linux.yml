@@ -27,21 +27,21 @@ jobs:
             python=${{ matrix.version }}
           cache-environment: true
 
-      # Linux and macOS
+      # Linux (TODO: MacOS)
       - name: Run Python
         shell: bash -l {0}
         run: |
           export CC=clang
           export CXX=clang++
           bash script/dependencies.sh # install dependencies
-          python setup.py bdist_wheel # build the wheel
+          python setup.py bdist_wheel -- --preset build-linux # build the wheel
 
       - name: 'Build wheel'
         uses: actions/upload-artifact@v3
         with:
           name: pyoperon-wheel
           path: dist/*.whl
-          retention-days: 7
+          retention-days: 90
 
   nix-build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
