@@ -113,7 +113,7 @@ git clone https://github.com/fmtlib/fmt.git
 pushd fmt
 mkdir build
 pushd build
-git checkout a33701196adfad74917046096bf5a2aa0ab0bb50
+git checkout e57ca2e3685b160617d3d95fcd9e789c4e06ca88
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
