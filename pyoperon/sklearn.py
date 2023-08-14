@@ -42,6 +42,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         optimizer_likelihood           = 'gaussian',
         optimizer_likelihood_loginput  = False,
         optimizer_batch_size           = 0,
+        optimizer_iterations           = 0,
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
@@ -53,7 +54,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         pool_size                      = None,
         generations                    = 1000,
         max_evaluations                = int(1e6),
-        local_iterations               = 0,
         max_selection_pressure         = 100,
         comparison_factor              = 0,
         brood_size                     = 10,
@@ -81,6 +81,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.optimizer_likelihood      = optimizer_likelihood
         self.optimizer_likelihood_loginput = optimizer_likelihood_loginput
         self.optimizer_batch_size      = optimizer_batch_size
+        self.optimizer_iterations      = optimizer_iterations
         self.max_length                = max_length
         self.max_depth                 = max_depth
         self.initialization_method     = initialization_method
@@ -92,7 +93,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.pool_size                 = population_size if pool_size is None else pool_size
         self.generations               = generations
         self.max_evaluations           = max_evaluations
-        self.local_iterations          = local_iterations
         self.max_selection_pressure    = max_selection_pressure
         self.comparison_factor         = comparison_factor
         self.brood_size                = brood_size
@@ -121,6 +121,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.optimizer_likelihood           = check(self.optimizer_likelihood, 'gaussian')
         self.optimizer_likelihood_loginput  = check(self.optimizer_likelihood_loginput, False)
         self.optimizer_batch_size           = check(self.optimizer_batch_size, 0)
+        self.optimizer_iterations           = check(self.optimizer_iterations, 0)
         self.max_length                     = check(self.max_length, 50)
         self.max_depth                      = check(self.max_depth, 10)
         self.initialization_method          = check(self.initialization_method, 'btc')
@@ -132,7 +133,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.pool_size                      = check(self.pool_size, self.population_size)
         self.generations                    = check(self.generations, 1000)
         self.max_evaluations                = check(self.max_evaluations, int(1e6))
-        self.local_iterations               = check(self.local_iterations, 0)
         self.max_selection_pressure         = check(self.max_selection_pressure, 100)
         self.comparison_factor              = check(self.comparison_factor, 0)
         self.brood_size                     = check(self.brood_size, 10)
@@ -383,7 +383,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         coeff_initializer     = op.UniformIntCoefficientAnalyzer() if self.symbolic_mode else op.NormalCoefficientInitializer()
 
         if self.symbolic_mode:
-            self.local_iterations = 0 # do not tune coefficients in symbolic mode
+            self.optimizer_iterations = 0 # do not tune coefficients in symbolic mode
             coeff_initializer.ParameterizeDistribution(-5, +5)
         else:
             coeff_initializer.ParameterizeDistribution(0, 1)
@@ -396,7 +396,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
-        optimizer = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=self.local_iterations, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
+        optimizer = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=self.optimizer_iterations, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
 
         mdl_opt = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=100, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
 
@@ -457,7 +457,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         config                = op.GeneticAlgorithmConfig(
                                     generations      = self.generations,
                                     max_evaluations  = self.max_evaluations,
-                                    local_iterations = self.local_iterations,
+                                    local_iterations = self.optimizer_iterations,
                                     population_size  = self.population_size,
                                     pool_size        = self.pool_size,
                                     p_crossover      = self.crossover_probability,
