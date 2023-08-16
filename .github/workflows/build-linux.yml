@@ -15,7 +15,8 @@ jobs:
     strategy:
       matrix:
         version: [ "3.8", "3.9", "3.10", "3.11" ]
-    runs-on: ubuntu-latest
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
