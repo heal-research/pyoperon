@@ -1,4 +1,4 @@
-name: build-linux
+name: build-nix
 
 on:
   push:
@@ -11,43 +11,15 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  mamba-build:
-    strategy:
-      matrix:
-        version: [ "3.8", "3.9", "3.10", "3.11" ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Conda environment from environment.yml
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-file: environment.yml
-          create-args: >-
-            python=${{ matrix.version }}
-          cache-environment: true
-
-      # Linux (TODO: MacOS)
-      - name: Run Python
-        shell: bash -l {0}
-        run: |
-          export CC=clang
-          export CXX=clang++
-          bash script/dependencies.sh # install dependencies
-          python setup.py bdist_wheel -- --preset build-linux # build the wheel
-
-      - name: 'Build wheel'
-        uses: actions/upload-artifact@v3
-        with:
-          name: pyoperon-wheel
-          path: dist/*.whl
-          retention-days: 90
-
   nix-build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
