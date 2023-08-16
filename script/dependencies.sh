@@ -181,7 +181,7 @@ rm -rf lbfgs
 git clone https://github.com/heal-research/operon.git
 pushd operon
 git switch cpp20
-git checkout 70b15344375a5ec4c2535ff5601ade5f30cc0dbf
+git checkout 25e22e68fa830c49555500934053ede9eeb69c8e
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
