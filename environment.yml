@@ -12,5 +12,4 @@ dependencies:
   - pkg-config
   - pybind11
   - scikit-build
-  - taskflow
   - xxhash

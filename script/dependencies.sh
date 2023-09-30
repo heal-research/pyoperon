@@ -177,6 +177,19 @@ cmake --install build
 popd
 rm -rf lbfgs
 
+# taskflow
+git clone https://github.com/taskflow/taskflow.git
+pushd taskflow
+git checkout 12f8bd4e970ab27fd3dee3bffa24b5b48b54ba39
+mkdir build
+cmake -S . -B build \
+    -DTF_BUILD_EXAMPLES=OFF \
+    -DTF_BUILD_TESTS=OFF \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf taskflow
+
 ## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
