@@ -43,7 +43,7 @@ endif()
 
 pybind11_add_module(
     pyoperon_pyoperon
-    MODULE
+    SHARED
     source/algorithm.cpp
     source/benchmark.cpp
     source/creator.cpp
@@ -65,14 +65,7 @@ pybind11_add_module(
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
 # ---- Find python ----
-find_package(Python3 COMPONENTS Development)
-if (Python3_FOUND)
-    target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Python)
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
-    target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
-endif()
+find_package(Python3 COMPONENTS Development REQUIRED)
 
 # when operon is statically linked, dependency information will not be available
 # via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
@@ -95,15 +88,15 @@ generate_export_header(
 )
 
 if(NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(pyoperon_pyoperon PUBLIC PYOPERON_STATIC_DEFINE)
+    target_compile_definitions(pyoperon_pyoperon PUBLIC PYOPERON_STATIC_DEFINE)
 endif()
 
 set_target_properties(
     pyoperon_pyoperon PROPERTIES
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN YES
-    #VERSION "${PROJECT_VERSION}"
-    #SOVERSION "${PROJECT_VERSION_MAJOR}"
+    VERSION "${PROJECT_VERSION}"
+    SOVERSION "${PROJECT_VERSION_MAJOR}"
     EXPORT_NAME pyoperon
     OUTPUT_NAME pyoperon
 )
