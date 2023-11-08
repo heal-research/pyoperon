@@ -66,6 +66,16 @@ add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
 # ---- Find python ----
 find_package(Python3 COMPONENTS Development REQUIRED)
+if(UNIX AND NOT APPLE)
+    # explicit linking is required on linux but not on macos
+    if (Python3_FOUND)
+        target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Python)
+    else()
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
+        target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
+    endif()
+endif()
 
 # when operon is statically linked, dependency information will not be available
 # via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
