@@ -37,7 +37,7 @@ micromamba activate pyoperon
 
 3. Install the dependencies
 ```
-./scripts/dependencies.sh
+./script/dependencies.sh
 ```
 
 4. Install `pyoperon`
