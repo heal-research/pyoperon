@@ -33,7 +33,7 @@ class Objective:
                 'pool_size' : trial.suggest_int('pool_size', low=250, high=pop_size, step=250),
                 'allowed_symbols' : trial.suggest_categorical('allowed_symbols', ['add,sub,mul,aq,constant,variable', 'add,sub,mul,aq,sin,cos,exp,log,sqrt,tanh,constant,variable']),
                 'max_length' : trial.suggest_int('max_length', low=10, high=30, step=10),
-                'local_iterations' : trial.suggest_int('local_iterations', low=0, high=5, step=1)
+                'optimizer_iterations' : trial.suggest_int('optimizer_iterations', low=0, high=5, step=1)
             }
 
         kf = KFold(n_splits=self.n_folds)

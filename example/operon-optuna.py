@@ -3,7 +3,7 @@ import numpy as np
 import csv
 from multiprocessing import Pool
 
-from operon.sklearn import SymbolicRegressor
+from pyoperon.sklearn import SymbolicRegressor
 import optuna
 import pmlb
 
@@ -21,12 +21,12 @@ max_samples = int(1e4)
 default_params = {
         'offspring_generator': 'basic',
         'initialization_method': 'btc',
-        'n_threads': 32,
+        'n_threads': 4,
         'objectives':  ['r2', 'diversity'],
         'epsilon':  1e-6,
         'random_state': None,
         'reinserter': 'keep-best',
-        'max_evaluations': int(2e6),
+        'max_evaluations': int(1e5),
         'symbolic_mode': False,
         'tournament_size': 3,
         'pool_size': None,
@@ -36,10 +36,10 @@ default_params = {
 
 # define parameter distributions
 param = {
-            'local_iterations' : optuna.distributions.IntUniformDistribution(0, 10, 1),
+            'optimizer_iterations' : optuna.distributions.IntDistribution(low=0, high=10, step=1),
             'allowed_symbols' : optuna.distributions.CategoricalDistribution(['add,sub,mul,aq,constant,variable', 'add,sub,mul,aq,sin,cos,exp,logabs,sqrtabs,tanh,constant,variable']),
-            'population_size' : optuna.distributions.IntUniformDistribution(100, 1000, 100),
-            'max_length': optuna.distributions.IntUniformDistribution(10, 50, 10)
+            'population_size' : optuna.distributions.IntDistribution(low=100, high=1000, step=100),
+            'max_length': optuna.distributions.IntDistribution(low=10, high=50, step=10)
         }
 
 # perform a number of reps with the best parameters for each problem
@@ -88,6 +88,9 @@ def optimize(name, X, y, scale_x, scale_y, reg):
 
     n_trials = est.n_trials_
 
+    if not os.path.exists('./results'):
+        os.mkdir('./results')
+
     with open(f'./results/{name}.csv', 'w') as r:
         header = [ 'problem', 'rep', 'n_trials', 'r2_train', 'r2_test' ] + [ k for k in reg.get_params().keys() ] + [ 'model_length', 'model_complexity', 'generations', 'evaluation_count', 'residual_evaluations', 'jacobian_evaluations', 'random_state', 'model' ]
         for h in header:
@@ -120,7 +123,7 @@ def optimize(name, X, y, scale_x, scale_y, reg):
         r2_train = r2_score(y_train, y_pred_train)
         r2_test = r2_score(y_test, y_pred_test)
 
-        stats = { 'problem': name, 'rep': rep, 'n_trials': n_trials, 'r2_train': r2_train, 'r2_test': r2_test } | reg.get_params() | reg.stats_ | { 'model': reg.get_model_string(4) }
+        stats = { 'problem': name, 'rep': rep, 'n_trials': n_trials, 'r2_train': r2_train, 'r2_test': r2_test } | reg.get_params() | reg.stats_ | { 'model': reg.get_model_string(reg.model_, 4) }
 
         with open(f'./results/{name}.csv', 'a') as r:
             for h in header:
@@ -140,7 +143,7 @@ def func(name):
 
 if __name__ == '__main__':
     #names = pmlb.regression_dataset_names
-    names = [ '192_vineyard' ]
+    names = [ '1027_ESL' ]
     #names = [ '1028_SWD', '192_vineyard', '542_pollution', '1030_ERA', '1089_USCrime' ]
 
 

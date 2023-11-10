@@ -10,21 +10,13 @@ from sklearn.ensemble import RandomForestRegressor
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, MSE, InfixFormatter, FitLeastSquares, Interpreter
 
-df = pd.read_csv('/home/bogdb/src/operon/data/Poly-10.csv')
+df = pd.read_csv('./datasets/1027_ESL/1027_ESL.tsv.gz', sep='\t')
 X = df.iloc[:,:-1]
 y = df.iloc[:, -1]
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5)
 
 y_pred = RandomForestRegressor(n_estimators=100).fit(X_train, y_train).predict(X_train)
 sErr = np.sqrt(mean_squared_error(y_train,  y_pred))
-
-# print(df_train.columns)
-
-# D_train = np.asarray(df_train)
-# D_test = np.asarray(df_test)
-
-# X_train, y_train = D_train[:,:-1], D_train[:,-1]
-# X_test, y_test = D_train[:,:-1], D_train[:,-1]
 
 from sympy import parse_expr
 import matplotlib.pyplot as plt
@@ -42,7 +34,7 @@ reg = SymbolicRegressor(
         initialization_max_length= 10,
         initialization_method= "btc",
         irregularity_bias= 0.0,
-        local_iterations= 5,
+        optimizer_iterations= 5,
         optimizer='lm',
         male_selector= "tournament",
         max_depth= 10,
