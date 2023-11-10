@@ -21,10 +21,11 @@
           overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
-        stdenv_ = pkgs.overrideCC pkgs.llvmPackages_16.stdenv (
-          pkgs.clang_16.override { gccForLibs = pkgs.gcc13.cc; }
-        );
-        python_ = pkgs.python310;
+        # stdenv_ = pkgs.overrideCC pkgs.llvmPackages_16.stdenv (
+        #   pkgs.clang_16.override { gccForLibs = pkgs.gcc13.cc; }
+        # );
+        stdenv_ = pkgs.llvmPackages_16.stdenv;
+        python_ = pkgs.python311;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
@@ -80,8 +81,14 @@
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 ])
                           ++ (with python_.pkgs; [ scikit-build ] ) # cmake integration and release preparation
-                          ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib ])
+                          ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib optuna ])
                           ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
+
+          shellHook = ''
+            LD_LIBRARY_PATH=${
+              pkgs.lib.makeLibraryPath [ pkgs.gcc13Stdenv.cc.cc.lib ]
+            };
+          '';
         };
 
         # backwards compatibility
