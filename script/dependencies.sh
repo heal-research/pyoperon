@@ -193,7 +193,7 @@ rm -rf taskflow
 ## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout 12db67ad8e0a304ede890046ccc0eecdacfae3b0
+git checkout 7a8cef15e8a4f8936a934060903642004ba55034
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
