@@ -20,6 +20,7 @@ sErr = np.sqrt(mean_squared_error(y_train,  y_pred))
 
 from sympy import parse_expr
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 reg = SymbolicRegressor(
         allowed_symbols= "add,sub,mul,div,constant,variable",

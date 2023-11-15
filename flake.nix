@@ -4,7 +4,7 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     foolnotion.url = "github:foolnotion/nur-pkg";
-    nixpkgs.url = "github:nixos/nixpkgs/staging-next";
+    nixpkgs.url = "github:nixos/nixpkgs/master";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
     lbfgs.url = "github:foolnotion/lbfgs";
 
@@ -21,15 +21,11 @@
           overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
-        # stdenv_ = pkgs.overrideCC pkgs.llvmPackages_16.stdenv (
-        #   pkgs.clang_16.override { gccForLibs = pkgs.gcc13.cc; }
-        # );
-        stdenv_ = pkgs.llvmPackages_16.stdenv;
+        stdenv_ = pkgs.stdenvAdapters.useMoldLinker pkgs.llvmPackages_16.stdenv;
         python_ = pkgs.python311;
 
         operon = pkgs.callPackage ./nix/operon {
           enableShared = enableShared;
-          useOpenLibm = false;
           vstat = pkgs.callPackage ./nix/vstat { };
           lbfgs = lbfgs.packages.${system}.default;
           stdenv = stdenv_;
@@ -61,7 +57,8 @@
             operon
           ] ++ operon.buildInputs;
         };
-      in rec {
+      in
+      rec {
         packages = {
           default = pyoperon;
           pyoperon-generic = pyoperon.overrideAttrs (old: {
@@ -83,12 +80,6 @@
                           ++ (with python_.pkgs; [ scikit-build ] ) # cmake integration and release preparation
                           ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib optuna ])
                           ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
-
-          shellHook = ''
-            LD_LIBRARY_PATH=${
-              pkgs.lib.makeLibraryPath [ pkgs.gcc13Stdenv.cc.cc.lib ]
-            };
-          '';
         };
 
         # backwards compatibility

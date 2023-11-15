@@ -82,7 +82,7 @@ error_metric   = Operon.R2()          # use the coefficient of determination as 
 evaluator      = Operon.Evaluator(problem, dtable, error_metric, True) # initialize evaluator, use linear scaling = True
 evaluator.Budget = 1000 * 1000             # computational budget
 
-optimizer      = Operon.Optimizer(dtable, problem, optimizer="lbfgs", likelihood="gaussian", iterations=10, batchsize=50)
+optimizer      = Operon.LMOptimizer(dtable, problem, max_iter=10)
 
 # define how new offspring are created
 generator      = Operon.BasicOffspringGenerator(evaluator, crossover, mutation, selector, selector)

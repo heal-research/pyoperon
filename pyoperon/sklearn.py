@@ -30,19 +30,23 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self,
         allowed_symbols                = 'add,sub,mul,div,constant,variable',
-        symbolic_mode                  = None,
+        symbolic_mode                  = False,
         crossover_probability          = 1.0,
         crossover_internal_probability = 0.9,
         mutation                       = { 'onepoint' : 1.0, 'discretepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 },
         mutation_probability           = 0.25,
         offspring_generator            = 'basic',
-        reinserter                     = 'replace-worst',
+        reinserter                     = 'keep-best',
         objectives                     = ['r2'],
         optimizer                      = 'lm',
         optimizer_likelihood           = 'gaussian',
-        optimizer_likelihood_loginput  = False,
         optimizer_batch_size           = 0,
         optimizer_iterations           = 0,
+        sgd_update_rule                = 'constant',
+        sgd_learning_rate              = 0.01,
+        sgd_beta                       = 0.9,
+        sgd_beta2                      = 0.999,
+        sgd_epsilon                    = 1e-6,
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
@@ -61,13 +65,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         irregularity_bias              = 0.0,
         epsilon                        = 1e-5,
         model_selection_criterion      = 'minimum_description_length',
+        add_model_scale_term           = True,
+        add_model_intercept_term       = True,
         uncertainty                    = [1],
         n_threads                      = 1,
         time_limit                     = None,
         random_state                   = None
         ):
 
-        # validate parameters
         self.allowed_symbols           = allowed_symbols
         self.symbolic_mode             = symbolic_mode
         self.crossover_probability     = crossover_probability
@@ -79,9 +84,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.objectives                = objectives
         self.optimizer                 = optimizer
         self.optimizer_likelihood      = optimizer_likelihood
-        self.optimizer_likelihood_loginput = optimizer_likelihood_loginput
         self.optimizer_batch_size      = optimizer_batch_size
         self.optimizer_iterations      = optimizer_iterations
+        self.sgd_update_rule           = sgd_update_rule
+        self.sgd_learning_rate         = sgd_learning_rate
+        self.sgd_beta                  = sgd_beta
+        self.sgd_beta2                 = sgd_beta2
+        self.sgd_epsilon               = sgd_epsilon
         self.max_length                = max_length
         self.max_depth                 = max_depth
         self.initialization_method     = initialization_method
@@ -90,7 +99,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.female_selector           = female_selector
         self.male_selector             = male_selector
         self.population_size           = population_size
-        self.pool_size                 = population_size if pool_size is None else pool_size
+        self.pool_size                 = pool_size
         self.generations               = generations
         self.max_evaluations           = max_evaluations
         self.max_selection_pressure    = max_selection_pressure
@@ -101,13 +110,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.epsilon                   = epsilon
         self.n_threads                 = n_threads
         self.model_selection_criterion = model_selection_criterion
+        self.add_model_scale_term      = add_model_scale_term
+        self.add_model_intercept_term  = add_model_intercept_term
         self.uncertainty               = uncertainty
         self.time_limit                = time_limit
         self.random_state              = random_state
 
 
     def __check_parameters(self):
-        check = lambda x,y: y if x is None else x
+        check = lambda x, y: y if x is None else x
         self.allowed_symbols                = check(self.allowed_symbols, 'add,sub,mul,div,constant,variable')
         self.symbolic_mode                  = check(self.symbolic_mode, False)
         self.crossover_probability          = check(self.crossover_probability, 1.0)
@@ -119,9 +130,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.objectives                     = check(self.objectives, [ 'r2' ])
         self.optimizer                      = check(self.optimizer, 'lbfgs')
         self.optimizer_likelihood           = check(self.optimizer_likelihood, 'gaussian')
-        self.optimizer_likelihood_loginput  = check(self.optimizer_likelihood_loginput, False)
         self.optimizer_batch_size           = check(self.optimizer_batch_size, 0)
         self.optimizer_iterations           = check(self.optimizer_iterations, 0)
+        self.sgd_update_rule                = check(self.sgd_update_rule, 'constant')
+        self.sgd_learning_rate              = check(self.sgd_learning_rate, 0.01)
+        self.sgd_beta                       = check(self.sgd_beta, 0.9)
+        self.sgd_beta2                      = check(self.sgd_beta2, 0.999)
+        self.sgd_epsilon                    = check(self.sgd_epsilon, 1e-6)
         self.max_length                     = check(self.max_length, 50)
         self.max_depth                      = check(self.max_depth, 10)
         self.initialization_method          = check(self.initialization_method, 'btc')
@@ -140,6 +155,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.irregularity_bias              = check(self.irregularity_bias, 0.0)
         self.epsilon                        = check(self.epsilon, 1e-5)
         self.model_selection_criterion      = check(self.model_selection_criterion, 'minimum_description_length')
+        self.add_model_scale_term           = check(self.add_model_scale_term, True)
+        self.add_model_intercept_term       = check(self.add_model_intercept_term, True)
         self.uncertainty                    = check(self.uncertainty, [1])
         self.n_threads                      = check(self.n_threads, 1)
         self.time_limit                     = check(self.time_limit, sys.maxsize)
@@ -328,6 +345,32 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown mutation method {}'.format(mutation_name))
 
 
+    def __init_sgd_update_rule(self):
+        if self.sgd_update_rule == 'constant':
+            return op.ConstantUpdateRule(0, self.sgd_learning_rate)
+        elif self.sgd_update_rule == 'momentum':
+            return op.MomentumUpdateRule(0, self.sgd_learning_rate, self.sgd_beta)
+        elif self.sgd_update_rule == 'rmsprop':
+            return op.RmsPropUpdateRule(0, self.sgd_learning_rate, self.sgd_beta, self.sgd_epsilon)
+        elif self.sgd_update_rule == 'adamax':
+            return op.AdaMaxUpdateRule(0, self.sgd_learning_rate, self.sgd_beta, self.sgd_beta2)
+        elif self.sgd_update_rule == 'amsgrad':
+            return op.AmsGradUpdateRule(0, self.sgd_learning_rate, self.sgd_epsilon, self.sgd_beta, self.sgd_beta2)
+
+        raise ValueError('Unknown update rule {}'.format(self.sgd_update_rule))
+
+
+    def __init_optimizer(self, dtable, problem, optimizer, likelihood, max_iter, batch_size, update_rule = None):
+        if optimizer == 'lm':
+            return op.LMOptimizer(dtable, problem, max_iter, batch_size)
+        elif optimizer == 'lbfgs':
+            return op.LBFGSOptimizer(dtable, problem, likelihood, max_iter, batch_size)
+        elif optimizer == 'sgd':
+            return op.SGDOptimizer(dtable, problem, update_rule, likelihood, max_iter, batch_size)
+
+        raise ValueError('Unknown optimizer {}'.format(optimizer))
+
+
     def get_model_string(self, model, precision=3, names=None):
         """Returns an infix string representation of an operon tree model"""
         hashes = set(x.HashValue for x in model.Nodes if x.IsVariable)
@@ -396,9 +439,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
-        optimizer = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=self.optimizer_iterations, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
-
-        mdl_opt = op.Optimizer(dtable=dtable, problem=problem, optimizer=self.optimizer, likelihood=self.optimizer_likelihood, iterations=100, batchsize=self.optimizer_batch_size, loginput=self.optimizer_likelihood_loginput)
+        update_rule = self.__init_sgd_update_rule()
+        optimizer = self.__init_optimizer(dtable, problem, self.optimizer, self.optimizer_likelihood, self.optimizer_iterations, self.optimizer_batch_size, update_rule)
+        mdl_opt = self.__init_optimizer(dtable, problem, self.optimizer, self.optimizer_likelihood, 100, self.optimizer_batch_size, update_rule)
 
         # evaluators for minimum description length and information criteria
         mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable)
@@ -480,9 +523,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             y_pred = op.Evaluate(dtable, solution.Genotype, ds, training_range)
             scale, offset = op.FitLeastSquares(y_pred, y)
             nodes = solution.Genotype.Nodes
-            if scale != 1:
+            if scale != 1 and self.add_model_scale_term:
                 nodes += [ op.Node.Constant(scale), op.Node.Mul() ]
-            if offset != 0:
+            if offset != 0 and self.add_model_intercept_term:
                 nodes += [ op.Node.Constant(offset), op.Node.Add() ]
             solution.Genotype = op.Tree(nodes).UpdateNodes()
 
@@ -547,4 +590,3 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self)
         return self.evaluate_model(self.model_, X).reshape(-1, 1)
-

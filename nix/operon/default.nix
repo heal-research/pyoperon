@@ -11,13 +11,12 @@
   eigen,
   eve,
   fast_float,
-  fmt_9,
+  fmt,
   git,
   lbfgs,
   ned14-outcome,
   ned14-quickcpplib,
   ned14-status-code,
-  openlibm,
   pkg-config,
   pratt-parser,
   unordered_dense,
@@ -30,7 +29,6 @@
   buildCliPrograms ? false,
   enableShared ? !stdenv.hostPlatform.isStatic,
   useCeres ? false,
-  useOpenLibm ? true,
 }:
 stdenv.mkDerivation rec {
   pname = "operon";
@@ -41,8 +39,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "25e22e68fa830c49555500934053ede9eeb69c8e";
-    hash = "sha256-lSgquEL3aWv8YhDBTVxP/7pxNbKjp+ET17un6IxrRRA=";
+    rev = "12db67ad8e0a304ede890046ccc0eecdacfae3b0";
+    hash = "sha256-ouwOT1pljZTBDZi4H0i4DkrAxU9PLU2GyifyJGUp8I8=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -65,10 +63,9 @@ stdenv.mkDerivation rec {
     vstat
     xxHash
     (scnlib.override { enableShared = enableShared; })
-    (fmt_9.override { enableShared = enableShared; })
+    (fmt.override { enableShared = enableShared; })
   ] ++ lib.optionals buildCliPrograms [ cxxopts ]
-    ++ lib.optionals useCeres [ ceres-solver ]
-    ++ lib.optionals useOpenLibm [ openlibm ];
+    ++ lib.optionals useCeres [ ceres-solver ];
 
   cmakeFlags = [
     "-DCMAKE_BUILD_TYPE=Release"
@@ -76,7 +73,6 @@ stdenv.mkDerivation rec {
     "-DBUILD_CLI_PROGRAMS=${if buildCliPrograms then "ON" else "OFF"}"
     "-DBUILD_SHARED_LIBS=${if enableShared then "ON" else "OFF"}"
     "-DCMAKE_POSITION_INDEPENDENT_CODE=${if enableShared then "OFF" else "ON"}"
-    "-DUSE_OPENLIBM=${if useOpenLibm then "ON" else "OFF"}"
     "-DCMAKE_CXX_FLAGS=${if stdenv.targetPlatform.isx86_64 then "-march=x86-64-v3" else ""}"
   ];
 

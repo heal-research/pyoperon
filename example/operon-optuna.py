@@ -30,7 +30,7 @@ default_params = {
         'symbolic_mode': False,
         'tournament_size': 3,
         'pool_size': None,
-        'initialization_max_length': 10
+        'initialization_max_length': 10,
         }
 
 
@@ -100,7 +100,7 @@ def optimize(name, X, y, scale_x, scale_y, reg):
     for rep in range(reps):
         reg = SymbolicRegressor(**(est.best_params_ | default_params))
 
-        print(reg.get_params())
+        # print(reg.get_params())
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, shuffle=True)
 
@@ -149,4 +149,3 @@ if __name__ == '__main__':
 
     with Pool(4) as pool:
         pool.map(func, names)
-

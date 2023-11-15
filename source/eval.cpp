@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
+#include <stdexcept>
+#include <operon/optimizer/optimizer.hpp>
+#include <operon/optimizer/solvers/sgd.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -10,20 +13,33 @@
 
 namespace py = pybind11;
 
-using TDispatch        = Operon::DefaultDispatch;
-using TInterpreter     = Operon::Interpreter<Operon::Scalar, TDispatch>;
-using TInterpreterBase = Operon::InterpreterBase<Operon::Scalar>;
+// type aliases for convenience
+using TDispatch                = Operon::DefaultDispatch;
+using TInterpreter             = Operon::Interpreter<Operon::Scalar, TDispatch>;
+using TInterpreterBase         = Operon::InterpreterBase<Operon::Scalar>;
 
-using TEvaluatorBase   = Operon::EvaluatorBase;
-using TEvaluator       = Operon::Evaluator<TDispatch>;
-using TMDLEvaluator    = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
-using TBICEvaluator    = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
-using TAIKEvaluator    = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
+using TEvaluatorBase           = Operon::EvaluatorBase;
+using TEvaluator               = Operon::Evaluator<TDispatch>;
+using TMDLEvaluator            = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
+using TBICEvaluator            = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
+using TAIKEvaluator            = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
 
 // likelihood
 using TGaussianLikelihood      = Operon::GaussianLikelihood<Operon::Scalar>;
 using TPoissonLikelihood       = Operon::PoissonLikelihood<Operon::Scalar, false>;
 using TPoissonLikelihoodLog    = Operon::PoissonLikelihood<Operon::Scalar, true>;
+
+// update rule
+using TUpdateRule              = Operon::UpdateRule::LearningRateUpdateRule;
+using TConstantUpdateRule      = Operon::UpdateRule::Constant<Operon::Scalar>;
+using TMomentumUpdateRule      = Operon::UpdateRule::Momentum<Operon::Scalar>;
+using TRmsPropUpdateRule       = Operon::UpdateRule::RmsProp<Operon::Scalar>;
+using TAdaDeltaUpdateRule      = Operon::UpdateRule::AdaDelta<Operon::Scalar>;
+using TAdaMaxUpdateRule        = Operon::UpdateRule::AdaMax<Operon::Scalar>;
+using TAdamUpdateRule          = Operon::UpdateRule::Adam<Operon::Scalar>;
+using TYamAdamUpdateRule       = Operon::UpdateRule::YamAdam<Operon::Scalar>;
+using TAmsGradUpdateRule       = Operon::UpdateRule::AmsGrad<Operon::Scalar>;
+using TYogiUpdateRule          = Operon::UpdateRule::Yogi<Operon::Scalar>;
 
 // optimizer
 using TOptimizerBase           = Operon::OptimizerBase<TDispatch>;
@@ -35,6 +51,10 @@ using TLBGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLike
 using TLBGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihood>;
 using TLBGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihoodLog>;
 
+using TSGDOptimizerGauss       = Operon::SGDOptimizer<TDispatch, TGaussianLikelihood>;
+using TSGDOptimizerPoisson     = Operon::SGDOptimizer<TDispatch, TPoissonLikelihood>;
+using TSGDOptimizerPoissonLog  = Operon::SGDOptimizer<TDispatch, TPoissonLikelihoodLog>;
+
 namespace detail {
 template<typename T>
 auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double, double>
@@ -45,51 +65,108 @@ auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double
 }
 
 class Optimizer {
-    std::unique_ptr<TOptimizerBase> impl_;
+    std::unique_ptr<TOptimizerBase> optimizer_;
 
-    public:
-        Optimizer(TDispatch const& dtable, Operon::Problem const& problem, std::string const& optName, std::string const& likName, std::size_t iter, std::size_t bsize, bool loginput = true) {
-            if (optName == "lm") {
-                impl_ = std::make_unique<TLMOptimizerEigen>(dtable, problem);
-            } else if (optName == "lbfgs") {
-                if (likName == "gaussian") {
-                    impl_ = std::make_unique<TLBGSOptimizerGauss>(dtable, problem);
-                } else if (likName == "poisson") {
-                    if (loginput) {
-                        impl_ = std::make_unique<TLBGSOptimizerPoissonLog>(dtable, problem);
-                    } else {
-                        impl_ = std::make_unique<TLBGSOptimizerPoisson>(dtable, problem);
-                    }
-                }
-            } else if (optName == "sgd") {
-                // TODO: add SGD optimizer
-            }
-            impl_->SetIterations(iter);
-            impl_->SetBatchSize(bsize);
-        }
+public:
+        // Optimizer(TDispatch const& dtable, Operon::Problem const& problem, std::string const& optName, std::string const& likName, std::string const& updName, std::size_t iter, std::size_t bsize) {
+        //     if (optName == "lm") {
+        //         optimizer_ = std::make_unique<TLMOptimizerEigen>(dtable, problem);
+        //     } else if (optName == "lbfgs") {
+        //         if (likName == "gaussian") {
+        //             optimizer_ = std::make_unique<TLBGSOptimizerGauss>(dtable, problem);
+        //         } else if (likName == "poisson") {
+        //             optimizer_ = std::make_unique<TLBGSOptimizerPoisson>(dtable, problem);
+        //         } else if (likName == "poisson_log") {
+        //             optimizer_ = std::make_unique<TLBGSOptimizerPoissonLog>(dtable, problem);
+        //         }
+        //     } else if (optName == "sgd") {
+        //         if (likName == "gaussian") {
+        //             // optimizer_ = std::make_unique<
+        //         }
+        //     }
+        //     optimizer_->SetIterations(iter);
+        //     optimizer_->SetBatchSize(bsize);
+        // }
 
-        auto SetBatchSize(std::size_t value) const { impl_->SetBatchSize(value); }
-        [[nodiscard]] auto BatchSize() const { return impl_->BatchSize(); }
+        auto SetBatchSize(std::size_t value) const { optimizer_->SetBatchSize(value); }
+        [[nodiscard]] auto BatchSize() const { return optimizer_->BatchSize(); }
 
-        auto SetIterations(std::size_t value) const { impl_->SetIterations(value); }
-        [[nodiscard]] auto Iterations() const { return impl_->Iterations(); }
+        auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
+        [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
 
-        [[nodiscard]] auto GetDispatchTable() const { return impl_->GetDispatchTable(); }
-        [[nodiscard]] auto GetProblem() const { return impl_->GetProblem(); }
+        [[nodiscard]] auto GetDispatchTable() const { return optimizer_->GetDispatchTable(); }
+        [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
 
         [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
-            return impl_->Optimize(rng, tree);
+            return optimizer_->Optimize(rng, tree);
         }
 
         [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
-            return impl_->ComputeLikelihood(x, y, w);
+            return optimizer_->ComputeLikelihood(x, y, w);
         }
 
         [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
-            return impl_->ComputeFisherMatrix(pred, jac, sigma);
+            return optimizer_->ComputeFisherMatrix(pred, jac, sigma);
         }
 
-        [[nodiscard]] auto OptimizerImpl() const { return impl_.get(); }
+        auto Set(std::unique_ptr<TOptimizerBase> optimizer) {
+            optimizer_ = std::move(optimizer);
+        }
+
+        [[nodiscard]] auto Get() const { return optimizer_.get(); }
+};
+
+class LMOptimizer : public Optimizer {
+    public:
+    LMOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, std::size_t maxIter, std::size_t batchSize)
+    {
+        Optimizer::Set(std::make_unique<TLMOptimizerEigen>(dispatch, problem));
+        auto const* opt = Optimizer::Get();
+        opt->SetIterations(maxIter);
+        opt->SetBatchSize(batchSize);
+    }
+};
+
+class LBFGSOptimizer : public Optimizer {
+public:
+    LBFGSOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, std::string const& likelihood, std::size_t maxIter, std::size_t batchSize)
+    {
+        if (likelihood == "gaussian") {
+            Optimizer::Set(std::make_unique<TLBGSOptimizerGauss>(dispatch, problem));
+        } else if (likelihood == "poisson") {
+            Optimizer::Set(std::make_unique<TLBGSOptimizerPoisson>(dispatch, problem));
+        } else if (likelihood == "poisson_log") {
+            Optimizer::Set(std::make_unique<TLBGSOptimizerPoissonLog>(dispatch, problem));
+        } else {
+            throw std::invalid_argument(fmt::format("{} is not a valid likelihood\n", likelihood));
+        }
+
+        auto const* opt = Optimizer::Get();
+        opt->SetIterations(maxIter);
+        opt->SetBatchSize(batchSize);
+    }
+};
+
+class SGDOptimizer : public Optimizer {
+    std::unique_ptr<TUpdateRule> rule_;
+
+public:
+    SGDOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, Operon::UpdateRule::LearningRateUpdateRule const& updateRule, std::string const& likelihood, std::size_t maxIter, std::size_t batchSize)
+    {
+        if (likelihood == "gaussian") {
+            Optimizer::Set(std::make_unique<TSGDOptimizerGauss>(dispatch, problem, updateRule));
+        } else if (likelihood == "poisson") {
+            Optimizer::Set(std::make_unique<TSGDOptimizerPoisson>(dispatch, problem, updateRule));
+        } else if (likelihood == "poisson_log") {
+            Optimizer::Set(std::make_unique<TSGDOptimizerPoissonLog>(dispatch, problem, updateRule));
+        } else {
+            throw std::invalid_argument(fmt::format("{} is not a valid likelihood\n", likelihood));
+        }
+
+        auto const* opt = Optimizer::Get();
+        opt->SetIterations(maxIter);
+        opt->SetBatchSize(batchSize);
+    }
 };
 } // namespace detail
 
@@ -97,6 +174,7 @@ void InitOptimizer(py::module_ &m)
 {
     using detail::Optimizer;
     using Operon::Problem;
+    using Operon::UpdateRule::LearningRateUpdateRule;
     using std::string;
     using std::size_t;
 
@@ -109,22 +187,92 @@ void InitOptimizer(py::module_ &m)
         .def_readwrite("Success", &Operon::OptimizerSummary::Success);
 
     py::class_<detail::Optimizer>(m, "Optimizer")
-        .def(py::init<TDispatch const&, Problem const&, string const&, string const, size_t, size_t, bool>()
-                , py::arg("dtable")
-                , py::arg("problem")
-                , py::arg("optimizer") = "lbfgs"
-                , py::arg("likelihood") = "gaussian"
-                , py::arg("iterations") = 10
-                , py::arg("batchsize") = TDispatch::BatchSize<Operon::Scalar>
-                , py::arg("loginput") = false)
+        // .def(py::init<TDispatch const&, Problem const&, string const&, string const, size_t, size_t, bool>()
+        //         , py::arg("dtable")
+        //         , py::arg("problem")
+        //         , py::arg("optimizer") = "lbfgs"
+        //         , py::arg("likelihood") = "gaussian"
+        //         , py::arg("iterations") = 10
+        //         , py::arg("batchsize") = TDispatch::BatchSize<Operon::Scalar>
+        //         , py::arg("loginput") = false)
         .def_property("BatchSize", &Optimizer::SetBatchSize, &Optimizer::BatchSize)
         .def_property("Iterations", &Optimizer::SetIterations, &Optimizer::Iterations)
         .def_property_readonly("DispatchTable", &Optimizer::GetDispatchTable)
         .def_property_readonly("Problem", &Optimizer::GetProblem)
-        .def_property_readonly("OptimizerImpl", &Optimizer::OptimizerImpl)
+        .def_property_readonly("OptimizerImpl", &Optimizer::Get)
         .def("Optimize", &Optimizer::Optimize)
         .def("ComputeLikelihood", &Optimizer::ComputeLikelihood)
         .def("ComputeFisherMatrix", &Optimizer::ComputeFisherMatrix);
+
+    py::class_<detail::LMOptimizer, detail::Optimizer>(m, "LMOptimizer")
+        .def(py::init<TDispatch const&, Problem const&, std::size_t, std::size_t>()
+            , py::arg("dtable")
+            , py::arg("problem")
+            , py::arg("max_iter") = 10
+            , py::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+        );
+
+    py::class_<detail::LBFGSOptimizer, detail::Optimizer>(m, "LBFGSOptimizer")
+        .def(py::init<TDispatch const&, Problem const&, std::string const&, std::size_t, std::size_t>()
+            , py::arg("dtable")
+            , py::arg("problem")
+            , py::arg("likelihood") = "gaussian"
+            , py::arg("max_iter") = 10
+            , py::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+        );
+
+    py::class_<detail::SGDOptimizer, detail::Optimizer>(m, "SGDOptimizer")
+        .def(py::init<TDispatch const&, Problem const&, LearningRateUpdateRule const&, std::string const&, std::size_t, std::size_t>()
+            , py::arg("dtable")
+            , py::arg("problem")
+            , py::arg("update_rule")
+            , py::arg("likelihood") = "gaussian"
+            , py::arg("max_iter") = 10
+            , py::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+        );
+
+    py::class_<TUpdateRule>(m, "UpdateRule"); // base class
+
+    py::class_<TConstantUpdateRule, TUpdateRule>(m, "ConstantUpdateRule")
+        // .def(py::init([](Operon::Scalar lr) {
+        //     return TConstantUpdateRule(0, lr);
+        // }), py::arg("learning_rate") = 0.01);
+        .def(py::init<Eigen::Index, Operon::Scalar>()
+            , py::arg("dimension") = 0
+            , py::arg("learning_rate") = 0.01
+        );
+
+    py::class_<TMomentumUpdateRule, TUpdateRule>(m, "MomentumUpdateRule")
+        .def(py::init<Eigen::Index, Operon::Scalar, Operon::Scalar>()
+            , py::arg("dimension") = 0
+            , py::arg("learning_rate") = 0.01
+            , py::arg("beta") = 0.9
+        );
+
+    py::class_<TRmsPropUpdateRule, TUpdateRule>(m, "RmsPropUpdateRule")
+        .def(py::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar>()
+            , py::arg("dimension") = 0
+            , py::arg("learning_rate") = 0.01
+            , py::arg("beta") = 0.9
+            , py::arg("eps") = 1e-6
+        );
+
+    py::class_<TAdaMaxUpdateRule, TUpdateRule>(m, "AdaDeltaUpdateRule")
+        .def(py::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar>()
+            , py::arg("dimension") = 0
+            , py::arg("learning_rate") = 0.01
+            , py::arg("beta1") = 0.9
+            , py::arg("beta2") = 0.999
+        );
+
+    py::class_<TAmsGradUpdateRule, TUpdateRule>(m, "AmsGradUpdateRule")
+        .def(py::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar, Operon::Scalar>()
+            , py::arg("dimension") = 0
+            , py::arg("learning_rate") = 0.01
+            , py::arg("epsilon")
+            , py::arg("beta1") = 0.9
+            , py::arg("beta2") = 0.999
+        );
 }
 
 void InitEval(py::module_ &m)
@@ -169,7 +317,7 @@ void InitEval(py::module_ &m)
         if (metric == "rmse") { return Operon::RMSE{}(estimated, values); }
         if (metric == "nmse") { return Operon::NMSE{}(estimated, values); }
         if (metric == "mae") { return Operon::MAE{}(estimated, values); }
-        throw std::runtime_error("Invalid fitness metric"); 
+        throw std::runtime_error("Invalid fitness metric");
 
     }, py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
 
@@ -247,7 +395,7 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>())
         //.def_property("Optimizer", &TEvaluator::GetOptimizer, &TEvaluator::SetOptimizer);
         .def_property("Optimizer", nullptr, [](TEvaluator& self, detail::Optimizer const& opt) {
-           self.SetOptimizer(opt.OptimizerImpl()); 
+           self.SetOptimizer(opt.Get());
         });
 
     py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
