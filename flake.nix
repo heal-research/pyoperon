@@ -21,7 +21,7 @@
           overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
-        stdenv_ = pkgs.stdenvAdapters.useMoldLinker pkgs.llvmPackages_16.stdenv;
+        stdenv_ = pkgs.llvmPackages_16.stdenv;
         python_ = pkgs.python311;
 
         operon = pkgs.callPackage ./nix/operon {
@@ -74,6 +74,12 @@
         };
 
         devShells.default = stdenv_.mkDerivation {
+          name = "pyoperon-dev";
+          nativeBuildInputs = pyoperon.nativeBuildInputs;
+          buildInputs = pyoperon.buildInputs;
+        };
+
+        devShells.pyenv = stdenv_.mkDerivation {
           name = "pyoperon-dev";
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 ])
