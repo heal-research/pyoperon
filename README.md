@@ -1,8 +1,8 @@
 # pyoperon
 
 [![License](https://img.shields.io/github/license/heal-research/pyoperon)](https://github.com/heal-research/pyoperon/blob/master/LICENSE)
-[![Build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml/badge.svg?branch=cpp20)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
-[![Build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-macos.yml/badge.svg?branch=cpp20)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
+[![Build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
+[![Build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
 [![Matrix chat](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/#operon:matrix.org)
 
 **pyoperon** is the python bindings library of [**Operon**](https://github.com/heal-research/operon), a modern C++ framework for symbolic regression developed by [Heal-Research](https://github.com/heal-research) at the University of Applied Sciences Upper Austria.
@@ -22,11 +22,10 @@ Due to ABI incompatiblity, the PyOperon version on PyPI is outdated. The wheels 
 
 ### Conda/Mamba
 
-1. Clone the repo and switch to the `cpp20` branch
+1. Clone the repository
 ```
 git clone https://github.com/heal-research/pyoperon.git
 cd pyoperon
-git switch cpp20
 ```
 
 2. Install and activate the environment (replace micromamba with your actual program)
