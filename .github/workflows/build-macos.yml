@@ -2,9 +2,9 @@ name: build-macos
 
 on:
   push:
-    branches: [ cpp20 ]
+    branches: [ main ]
   pull_request:
-    branches: [ cpp20 ]
+    branches: [ main ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
