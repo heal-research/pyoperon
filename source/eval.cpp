@@ -184,7 +184,9 @@ void InitOptimizer(py::module_ &m)
         .def_readwrite("Iterations", &Operon::OptimizerSummary::Iterations)
         .def_readwrite("FunctionEvaluations", &Operon::OptimizerSummary::FunctionEvaluations)
         .def_readwrite("JacobianEvaluations", &Operon::OptimizerSummary::JacobianEvaluations)
-        .def_readwrite("Success", &Operon::OptimizerSummary::Success);
+        .def_readwrite("Success", &Operon::OptimizerSummary::Success)
+        .def_readwrite("InitialParameters", &Operon::OptimizerSummary::InitialParameters)
+        .def_readwrite("FinalParameters", &Operon::OptimizerSummary::FinalParameters);
 
     py::class_<detail::Optimizer>(m, "Optimizer")
         // .def(py::init<TDispatch const&, Problem const&, string const&, string const, size_t, size_t, bool>()
