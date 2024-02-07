@@ -65,7 +65,7 @@ PYBIND11_MODULE(pyoperon, m)
                 if (t.size() != 4) { throw std::runtime_error("Invalid state!"); }
                 auto fit { t[1].cast<Operon::Vector<Operon::Scalar>>() };
                 Operon::Individual ind(fit.size());
-                ind.Genotype = std::move(t[0].cast<Operon::Tree>());
+                ind.Genotype = t[0].cast<Operon::Tree>();
                 ind.Fitness = std::move(fit);
                 ind.Rank     = t[2].cast<std::size_t>();
                 ind.Distance = t[3].cast<Operon::Scalar>();

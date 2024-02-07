@@ -190,18 +190,32 @@ cmake --install build
 popd
 rm -rf taskflow
 
+# mdspan
+git clone https://github.com/kokkos/mdspan.git
+pushd mdspan
+git checkout 0e6a69dfe045acbb623003588a4aff844ea4b276
+mkdir build
+cmake -S . -B build \
+    -DCMAKE_CXX_STANDARD=20 \
+    -DMDSPAN_CXX_STANDARD=20 \
+    -DMDSPAN_ENABLE_TESTS=OFF \
+    -DMDSPAN_ENABLE_BENCHMARKS=OFF \
+    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf mdspan
+
 ## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout 7a8cef15e8a4f8936a934060903642004ba55034
+git checkout a803245d9cc29ea18321cc035d7a24f73c4a65e3
 mkdir build
-cmake -S . -B build \
+cmake -S . -B build --preset build-linux \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_CLI_PROGRAMS=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    -DCMAKE_CXX_FLAGS="-fsized-deallocation -fno-math-errno" \
     -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}/lib64/cmake
 cmake --build build -j -t operon_operon

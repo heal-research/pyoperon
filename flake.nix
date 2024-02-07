@@ -36,11 +36,12 @@
           src = self;
 
           cmakeFlags = [
-            "-DCMAKE_BUILD_TYPE=Release"
-            "-DCMAKE_CXX_FLAGS=${
-              if pkgs.hostPlatform.isx86_64 then "-march=x86-64-v3" else ""
-            }"
+            "-DCMAKE_CXX_FLAGS=${if pkgs.hostPlatform.isx86_64 then "-g" else ""}"
           ];
+
+          cmakeBuildType = "Debug";
+
+          dontStrip = true;
 
           nativeBuildInputs = with pkgs; [
             cmake
@@ -84,7 +85,7 @@
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 ])
                           ++ (with python_.pkgs; [ scikit-build ] ) # cmake integration and release preparation
-                          ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib optuna ])
+                          ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib optuna jax jaxlib-bin ])
                           ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
         };
 

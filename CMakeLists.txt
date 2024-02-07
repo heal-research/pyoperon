@@ -25,6 +25,7 @@ find_package(Eigen3 REQUIRED)
 find_package(FastFloat REQUIRED)
 find_package(Threads REQUIRED)
 find_package(lbfgs REQUIRED)
+find_package(mdspan REQUIRED)
 find_package(operon REQUIRED)
 find_package(outcome REQUIRED)
 find_package(pratt-parser REQUIRED)
@@ -49,12 +50,13 @@ pybind11_add_module(
     source/creator.cpp
     source/crossover.cpp
     source/dataset.cpp
-    source/eval.cpp
+    source/evaluator.cpp
     source/generator.cpp
     source/initializer.cpp
     source/mutation.cpp
     source/node.cpp
     source/non_dominated_sorter.cpp
+    source/optimizer.cpp
     source/problem.cpp
     source/pset.cpp
     source/pyoperon.cpp

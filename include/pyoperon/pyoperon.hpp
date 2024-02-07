@@ -14,6 +14,7 @@
 #include <operon/core/types.hpp>
 #include <operon/core/dataset.hpp>
 #include <operon/core/individual.hpp>
+#include <operon/operators/evaluator.hpp>
 
 namespace py = pybind11;
 
