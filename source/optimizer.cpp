@@ -153,6 +153,9 @@ void InitOptimizer(py::module_ &m)
         .def_readwrite("InitialParameters", &Operon::OptimizerSummary::InitialParameters)
         .def_readwrite("FinalParameters", &Operon::OptimizerSummary::FinalParameters);
 
+
+    py::class_<detail::Optimizer>(m, "Optimizer"); // base class
+
     py::class_<detail::LMOptimizer, detail::Optimizer>(m, "LMOptimizer")
         .def(py::init<TDispatch const&, Problem const&, std::size_t, std::size_t>()
             , py::arg("dtable")

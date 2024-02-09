@@ -23,7 +23,6 @@ using TMDLEvaluator      = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
 using TBICEvaluator      = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
 using TAIKEvaluator      = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
 using TGaussEvaluator    = Operon::GaussianLikelihoodEvaluator<TDispatch>;
-using TPoissonEvaluator  = Operon::GaussianLikelihoodEvaluator<TDispatch>;
 
 namespace detail {
 
@@ -201,8 +200,5 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&, TDispatch const&>());
 
     py::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
-        .def(py::init<Operon::Problem&, TDispatch const&>());
-
-    py::class_<TPoissonEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
         .def(py::init<Operon::Problem&, TDispatch const&>());
 }
