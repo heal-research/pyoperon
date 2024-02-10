@@ -21,7 +21,7 @@
           overlays = [ foolnotion.overlay ];
         };
         enableShared = false;
-        stdenv_ = pkgs.llvmPackages_16.stdenv;
+        stdenv_ = pkgs.llvmPackages_17.stdenv;
         python_ = pkgs.python311;
 
         operon = pkgs.callPackage ./nix/operon {
@@ -78,6 +78,9 @@
           name = "pyoperon-dev";
           nativeBuildInputs = pyoperon.nativeBuildInputs;
           buildInputs = pyoperon.buildInputs;
+          shellHook = ''
+            $SHELL
+          '';
         };
 
         devShells.pyenv = stdenv_.mkDerivation {
@@ -87,6 +90,9 @@
                           ++ (with python_.pkgs; [ scikit-build ] ) # cmake integration and release preparation
                           ++ (with python_.pkgs; [ numpy scikit-learn pandas ipdb sympy requests matplotlib optuna jax jaxlib-bin ])
                           ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
+          shellHook = ''
+            $SHELL
+          '';
         };
 
         # backwards compatibility

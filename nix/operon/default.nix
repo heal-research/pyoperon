@@ -14,6 +14,7 @@
   fmt,
   git,
   lbfgs,
+  mdspan,
   ned14-outcome,
   ned14-quickcpplib,
   ned14-status-code,
@@ -34,13 +35,13 @@ stdenv.mkDerivation rec {
   pname = "operon";
   version = "0.3.1";
 
-  #src = /home/bogdb/src/operon-mdl-fix;
+  #src = /home/bogdb/src/operon_tmp;
 
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "80793f91f14030979c189df640d75e111f404faa";
-    hash = "sha256-qQKaH0k7j4/cBAcY+SjKVZfaTwSiuxwUbvCiISsh9eM=";
+    rev = "b59cc849ff406b6157d45778c90ec4ca22e2944d";
+    hash = "";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -53,6 +54,7 @@ stdenv.mkDerivation rec {
     fast_float
     git
     lbfgs
+    mdspan
     ned14-outcome
     ned14-quickcpplib
     ned14-status-code
@@ -68,13 +70,15 @@ stdenv.mkDerivation rec {
     ++ lib.optionals useCeres [ ceres-solver ];
 
   cmakeFlags = [
-    "-DCMAKE_BUILD_TYPE=Release"
     "-DUSE_SINGLE_PRECISION=${if useSinglePrecision then "ON" else "OFF"}"
     "-DBUILD_CLI_PROGRAMS=${if buildCliPrograms then "ON" else "OFF"}"
     "-DBUILD_SHARED_LIBS=${if enableShared then "ON" else "OFF"}"
     "-DCMAKE_POSITION_INDEPENDENT_CODE=${if enableShared then "OFF" else "ON"}"
-    "-DCMAKE_CXX_FLAGS=${if stdenv.targetPlatform.isx86_64 then "-march=x86-64-v3" else ""}"
+    "-DCMAKE_CXX_FLAGS=${if stdenv.targetPlatform.isx86_64 then "-g" else ""}"
   ];
+
+  #cmakeBuildType = "Debug";
+  #dontStrip = true;
 
   meta = with lib; {
     description = "Modern, fast, scalable C++ framework for symbolic regression";
