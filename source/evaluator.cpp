@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
+// SPDX-FileCopyrightText: Copyright 2019-2024 Heal Research
 
 #include <stdexcept>
 #include <operon/optimizer/optimizer.hpp>
@@ -8,25 +8,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <operon/operators/evaluator.hpp>
 #include "pyoperon/pyoperon.hpp"
+#include "pyoperon/optimizer.hpp"
 
 namespace py = pybind11;
 
-using TDispatch          = Operon::DefaultDispatch;
-using TInterpreter       = Operon::Interpreter<Operon::Scalar, TDispatch>;
-using TInterpreterBase   = Operon::InterpreterBase<Operon::Scalar>;
-
-using TEvaluatorBase     = Operon::EvaluatorBase;
-using TEvaluator         = Operon::Evaluator<TDispatch>;
-using TMDLEvaluator      = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
-using TBICEvaluator      = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
-using TAIKEvaluator      = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
-using TGaussEvaluator    = Operon::GaussianLikelihoodEvaluator<TDispatch>;
-
 namespace detail {
-
-// class Optimizer; // fwd declaration
 
 template<typename T>
 auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double, double>
@@ -34,6 +21,16 @@ auto FitLeastSquares(py::array_t<T> lhs, py::array_t<T> rhs) -> std::pair<double
     auto s1 = MakeSpan(lhs);
     auto s2 = MakeSpan(rhs);
     return Operon::FitLeastSquares(s1, s2);
+}
+
+template<typename T>
+auto PoissonLikelihood(py::array_t<T> x, py::array_t<T> y) {
+    return TPoissonLikelihood::ComputeLikelihood(MakeSpan(x), MakeSpan(y), {});
+}
+
+template<typename T>
+auto PoissonLikelihood(py::array_t<T> x, py::array_t<T> y, py::array_t<T> w) {
+    return TPoissonLikelihood::ComputeLikelihood(MakeSpan(x), MakeSpan(y), MakeSpan(w));
 }
 } // namespace detail
 
@@ -82,6 +79,14 @@ void InitEval(py::module_ &m)
         throw std::runtime_error("Invalid fitness metric");
 
     }, py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
+
+    m.def("PoissonLikelihood", [](py::array_t<float> x, py::array_t<float> y){
+        return detail::PoissonLikelihood(std::move(x), std::move(y));
+    });
+
+    m.def("PoissonLikelihood", [](py::array_t<float> x, py::array_t<float> y, py::array_t<float> w){
+        return detail::PoissonLikelihood(std::move(x), std::move(y), std::move(w));
+    });
 
     m.def("CalculateFitness", [](std::vector<Operon::Tree> const& trees, Operon::Dataset const& d, Operon::Range r, std::string const& target, std::string const& metric) {
         std::unique_ptr<Operon::ErrorMetric> error;
@@ -136,6 +141,7 @@ void InitEval(py::module_ &m)
             return self(MakeSpan<Operon::Scalar>(lhs), MakeSpan<Operon::Scalar>(rhs)); // NOLINT
         });
 
+    py::class_<Operon::SSE, Operon::ErrorMetric>(m, "SSE").def(py::init<>());
     py::class_<Operon::MSE, Operon::ErrorMetric>(m, "MSE").def(py::init<>());
     py::class_<Operon::NMSE, Operon::ErrorMetric>(m, "NMSE").def(py::init<>());
     py::class_<Operon::RMSE, Operon::ErrorMetric>(m, "RMSE").def(py::init<>());
@@ -155,9 +161,10 @@ void InitEval(py::module_ &m)
 
     py::class_<TEvaluator, Operon::EvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>())
-        //.def_property("Optimizer", &TEvaluator::GetOptimizer, &TEvaluator::SetOptimizer);
-        .def_property("Optimizer", nullptr, [](TEvaluator& self, Operon::OptimizerBase<TDispatch> const& opt) {
-           self.SetOptimizer(&opt);
+        .def_property("Optimizer", nullptr, [](TEvaluator& self, py::object const& obj) {
+            auto const* ptr = obj.cast<detail::Optimizer const&>().Get();
+            ENSURE(ptr != nullptr);
+            self.SetOptimizer(ptr);
         });
 
     py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
@@ -201,4 +208,9 @@ void InitEval(py::module_ &m)
 
     py::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
         .def(py::init<Operon::Problem&, TDispatch const&>());
+        // .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);;
+
+    py::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&>());
+        // .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);
 }

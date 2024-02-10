@@ -8,78 +8,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <operon/operators/evaluator.hpp>
 #include "pyoperon/pyoperon.hpp"
+#include "pyoperon/optimizer.hpp"
 
 namespace py = pybind11;
 
-// likelihood
-using TGaussianLikelihood      = Operon::GaussianLikelihood<Operon::Scalar>;
-using TPoissonLikelihood       = Operon::PoissonLikelihood<Operon::Scalar, false>;
-using TPoissonLikelihoodLog    = Operon::PoissonLikelihood<Operon::Scalar, true>;
-
-// optimizer
-using TDispatch                = Operon::DefaultDispatch;
-using TOptimizerBase           = Operon::OptimizerBase<TDispatch>;
-
-// optimizer::lm
-using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
-
-// optimizer::lbfgs
-using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLikelihood>;
-using TLBFGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihood>;
-using TLBFGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihoodLog>;
-
-// optimizer::sgd
-using TSGDOptimizerGauss       = Operon::SGDOptimizer<TDispatch, TGaussianLikelihood>;
-using TSGDOptimizerPoisson     = Operon::SGDOptimizer<TDispatch, TPoissonLikelihood>;
-using TSGDOptimizerPoissonLog  = Operon::SGDOptimizer<TDispatch, TPoissonLikelihoodLog>;
-
-// optimizer::sgd::update_rule
-using TUpdateRule              = Operon::UpdateRule::LearningRateUpdateRule;
-using TConstantUpdateRule      = Operon::UpdateRule::Constant<Operon::Scalar>;
-using TMomentumUpdateRule      = Operon::UpdateRule::Momentum<Operon::Scalar>;
-using TRmsPropUpdateRule       = Operon::UpdateRule::RmsProp<Operon::Scalar>;
-using TAdaDeltaUpdateRule      = Operon::UpdateRule::AdaDelta<Operon::Scalar>;
-using TAdaMaxUpdateRule        = Operon::UpdateRule::AdaMax<Operon::Scalar>;
-using TAdamUpdateRule          = Operon::UpdateRule::Adam<Operon::Scalar>;
-using TYamAdamUpdateRule       = Operon::UpdateRule::YamAdam<Operon::Scalar>;
-using TAmsGradUpdateRule       = Operon::UpdateRule::AmsGrad<Operon::Scalar>;
-using TYogiUpdateRule          = Operon::UpdateRule::Yogi<Operon::Scalar>;
-
 namespace detail {
-
-class Optimizer {
-    std::unique_ptr<TOptimizerBase> optimizer_;
-
-public:
-        auto SetBatchSize(std::size_t value) const { optimizer_->SetBatchSize(value); }
-        [[nodiscard]] auto BatchSize() const { return optimizer_->BatchSize(); }
-
-        auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
-        [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
-
-        [[nodiscard]] auto GetDispatchTable() const { return optimizer_->GetDispatchTable(); }
-        [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
-
-        [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
-            return optimizer_->Optimize(rng, tree);
-        }
-
-        [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
-            return optimizer_->ComputeLikelihood(x, y, w);
-        }
-
-        [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
-            return optimizer_->ComputeFisherMatrix(pred, jac, sigma);
-        }
-
-        auto Set(std::unique_ptr<TOptimizerBase> optimizer) {
-            optimizer_ = std::move(optimizer);
-        }
-
-        [[nodiscard]] auto Get() const { return optimizer_.get(); }
-};
 
 class LMOptimizer : public Optimizer {
     public:
@@ -154,7 +88,7 @@ void InitOptimizer(py::module_ &m)
         .def_readwrite("FinalParameters", &Operon::OptimizerSummary::FinalParameters);
 
 
-    py::class_<detail::Optimizer>(m, "Optimizer"); // base class
+    py::class_<detail::Optimizer>(m, "Optimizer");
 
     py::class_<detail::LMOptimizer, detail::Optimizer>(m, "LMOptimizer")
         .def(py::init<TDispatch const&, Problem const&, std::size_t, std::size_t>()

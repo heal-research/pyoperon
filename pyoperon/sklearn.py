@@ -273,6 +273,12 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         elif objective == 'diversity':
             return op.DiversityEvaluator(problem), None
 
+        elif objective == 'poisson':
+            return op.PoissonLikelihoodEvaluator(problem, dtable), None
+
+        elif objective == 'gauss':
+            return op.GaussianLikelihoodEvaluator(problem, dtable), None
+
         raise ValueError('Unknown objective {}'.format(objective))
 
 
