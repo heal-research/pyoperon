@@ -35,13 +35,11 @@ stdenv.mkDerivation rec {
   pname = "operon";
   version = "0.3.1";
 
-  #src = /home/bogdb/src/operon_tmp;
-
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "operon";
-    rev = "b59cc849ff406b6157d45778c90ec4ca22e2944d";
-    hash = "";
+    rev = "afeefb218a79067722b8f27a0676d60d4145c82d";
+    hash = "sha256-WhoeBHNUMrzFS/pAG851wFBGYyncqbsQ7y1FMxLpoO8=";
   };
 
   nativeBuildInputs = [ cmake git ];
@@ -74,11 +72,11 @@ stdenv.mkDerivation rec {
     "-DBUILD_CLI_PROGRAMS=${if buildCliPrograms then "ON" else "OFF"}"
     "-DBUILD_SHARED_LIBS=${if enableShared then "ON" else "OFF"}"
     "-DCMAKE_POSITION_INDEPENDENT_CODE=${if enableShared then "OFF" else "ON"}"
-    "-DCMAKE_CXX_FLAGS=${if stdenv.targetPlatform.isx86_64 then "-g" else ""}"
+    "--preset ${if stdenv.targetPlatform.isx86_64 then "build-linux" else "build-osx"}"
   ];
 
-  #cmakeBuildType = "Debug";
-  #dontStrip = true;
+  cmakeBuildType = "Debug";
+  dontStrip = true;
 
   meta = with lib; {
     description = "Modern, fast, scalable C++ framework for symbolic regression";
