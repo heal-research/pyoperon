@@ -53,35 +53,35 @@ class Optimizer {
     std::unique_ptr<TOptimizerBase> optimizer_;
 
 public:
-        auto SetBatchSize(std::size_t value) const { optimizer_->SetBatchSize(value); }
-        [[nodiscard]] auto BatchSize() const { return optimizer_->BatchSize(); }
+    auto SetBatchSize(std::size_t value) const { optimizer_->SetBatchSize(value); }
+    [[nodiscard]] auto BatchSize() const { return optimizer_->BatchSize(); }
 
-        auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
-        [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
+    auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
+    [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
 
-        [[nodiscard]] auto GetDispatchTable() const { return optimizer_->GetDispatchTable(); }
-        [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
+    [[nodiscard]] auto GetDispatchTable() const { return optimizer_->GetDispatchTable(); }
+    [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
 
-        [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
-            return optimizer_->Optimize(rng, tree);
-        }
+    [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
+        return optimizer_->Optimize(rng, tree);
+    }
 
-        [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
-            return optimizer_->ComputeLikelihood(x, y, w);
-        }
+    [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
+        return optimizer_->ComputeLikelihood(x, y, w);
+    }
 
-        [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
-            return optimizer_->ComputeFisherMatrix(pred, jac, sigma);
-        }
+    [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
+        return optimizer_->ComputeFisherMatrix(pred, jac, sigma);
+    }
 
-        auto Set(std::unique_ptr<TOptimizerBase> optimizer) {
-            optimizer_ = std::move(optimizer);
-        }
+    auto Set(std::unique_ptr<TOptimizerBase> optimizer) {
+        optimizer_ = std::move(optimizer);
+    }
 
-        auto Set(TOptimizerBase* optimizer) {
-            optimizer_.reset(optimizer);
-        }
+    auto Set(TOptimizerBase* optimizer) {
+        optimizer_.reset(optimizer);
+    }
 
-        [[nodiscard]] auto Get() const { return optimizer_.get(); }
+    [[nodiscard]] auto Get() const { return optimizer_.get(); }
 };
 }  // namespace detail

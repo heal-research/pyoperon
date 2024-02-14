@@ -71,7 +71,6 @@ public:
 
 void InitOptimizer(py::module_ &m)
 {
-    using OptimizerBase = Operon::OptimizerBase<TDispatch>;
     using Operon::Problem;
     using Operon::UpdateRule::LearningRateUpdateRule;
     using std::string;
@@ -121,9 +120,6 @@ void InitOptimizer(py::module_ &m)
     py::class_<TUpdateRule>(m, "UpdateRule"); // base class
 
     py::class_<TConstantUpdateRule, TUpdateRule>(m, "ConstantUpdateRule")
-        // .def(py::init([](Operon::Scalar lr) {
-        //     return TConstantUpdateRule(0, lr);
-        // }), py::arg("learning_rate") = 0.01);
         .def(py::init<Eigen::Index, Operon::Scalar>()
             , py::arg("dimension") = 0
             , py::arg("learning_rate") = 0.01

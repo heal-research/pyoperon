@@ -241,43 +241,46 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
     def __init_evaluator(self, objective, problem, dtable):
         if objective == 'r2':
-            err = op.R2()
-            return op.Evaluator(problem, dtable, err, True), err
+            return op.Evaluator(problem, dtable, op.R2(), True)
 
         elif objective == 'c2':
-            err = op.C2()
-            return op.Evaluator(problem, dtable, err, False), err
+            return op.Evaluator(problem, dtable, op.C2(), False)
 
         elif objective == 'nmse':
-            err = op.NMSE()
-            return op.Evaluator(problem, dtable, err, True), err
+            return op.Evaluator(problem, dtable, op.NMSE(), True)
 
         elif objective == 'rmse':
-            err = op.RMSE()
-            return op.Evaluator(problem, dtable, err, True), err
+            return op.Evaluator(problem, dtable, op.RMSE(), True)
 
         elif objective == 'mse':
-            err = op.MSE()
-            return op.Evaluator(problem, dtable, err, True), err
+            return op.Evaluator(problem, dtable, op.MSE(), True)
 
         elif objective == 'mae':
-            err = op.MAE()
-            return op.Evaluator(problem, dtable, err, True), err
+            return op.Evaluator(problem, dtable, op.MAE(), True)
 
         elif objective == 'length':
-            return op.LengthEvaluator(problem), None
+            return op.LengthEvaluator(problem)
 
         elif objective == 'shape':
-            return op.ShapeEvaluator(problem), None
+            return op.ShapeEvaluator(problem)
 
         elif objective == 'diversity':
-            return op.DiversityEvaluator(problem), None
+            return op.DiversityEvaluator(problem)
+
+        elif objective == 'mdl':
+            evaluator = op.MinimumDescriptionLengthEvaluator(problem, dtable)
+            evaluator.Sigma = self.uncertainty
+            return evaluator
 
         elif objective == 'poisson':
-            return op.PoissonLikelihoodEvaluator(problem, dtable), None
+            evaluator = op.PoissonLikelihoodEvaluator(problem, dtable)
+            evaluator.Sigma = self.uncertainty
+            return evaluator
 
         elif objective == 'gauss':
-            return op.GaussianLikelihoodEvaluator(problem, dtable), None
+            evaluator = op.GaussianLikelihoodEvaluator(problem, dtable)
+            evaluator.Sigma = self.uncertainty
+            return evaluator
 
         raise ValueError('Unknown objective {}'.format(objective))
 
@@ -442,7 +445,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         dtable = op.DispatchTable()
 
         # these lists are used as placeholders in order to extend the lifetimes of the objects
-        error_metrics = [] # placeholder for the error metric
         evaluators = [] # placeholder for the evaluator(s)
 
         update_rule = self.__init_sgd_update_rule()
@@ -460,10 +462,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             eval.Optimizer = mdl_opt
 
         for obj in self.objectives:
-            eval_, err_  = self.__init_evaluator(obj, problem, dtable)
+            eval_        = self.__init_evaluator(obj, problem, dtable)
             eval_.Budget = self.max_evaluations
             evaluators.append(eval_)
-            error_metrics.append(err_)
 
         evaluators[0].Optimizer = optimizer
 

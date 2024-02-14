@@ -151,15 +151,15 @@ void InitEval(py::module_ &m)
 
     // evaluator
     py::class_<TEvaluatorBase>(m, "EvaluatorBase")
-        .def_property("Budget", &TEvaluatorBase::Budget, &Operon::EvaluatorBase::SetBudget)
+        .def_property("Budget", &TEvaluatorBase::Budget, &TEvaluatorBase::SetBudget)
         .def_property_readonly("TotalEvaluations", &TEvaluatorBase::TotalEvaluations)
         //.def("__call__", &TEvaluatorBase::operator())
-        .def("__call__", [](Operon::EvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
+        .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
         .def_property_readonly("CallCount", [](TEvaluatorBase& self) { return self.CallCount.load(); })
         .def_property_readonly("ResidualEvaluations", [](TEvaluatorBase& self) { return self.ResidualEvaluations.load(); })
         .def_property_readonly("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
-    py::class_<TEvaluator, Operon::EvaluatorBase>(m, "Evaluator")
+    py::class_<TEvaluator, TEvaluatorBase>(m, "Evaluator")
         .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>())
         .def_property("Optimizer", nullptr, [](TEvaluator& self, py::object const& obj) {
             auto const* ptr = obj.cast<detail::Optimizer const&>().Get();
@@ -167,19 +167,24 @@ void InitEval(py::module_ &m)
             self.SetOptimizer(ptr);
         });
 
-    py::class_<Operon::UserDefinedEvaluator, Operon::EvaluatorBase>(m, "UserDefinedEvaluator")
-        .def(py::init<Operon::Problem&, std::function<typename Operon::EvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>());
+    py::class_<Operon::UserDefinedEvaluator, TEvaluatorBase>(m, "UserDefinedEvaluator")
+        .def(py::init<Operon::Problem&, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>())
+        .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
+            py::gil_scoped_release release;
+            return self(rng, ind, {});
+            py::gil_scoped_acquire acquire;
+        });
 
-    py::class_<Operon::LengthEvaluator, Operon::EvaluatorBase>(m, "LengthEvaluator")
+    py::class_<Operon::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
         .def(py::init<Operon::Problem&>());
 
-    py::class_<Operon::ShapeEvaluator, Operon::EvaluatorBase>(m, "ShapeEvaluator")
+    py::class_<Operon::ShapeEvaluator, TEvaluatorBase>(m, "ShapeEvaluator")
         .def(py::init<Operon::Problem&>());
 
-    py::class_<Operon::DiversityEvaluator, Operon::EvaluatorBase>(m, "DiversityEvaluator")
+    py::class_<Operon::DiversityEvaluator, TEvaluatorBase>(m, "DiversityEvaluator")
         .def(py::init<Operon::Problem&>());
 
-    py::class_<Operon::MultiEvaluator, Operon::EvaluatorBase>(m, "MultiEvaluator")
+    py::class_<Operon::MultiEvaluator, TEvaluatorBase>(m, "MultiEvaluator")
         .def(py::init<Operon::Problem&>())
         .def("Add", &Operon::MultiEvaluator::Add);
 
@@ -191,8 +196,8 @@ void InitEval(py::module_ &m)
         .value("HarmonicMean", Operon::AggregateEvaluator::AggregateType::HarmonicMean)
         .value("Sum", Operon::AggregateEvaluator::AggregateType::Sum);
 
-    py::class_<Operon::AggregateEvaluator, Operon::EvaluatorBase>(m, "AggregateEvaluator")
-        .def(py::init<Operon::EvaluatorBase&>())
+    py::class_<Operon::AggregateEvaluator, TEvaluatorBase>(m, "AggregateEvaluator")
+        .def(py::init<TEvaluatorBase&>())
         .def_property("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
     py::class_<TMDLEvaluator, TEvaluator>(m, "MinimumDescriptionLengthEvaluator")
