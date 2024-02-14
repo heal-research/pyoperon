@@ -9,6 +9,7 @@ from scipy import stats
 import pyoperon as Operon
 from pmlb import fetch_data
 
+
 # get some training data - see https://epistasislab.github.io/pmlb/
 D = fetch_data('1027_ESL', return_X_y=False, local_cache_dir='./datasets').to_numpy()
 
@@ -82,7 +83,8 @@ error_metric   = Operon.R2()          # use the coefficient of determination as 
 evaluator      = Operon.Evaluator(problem, dtable, error_metric, True) # initialize evaluator, use linear scaling = True
 evaluator.Budget = 1000 * 1000             # computational budget
 
-optimizer      = Operon.LMOptimizer(dtable, problem, max_iter=10)
+optimizer      = Operon.LMOptimizer(dtable, problem, max_iter=3)
+evaluator.Optimizer = optimizer
 
 # define how new offspring are created
 generator      = Operon.BasicOffspringGenerator(evaluator, crossover, mutation, selector, selector)
@@ -102,11 +104,11 @@ def report():
     best = gp.BestModel
     bestfit = best.GetFitness(0)
     sys.stdout.write('\r')
-    cursor = int(np.round(gen / config.Generations * max_ticks))
+    cursor = int(np.round(evaluator.TotalEvaluations/config.Evaluations * max_ticks))
     for i in range(cursor):
         sys.stdout.write('\u2588')
     sys.stdout.write(' ' * (max_ticks-cursor))
-    sys.stdout.write(f'{100 * gen/config.Generations:.1f}%, generation {gen}/{config.Generations}, train quality: {-bestfit:.6f}, elapsed: {time.time()-t0:.2f}s')
+    sys.stdout.write(f'{100 * evaluator.TotalEvaluations/config.Evaluations:.1f}%, generation {gen}/{config.Generations}, train quality: {-bestfit:.6f}, elapsed: {time.time()-t0:.2f}s')
     sys.stdout.flush()
     gen += 1
 
@@ -116,4 +118,6 @@ gp.Run(rng, report, threads=0)
 # get the best solution and print it
 best = gp.BestModel
 model_string = Operon.InfixFormatter.Format(best.Genotype, ds, 6)
+fit = evaluator(rng, gp.BestModel)
+print('\nfit=', fit)
 print(f'\n{model_string}')
