@@ -12,7 +12,7 @@ A scikit-learn regressor is also available:
 from pyoperon.sklearn import SymbolicRegressor
 ```
 
-The [examples](https://github.com/heal-research/pyoperon/examples) folder contains sample code for using either the Python bindings directly or the **pyoperon.sklearn** module.
+The [example](https://github.com/heal-research/pyoperon/tree/main/example) folder contains sample code for using either the Python bindings directly or the **pyoperon.sklearn** module.
 
 # Installation
 
