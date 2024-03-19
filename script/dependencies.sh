@@ -14,6 +14,12 @@ fi
 
 set -e
 
+PLATFORM=linux
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PLATFORM=osx
+fi
+
 # aria-csv
 git clone https://github.com/AriaFallah/csv-parser csv-parser
 mkdir -p ${CONDA_PREFIX}/include/aria-csv
@@ -46,7 +52,7 @@ rm -rf eve
 git clone https://github.com/heal-research/vstat.git
 pushd vstat
 git switch cpp20-eve
-git checkout 4ed22ae344c6a2a6e4522ad8b2c40070dd760600
+git checkout 06a8f15b22a0da523097f3fe500489c08a3ec086
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -59,7 +65,7 @@ rm -rf vstat
 ## fast-float
 git clone https://github.com/fastfloat/fast_float.git
 pushd fast_float
-git checkout 7a6fe5ee799bc5583b9f8ac62966b15d669bed0f
+git checkout f476bc713fda06fbd34dc621b466745a574b3d4c
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -85,7 +91,7 @@ rm -rf pratt-parser-calculator
 ## unordered_dense
 git clone https://github.com/martinus/unordered_dense.git
 pushd unordered_dense
-git checkout e88dd1ce6e9dc5b3fe84a7d93ac1d7f6f7653dbf
+git checkout 231e48c9426bd21c273669e5fdcd042c146975cf
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -97,7 +103,7 @@ rm -rf unordered_dense
 ## cpp-sort
 git clone https://github.com/Morwenn/cpp-sort.git
 pushd cpp-sort
-git checkout 29b593a6f9de08281bc5863ca82f6daaf55906d4
+git checkout 31dd8e9574dfc21e87d36794521b9e0a0fd6f5f6
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -113,7 +119,7 @@ git clone https://github.com/fmtlib/fmt.git
 pushd fmt
 mkdir build
 pushd build
-git checkout e57ca2e3685b160617d3d95fcd9e789c4e06ca88
+git checkout e69e5f977d458f2650bb346dadf2ad30c5320281
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -128,7 +134,7 @@ rm -rf fmt
 ## quickcpplib
 git clone https://github.com/ned14/quickcpplib.git
 pushd quickcpplib
-git checkout 5f33a37e9686b87b10f560958e7f78aff64624e4
+git checkout 72277c70f925829935a2af846731ab36063ec16f
 cmake -S . -B build \
     -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
@@ -139,7 +145,7 @@ rm -rf quickcpplib
 ## status-code
 git clone https://github.com/ned14/status-code.git
 pushd status-code
-git checkout 6bd2d565fd4377e16614c6c5beb495c33bfa835b
+git checkout a35d88d692a23a89a39d45dee12a629fffa57207
 cmake -S . -B build \
     -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
@@ -150,7 +156,7 @@ rm -rf status-code
 ## outcome
 git clone https://github.com/ned14/outcome.git
 pushd outcome
-git checkout 11a18c85ca7ae16af34ea309da5a0fe90024e3c3
+git checkout 571f9c930e672950e99d5d30f743603aaaf8014c
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DPROJECT_IS_DEPENDENCY=ON \
@@ -208,9 +214,9 @@ rm -rf mdspan
 ## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout afeefb218a79067722b8f27a0676d60d4145c82d
+git checkout 59ea4c147baad463406ed9f315a9031b4eb130b1
 mkdir build
-cmake -S . -B build --preset build-linux \
+cmake -S . -B build --preset build-${PLATFORM} \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_CLI_PROGRAMS=OFF \
     -DBUILD_TESTING=OFF \
