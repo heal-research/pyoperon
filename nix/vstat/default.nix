@@ -7,8 +7,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "heal-research";
     repo = "vstat";
-    rev = "4ed22ae344c6a2a6e4522ad8b2c40070dd760600";
-    hash = "sha256-xcQlOU6YLxykNsWnfbobrV0YmT0I3e0itRNrwxkW3jw=";
+    rev = "06a8f15b22a0da523097f3fe500489c08a3ec086";
+    hash = "sha256-zlKiMQBKLm66rj7xOWpfugVCbSEAPiHZinWRSeoV/w4=";
   };
 
   nativeBuildInputs = [ cmake pkg-config ];
