@@ -212,10 +212,10 @@ void InitEval(py::module_ &m)
         .def(py::init<Operon::Problem&, TDispatch const&>());
 
     py::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
-        .def(py::init<Operon::Problem&, TDispatch const&>());
-        // .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);;
+        .def(py::init<Operon::Problem&, TDispatch const&>())
+        .def_property("Sigma", &TGaussEvaluator::Sigma , &TGaussEvaluator::SetSigma /*set*/);;
 
     py::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
-        .def(py::init<Operon::Problem&, TDispatch const&>());
-        // .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);
+        .def(py::init<Operon::Problem&, TDispatch const&>())
+        .def_property("Sigma", &TPoissonEvaluator::Sigma , &TPoissonEvaluator::SetSigma /*set*/);
 }
