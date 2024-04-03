@@ -51,8 +51,7 @@ rm -rf eve
 ## vstat
 git clone https://github.com/heal-research/vstat.git
 pushd vstat
-git switch cpp20-eve
-git checkout 06a8f15b22a0da523097f3fe500489c08a3ec086
+git checkout 428ec2385aebf44d9ba89064b2b2ef419fd6206a
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
