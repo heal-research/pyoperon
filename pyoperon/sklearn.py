@@ -579,7 +579,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X, accept_sparse=False)
         ds = op.Dataset(X)
         rg = op.Range(0, ds.Rows)
-        return op.Evaluate(model, ds, rg)
+        return op.Evaluate(model, ds, rg).reshape(-1,)
 
 
     def predict(self, X):
@@ -596,4 +596,4 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Returns an array of ones.
         """
         check_is_fitted(self)
-        return self.evaluate_model(self.model_, X).reshape(-1,)
+        return self.evaluate_model(self.model_, X)
