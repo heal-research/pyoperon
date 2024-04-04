@@ -596,4 +596,4 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Returns an array of ones.
         """
         check_is_fitted(self)
-        return self.evaluate_model(self.model_, X).reshape(-1, 1)
+        return self.evaluate_model(self.model_, X).reshape(-1,)
