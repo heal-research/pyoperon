@@ -12,7 +12,14 @@
 
 void InitAlgorithm(py::module_ &m)
 {
-    py::class_<Operon::GeneticProgrammingAlgorithm>(m, "GeneticProgrammingAlgorithm")
+    py::class_<Operon::GeneticAlgorithmBase>(m, "GeneticAlgorithmBase")
+        .def_property_readonly("Generation", static_cast<size_t (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Generation))
+        .def_property_readonly("Individuals", static_cast<std::vector<Operon::Individual> const& (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Individuals))
+        .def_property_readonly("Parents", static_cast<std::span<Operon::Individual const> (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Parents))
+        .def_property_readonly("Parents", static_cast<std::span<Operon::Individual const> (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Offspring))
+        ;
+
+    py::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
         .def(py::init<Operon::Problem const&, Operon::GeneticAlgorithmConfig const&, Operon::TreeInitializerBase const&,
                 Operon::CoefficientInitializerBase const&, Operon::OffspringGeneratorBase const&, Operon::ReinserterBase const&>())
         .def("Run", py::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t>(&Operon::GeneticProgrammingAlgorithm::Run),
@@ -22,11 +29,9 @@ void InitAlgorithm(py::module_ &m)
                 auto minElem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
                 return *minElem;
             })
-        .def_property_readonly("Generation", &Operon::GeneticProgrammingAlgorithm::Generation)
-        .def_property_readonly("Individuals", &Operon::GeneticProgrammingAlgorithm::Individuals)
         .def_property_readonly("Config", &Operon::GeneticProgrammingAlgorithm::GetConfig);
 
-    py::class_<Operon::NSGA2>(m, "NSGA2Algorithm")
+    py::class_<Operon::NSGA2, Operon::GeneticAlgorithmBase>(m, "NSGA2Algorithm")
         .def(py::init<Operon::Problem const&, Operon::GeneticAlgorithmConfig const&, Operon::TreeInitializerBase const&, Operon::CoefficientInitializerBase const&,
                 Operon::OffspringGeneratorBase const&, Operon::ReinserterBase const&, Operon::NondominatedSorterBase const&>())
         .def("Run", py::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t>(&Operon::NSGA2::Run),
@@ -36,8 +41,6 @@ void InitAlgorithm(py::module_ &m)
                 auto minElem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return a[0] < b[0];});
                 return *minElem;
             })
-        .def_property_readonly("Generation", &Operon::NSGA2::Generation)
-        .def_property_readonly("Individuals", &Operon::NSGA2::Individuals)
         .def_property_readonly("BestFront", [](Operon::NSGA2 const& self) {
                     auto best = self.Best();
                     return std::vector<Operon::Individual>(best.begin(), best.end());

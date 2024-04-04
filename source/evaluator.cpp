@@ -217,5 +217,8 @@ void InitEval(py::module_ &m)
 
     py::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
         .def(py::init<Operon::Problem&, TDispatch const&>())
-        .def_property("Sigma", &TPoissonEvaluator::Sigma , &TPoissonEvaluator::SetSigma /*set*/);
+        .def_property("Sigma", [](TPoissonEvaluator const& self) {
+            auto sigma = self.Sigma();
+            return std::vector<Operon::Scalar>(sigma.begin(), sigma.end());
+        }, &TPoissonEvaluator::SetSigma /*set*/);
 }

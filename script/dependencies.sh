@@ -213,7 +213,7 @@ rm -rf mdspan
 ## operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout 59ea4c147baad463406ed9f315a9031b4eb130b1
+git checkout 4c3e1eea119d118406dd80389884253815721bc8
 mkdir build
 cmake -S . -B build --preset build-${PLATFORM} \
     -DCMAKE_BUILD_TYPE=Release \
