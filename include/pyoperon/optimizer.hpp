@@ -12,14 +12,16 @@ using TEvaluator               = Operon::Evaluator<TDispatch>;
 using TMDLEvaluator            = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
 using TBICEvaluator            = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
 using TAIKEvaluator            = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
-using TGaussEvaluator          = Operon::GaussianLikelihoodEvaluator<TDispatch>;
-using TPoissonEvaluator        = Operon::PoissonLikelihoodEvaluator<TDispatch>;
 
 // likelihood
 using TGaussianLikelihood      = Operon::GaussianLikelihood<Operon::Scalar>;
 using TPoissonLikelihood       = Operon::PoissonLikelihood<Operon::Scalar, false>;
 using TPoissonLikelihoodLog    = Operon::PoissonLikelihood<Operon::Scalar, true>;
 
+// likelihood evaluators
+using TGaussEvaluator          = Operon::GaussianLikelihoodEvaluator<TDispatch>;
+using TPoissonEvaluator        = Operon::LikelihoodEvaluator<TDispatch, TPoissonLikelihood>;
+using TPoissonLogEvaluator     = Operon::LikelihoodEvaluator<TDispatch, TPoissonLikelihoodLog>;
 // optimizer
 using TOptimizerBase           = Operon::OptimizerBase<TDispatch>;
 
