@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <operon/optimizer/optimizer.hpp>
+#include <operon/operators/local_search.hpp>
 #include <operon/optimizer/solvers/sgd.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -75,6 +76,12 @@ void InitOptimizer(py::module_ &m)
     using Operon::UpdateRule::LearningRateUpdateRule;
     using std::string;
     using std::size_t;
+
+    py::class_<Operon::CoefficientOptimizer>(m, "CoefficientOptimizer")
+        .def(py::init([](detail::Optimizer const& opt, double pLocal) {
+            return Operon::CoefficientOptimizer(*opt.Get(), pLocal);
+        }))
+        .def("__call__", &Operon::CoefficientOptimizer::operator());
 
     py::class_<Operon::OptimizerSummary>(m, "OptimizerSummary")
         .def_readwrite("InitialCost", &Operon::OptimizerSummary::InitialCost)

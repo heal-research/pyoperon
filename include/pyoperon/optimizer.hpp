@@ -7,12 +7,6 @@ using TDispatch                = Operon::DefaultDispatch;
 using TInterpreter             = Operon::Interpreter<Operon::Scalar, TDispatch>;
 using TInterpreterBase         = Operon::InterpreterBase<Operon::Scalar>;
 
-using TEvaluatorBase           = Operon::EvaluatorBase;
-using TEvaluator               = Operon::Evaluator<TDispatch>;
-using TMDLEvaluator            = Operon::MinimumDescriptionLengthEvaluator<TDispatch>;
-using TBICEvaluator            = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
-using TAIKEvaluator            = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
-
 // likelihood
 using TGaussianLikelihood      = Operon::GaussianLikelihood<Operon::Scalar>;
 using TPoissonLikelihood       = Operon::PoissonLikelihood<Operon::Scalar, false>;
@@ -22,8 +16,19 @@ using TPoissonLikelihoodLog    = Operon::PoissonLikelihood<Operon::Scalar, true>
 using TGaussEvaluator          = Operon::GaussianLikelihoodEvaluator<TDispatch>;
 using TPoissonEvaluator        = Operon::LikelihoodEvaluator<TDispatch, TPoissonLikelihood>;
 using TPoissonLogEvaluator     = Operon::LikelihoodEvaluator<TDispatch, TPoissonLikelihoodLog>;
+
+// evaluator
+using TEvaluatorBase           = Operon::EvaluatorBase;
+using TEvaluator               = Operon::Evaluator<TDispatch>;
+using TMDLEvaluatorGauss       = Operon::MinimumDescriptionLengthEvaluator<TDispatch, TGaussianLikelihood>;
+using TMDLEvaluatorPoisson     = Operon::MinimumDescriptionLengthEvaluator<TDispatch, TPoissonLikelihood>;
+using TMDLEvaluatorPoissonLog  = Operon::MinimumDescriptionLengthEvaluator<TDispatch, TPoissonLikelihoodLog>;
+
+using TBICEvaluator            = Operon::BayesianInformationCriterionEvaluator<TDispatch>;
+using TAIKEvaluator            = Operon::AkaikeInformationCriterionEvaluator<TDispatch>;
+
 // optimizer
-using TOptimizerBase           = Operon::OptimizerBase<TDispatch>;
+using TOptimizerBase           = Operon::OptimizerBase;
 
 // optimizer::lm
 using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
@@ -61,7 +66,6 @@ public:
     auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
     [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
 
-    [[nodiscard]] auto GetDispatchTable() const { return optimizer_->GetDispatchTable(); }
     [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
 
     [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {

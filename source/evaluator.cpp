@@ -32,6 +32,48 @@ template<typename T>
 auto PoissonLikelihood(py::array_t<T> x, py::array_t<T> y, py::array_t<T> w) {
     return TPoissonLikelihood::ComputeLikelihood(MakeSpan(x), MakeSpan(y), MakeSpan(w));
 }
+
+// small wrapper to unify the differently-templated MDL evaluators under a single class
+class MDLEvaluator {
+    std::unique_ptr<TEvaluatorBase> eval_;
+    enum { Gauss, Poisson, PoissonLog } lik_ = Gauss; // TODO: very ugly, find something better
+
+public:
+    MDLEvaluator(Operon::Problem& problem, TDispatch const& dtable, std::string const& lik) {
+        if (lik == "gauss") {
+            eval_ = std::make_unique<TMDLEvaluatorGauss>(problem, dtable);
+            lik_ = Gauss;
+        } else if (lik == "poisson") {
+            eval_ = std::make_unique<TMDLEvaluatorPoisson>(problem, dtable);
+            lik_ = Poisson;
+        } else if (lik == "poisson_log") {
+            eval_ = std::make_unique<TMDLEvaluatorPoissonLog>(problem, dtable);
+            lik_ = PoissonLog;
+        } else {
+            throw std::runtime_error(fmt::format("unknown likelihood: {}", lik));
+        }
+    }
+
+    auto SetSigma(std::vector<Operon::Scalar> const& sigma) -> void {
+        switch(lik_) {
+            case Gauss: dynamic_cast<TMDLEvaluatorGauss*>(eval_.get())->SetSigma(sigma); break;
+            case Poisson: dynamic_cast<TMDLEvaluatorPoisson*>(eval_.get())->SetSigma(sigma); break;
+            case PoissonLog: dynamic_cast<TMDLEvaluatorPoissonLog*>(eval_.get())->SetSigma(sigma); break;
+            default: throw std::runtime_error("unknown likelihood");
+        }
+    }
+
+    auto GetSigma() -> std::span<Operon::Scalar const> {
+        switch(lik_) {
+            case Gauss: return dynamic_cast<TMDLEvaluatorGauss*>(eval_.get())->Sigma();
+            case Poisson: return dynamic_cast<TMDLEvaluatorPoisson*>(eval_.get())->Sigma();
+            case PoissonLog: return dynamic_cast<TMDLEvaluatorPoissonLog*>(eval_.get())->Sigma();
+            default: throw std::runtime_error("unknown likelihood");
+        }
+    }
+
+    [[nodiscard]] auto Get() const { return eval_.get(); }
+};
 } // namespace detail
 
 void InitEval(py::module_ &m)
@@ -160,12 +202,7 @@ void InitEval(py::module_ &m)
         .def_property_readonly("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     py::class_<TEvaluator, TEvaluatorBase>(m, "Evaluator")
-        .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>())
-        .def_property("Optimizer", nullptr, [](TEvaluator& self, py::object const& obj) {
-            auto const* ptr = obj.cast<detail::Optimizer const&>().Get();
-            ENSURE(ptr != nullptr);
-            self.SetOptimizer(ptr);
-        });
+        .def(py::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>());
 
     py::class_<Operon::UserDefinedEvaluator, TEvaluatorBase>(m, "UserDefinedEvaluator")
         .def(py::init<Operon::Problem&, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>())
@@ -200,10 +237,12 @@ void InitEval(py::module_ &m)
         .def(py::init<TEvaluatorBase&>())
         .def_property("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
-    py::class_<TMDLEvaluator, TEvaluator>(m, "MinimumDescriptionLengthEvaluator")
-        .def(py::init<Operon::Problem&, TDispatch const&>())
-        .def_property("Sigma", nullptr /*get*/ , &TMDLEvaluator::SetSigma /*set*/);
-        // .def("__call__", &TMDLEvaluator::operator());
+    py::class_<detail::MDLEvaluator>(m, "MinimumDescriptionLengthEvaluator")
+        .def(py::init<Operon::Problem&, TDispatch const&, std::string const&>())
+        .def("__call__", [](detail::MDLEvaluator const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
+            return (*self.Get())(rng, ind, std::span<Operon::Scalar>{});
+        })
+        .def_property("Sigma", nullptr /*get*/ , &detail::MDLEvaluator::SetSigma /*set*/);
 
     py::class_<TBICEvaluator, TEvaluator>(m, "BayesianInformationCriterionEvaluator")
         .def(py::init<Operon::Problem&, TDispatch const&>());

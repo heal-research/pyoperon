@@ -42,6 +42,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         optimizer_likelihood           = 'gaussian',
         optimizer_batch_size           = 0,
         optimizer_iterations           = 0,
+        local_search_probability       = 1.0,
+        lamarckian_probability         = 1.0,
         sgd_update_rule                = 'constant',
         sgd_learning_rate              = 0.01,
         sgd_beta                       = 0.9,
@@ -86,6 +88,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.optimizer_likelihood      = optimizer_likelihood
         self.optimizer_batch_size      = optimizer_batch_size
         self.optimizer_iterations      = optimizer_iterations
+        self.local_search_probability  = local_search_probability
+        self.lamarckian_probability    = lamarckian_probability
         self.sgd_update_rule           = sgd_update_rule
         self.sgd_learning_rate         = sgd_learning_rate
         self.sgd_beta                  = sgd_beta
@@ -126,12 +130,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.mutation                       = check(self.mutation, { 'onepoint': 1.0, 'discretepoint': 1.0, 'changevar': 1.0, 'changefunc': 1.0, 'insertsubtree': 1.0, 'removesubtree': 1.0 })
         self.mutation_probability           = check(self.mutation_probability, 0.25)
         self.offspring_generator            = check(self.offspring_generator, 'basic')
-        self.reinserter                     = check(self.reinserter, 'replace-worst')
+        self.reinserter                     = check(self.reinserter, 'keep-best')
         self.objectives                     = check(self.objectives, [ 'r2' ])
         self.optimizer                      = check(self.optimizer, 'lbfgs')
         self.optimizer_likelihood           = check(self.optimizer_likelihood, 'gaussian')
         self.optimizer_batch_size           = check(self.optimizer_batch_size, 0)
         self.optimizer_iterations           = check(self.optimizer_iterations, 0)
+        self.local_search_probability       = check(self.local_search_probability, 1.0)
+        self.lamarckian_probability         = check(self.lamarckian_probability, 1.0)
         self.sgd_update_rule                = check(self.sgd_update_rule, 'constant')
         self.sgd_learning_rate              = check(self.sgd_learning_rate, 0.01)
         self.sgd_beta                       = check(self.sgd_beta, 0.9)
@@ -285,26 +291,26 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown objective {}'.format(objective))
 
 
-    def __init_generator(self, generator_name, evaluator, crossover, mutator, female_selector, male_selector):
+    def __init_generator(self, generator_name, evaluator, crossover, mutator, female_selector, male_selector, coeff_optimizer):
         if male_selector is None:
             male_selector = female_selector
 
         if generator_name == 'basic':
-            return op.BasicOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector)
+            return op.BasicOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector, coeff_optimizer)
 
         elif generator_name == 'os':
-            generator = op.OffspringSelectionGenerator(evaluator, crossover, mutator, female_selector, male_selector)
+            generator = op.OffspringSelectionGenerator(evaluator, crossover, mutator, female_selector, male_selector, coeff_optimizer)
             generator.MaxSelectionPressure = self.max_selection_pressure
             generator.ComparisonFactor = self.comparison_factor
             return generator
 
         elif generator_name == 'brood':
-            generator = op.BroodOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector)
+            generator = op.BroodOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector, coeff_optimizer)
             generator.BroodSize = self.brood_size
             return generator
 
         elif generator_name == 'poly':
-            generator = op.PolygenicOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector)
+            generator = op.PolygenicOffspringGenerator(evaluator, crossover, mutator, female_selector, male_selector, coeff_optimizer)
             generator.BroodSize = self.brood_size
             return generator
 
@@ -452,21 +458,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         mdl_opt = self.__init_optimizer(dtable, problem, self.optimizer, self.optimizer_likelihood, 100, self.optimizer_batch_size, update_rule)
 
         # evaluators for minimum description length and information criteria
-        mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable)
+        mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable, 'gauss')
         mdl_eval.Sigma = self.uncertainty
 
         bic_eval = op.BayesianInformationCriterionEvaluator(problem, dtable)
         aik_eval = op.AkaikeInformationCriterionEvaluator(problem, dtable)
 
-        for eval in [mdl_eval, bic_eval, aik_eval]:
-            eval.Optimizer = mdl_opt
-
         for obj in self.objectives:
             eval_        = self.__init_evaluator(obj, problem, dtable)
             eval_.Budget = self.max_evaluations
             evaluators.append(eval_)
-
-        evaluators[0].Optimizer = optimizer
 
         if single_objective:
             evaluator = evaluators[0]
@@ -491,7 +492,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             mut.Add(m, v)
             mut_list.append(m)
 
-        generator             = self.__init_generator(self.offspring_generator, evaluator, cx, mut, female_selector, male_selector)
+        coeff_optimizer       = op.CoefficientOptimizer(optimizer, self.lamarckian_probability)
+        generator             = self.__init_generator(self.offspring_generator, evaluator, cx, mut, female_selector, male_selector, coeff_optimizer)
 
         min_arity, max_arity  = pset.FunctionArityLimits()
         tree_initializer      = op.UniformLengthTreeInitializer(creator)
@@ -504,23 +506,25 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         if isinstance(self.random_state, np.random.Generator):
             self.random_state = self.random_state.bit_generator.random_raw()
 
-        config                = op.GeneticAlgorithmConfig(
-                                    generations      = self.generations,
-                                    max_evaluations  = self.max_evaluations,
-                                    local_iterations = self.optimizer_iterations,
-                                    population_size  = self.population_size,
-                                    pool_size        = self.pool_size,
-                                    p_crossover      = self.crossover_probability,
-                                    p_mutation       = self.mutation_probability,
-                                    epsilon          = self.epsilon,
-                                    seed             = self.random_state,
-                                    time_limit       = self.time_limit
-                                    )
+        config = op.GeneticAlgorithmConfig(
+                     generations      = self.generations,
+                     max_evaluations  = self.max_evaluations,
+                     local_iterations = self.optimizer_iterations,
+                     population_size  = self.population_size,
+                     pool_size        = self.pool_size,
+                     p_crossover      = self.crossover_probability,
+                     p_mutation       = self.mutation_probability,
+                     p_local          = self.local_search_probability,
+                     p_lamarck        = self.lamarckian_probability,
+                     epsilon          = self.epsilon,
+                     seed             = self.random_state,
+                     time_limit       = self.time_limit
+                     )
 
-        sorter                = None if single_objective else op.RankSorter()
-        gp                    = op.GeneticProgrammingAlgorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter) if single_objective \
-                                else op.NSGA2Algorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter, sorter)
-        rng                   = op.RomuTrio(np.uint64(config.Seed))
+        sorter = None if single_objective else op.RankSorter()
+        gp     = op.GeneticProgrammingAlgorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter) if single_objective \
+                 else op.NSGA2Algorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter, sorter)
+        rng    = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
 

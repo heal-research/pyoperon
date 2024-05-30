@@ -151,22 +151,26 @@ PYBIND11_MODULE(pyoperon, m)
         .def_readwrite("PoolSize", &Operon::GeneticAlgorithmConfig::PoolSize)
         .def_readwrite("CrossoverProbability", &Operon::GeneticAlgorithmConfig::CrossoverProbability)
         .def_readwrite("MutationProbability", &Operon::GeneticAlgorithmConfig::MutationProbability)
+        .def_readwrite("LocalSearchProbability", &Operon::GeneticAlgorithmConfig::LocalSearchProbability)
+        .def_readwrite("LamarckianProbability", &Operon::GeneticAlgorithmConfig::LamarckianProbability)
         .def_readwrite("Seed", &Operon::GeneticAlgorithmConfig::Seed)
         .def_readwrite("Epsilon", &Operon::GeneticAlgorithmConfig::Epsilon)
         .def_readwrite("TimeLimit", &Operon::GeneticAlgorithmConfig::TimeLimit)
-        .def(py::init([](size_t gen, size_t evals, size_t iter, size_t popsize, size_t poolsize, double pc, double pm, double epsilon, size_t seed, size_t timelimit) {
-                    Operon::GeneticAlgorithmConfig config;
-                    config.Generations = gen;
-                    config.Evaluations = evals;
-                    config.Iterations = iter;
-                    config.PopulationSize = popsize;
-                    config.PoolSize = poolsize;
-                    config.CrossoverProbability = pc;
-                    config.MutationProbability = pm;
-                    config.Epsilon = epsilon;
-                    config.Seed = seed;
-                    config.TimeLimit = timelimit;
-                    return config;
+        .def(py::init([](size_t gen, size_t evals, size_t iter, size_t popsize, size_t poolsize, double pc, double pm, double ps, double plm, double epsilon, size_t seed, size_t timelimit) {
+            Operon::GeneticAlgorithmConfig config;
+            config.Generations = gen;
+            config.Evaluations = evals;
+            config.Iterations = iter;
+            config.PopulationSize = popsize;
+            config.PoolSize = poolsize;
+            config.CrossoverProbability = pc;
+            config.MutationProbability = pm;
+            config.LocalSearchProbability = ps;
+            config.LamarckianProbability = plm;
+            config.Epsilon = epsilon;
+            config.Seed = seed;
+            config.TimeLimit = timelimit;
+            return config;
         }), py::arg("generations")
           , py::arg("max_evaluations")
           , py::arg("local_iterations")
@@ -174,7 +178,9 @@ PYBIND11_MODULE(pyoperon, m)
           , py::arg("pool_size")
           , py::arg("p_crossover")
           , py::arg("p_mutation")
-          , py::arg("epsilon")
-          , py::arg("seed")
-          , py::arg("time_limit"));
+          , py::arg("p_local") = 1.0
+          , py::arg("p_lamarck") = 1.0
+          , py::arg("epsilon") = 1e-5
+          , py::arg("seed") = 0
+          , py::arg("time_limit") = ~size_t{0});
 }
