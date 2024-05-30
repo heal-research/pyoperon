@@ -13,3 +13,6 @@ dependencies:
   - pybind11
   - scikit-build
   - xxhash
+  - zstd
+  - zstd-static
+  - zlib

@@ -210,10 +210,56 @@ cmake --install build
 popd
 rm -rf mdspan
 
+# span-lite
+git clone https://github.com/martinmoene/span-lite.git
+pushd span-lite
+git checkout 50f55c59d1b66910837313c40d11328d03447a41
+mkdir build
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf span-lite
+
+# byte-lite
+git clone https://github.com/martinmoene/byte-lite.git
+pushd byte-lite
+git checkout dd5b3827f7cd74c1f399d1ec2c063982d3442a99
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --install build
+popd
+rm -rf byte-lite
+
+# cpptrace
+git clone https://github.com/jeremy-rifkin/cpptrace.git
+pushd cpptrace
+cmake -S . -B build \
+       -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+       -DCPPTRACE_USE_EXTERNAL_ZSTD=1 \
+       -DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0
+cmake --build build
+cmake --install build
+popd
+rm -rf cpptrace
+
+# libassert
+git clone https://github.com/jeremy-rifkin/libassert.git
+pushd libassert
+git checkout v2.0.2
+mkdir build
+cmake -S . -B build \
+       -DCMAKE_BUILD_TYPE=Release \
+       -DLIBASSERT_USE_EXTERNAL_CPPTRACE=1 \
+       -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake --build build
+cmake --install build
+popd
+rm -rf libassert
+
 ## operon
+[ -d operon ] && rm -rf operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout d01b92cfa42e9e3059c1cbb4a8bc5cf5bacc8a96
+git checkout 4a93f98af108dbb98eb1cc10efe0f057b723293c
 mkdir build
 cmake -S . -B build --preset build-${PLATFORM} \
     -DCMAKE_BUILD_TYPE=Release \
