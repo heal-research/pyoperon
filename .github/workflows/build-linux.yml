@@ -30,8 +30,8 @@ jobs:
       - name: Run the build script
         shell: bash -l {0}
         run: |
-          export CC=clang
-          export CXX=clang++
+          export CC=gcc
+          export CXX=g++
           bash script/dependencies.sh # install dependencies
           python setup.py bdist_wheel -- --preset build-linux # build the wheel
 
