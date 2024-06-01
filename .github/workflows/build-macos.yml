@@ -39,6 +39,7 @@ jobs:
       - name: 'Build wheel'
         uses: actions/upload-artifact@v4
         with:
-          name: pyoperon-wheel
+          name: pyoperon-${{ matrix.version }}-${{ matrix.os }}
           path: dist/*.whl
           retention-days: 90
+
