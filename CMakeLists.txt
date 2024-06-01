@@ -122,6 +122,10 @@ if (MSVC)
     target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
 endif()
 
+if (APPLE)
+    set_target_properties(pyoperon_pyoperon PROPERTIES VERSION "")
+endif()
+
 # ---- Install rules ----
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
