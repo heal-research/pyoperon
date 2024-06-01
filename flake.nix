@@ -34,7 +34,7 @@
           };
           enableShared = false;
           stdenv_ = pkgs.llvmPackages_18.stdenv;
-          python_ = pkgs.python311;
+          python_ = pkgs.python3;
           operon_ = if enableShared then operon.packages.${system}.library else operon.packages.${system}.library-static;
 
           pyoperon = stdenv_.mkDerivation {
@@ -44,8 +44,6 @@
             cmakeFlags = [
               "--preset ${if pkgs.stdenv.hostPlatform.isx86_64 then "build-linux" else "build-osx"}"
             ];
-            cmakeBuildType = "Debug";
-            dontStrip = true;
 
             nativeBuildInputs = with pkgs; [
               cmake
@@ -56,7 +54,7 @@
             ];
 
             buildInputs = with pkgs; [
-              (python_.withPackages (ps: with ps; [ setuptools wheel requests ]))
+              (python_.withPackages (ps: with ps; [ setuptools wheel requests nanobind ]))
               operon_
             ] ++ operon_.buildInputs;
           };
@@ -80,9 +78,6 @@
             name = "pyoperon-dev";
             nativeBuildInputs = pyoperon.nativeBuildInputs;
             buildInputs = pyoperon.buildInputs;
-            shellHook = ''
-              $SHELL
-            '';
           };
 
           devShells.pyenv = stdenv_.mkDerivation {
@@ -92,9 +87,6 @@
               ++ (with python_.pkgs; [ scikit-build ]) # cmake integration and release preparation
               ++ (with python_.pkgs; [ numpy scikit-learn pandas pyarrow ipdb sympy requests matplotlib optuna jax jaxlib-bin torch ])
               ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
-            shellHook = ''
-              $SHELL
-            '';
           };
         };
     };

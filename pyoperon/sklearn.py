@@ -205,10 +205,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'variable' : op.NodeType.Variable,
         }
 
-        config = op.NodeType(0)
+        config = 0
         for s in symbols:
             if s in known_symbols:
-                config |= known_symbols[s]
+                v = int(known_symbols[s])
+                config |= v
             else:
                 raise ValueError('Unknown symbol type {}'.format(s))
 
@@ -433,8 +434,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         problem               = op.Problem(ds, training_range, test_range)
         problem.Target        = target
         problem.InputHashes   = self.inputs_
-        pcfg                  = self.__init_primitive_config(self.allowed_symbols)
-        problem.ConfigurePrimitiveSet(pcfg)
+        primitive_set_config  = self.__init_primitive_config(self.allowed_symbols)
+        problem.ConfigurePrimitiveSet(primitive_set_config)
         pset = problem.PrimitiveSet
 
         creator               = self.__init_creator(self.initialization_method, pset, self.inputs_)

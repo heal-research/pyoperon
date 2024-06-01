@@ -4,64 +4,64 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/operators/selector.hpp>
 
-void InitSelector(py::module_ &m)
+void InitSelector(nb::module_ &m)
 {
     // selection
-    py::class_<Operon::SelectorBase> sel(m, "SelectorBase");
+    nb::class_<Operon::SelectorBase> sel(m, "SelectorBase");
 
-    py::class_<Operon::TournamentSelector, Operon::SelectorBase>(m, "TournamentSelector")
-        .def(py::init([](size_t i){ 
+    nb::class_<Operon::TournamentSelector, Operon::SelectorBase>(m, "TournamentSelector")
+        .def("__init__", [](Operon::TournamentSelector* op, size_t i){
             Operon::SingleObjectiveComparison comp(i);
-            return Operon::TournamentSelector(comp); }), py::arg("objective_index"))
-        .def(py::init([](Operon::SingleObjectiveComparison const& comp) {
+            new (op) Operon::TournamentSelector(comp); }, nb::arg("objective_index"))
+        .def("__init__", [](Operon::TournamentSelector* op, Operon::SingleObjectiveComparison const& comp) {
                 Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                return Operon::TournamentSelector(temp);
-            }))
-        .def(py::init([](Operon::CrowdedComparison const&) {
+                new (op) Operon::TournamentSelector(temp);
+            })
+        .def("__init__", [](Operon::TournamentSelector* op, Operon::CrowdedComparison const&) {
                 Operon::CrowdedComparison temp;
-                return Operon::TournamentSelector(temp);
-            }))
-        .def(py::init<Operon::ComparisonCallback const&>())
+                new (op) Operon::TournamentSelector(temp);
+            })
+        .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::TournamentSelector::operator())
-        .def_property("TournamentSize", &Operon::TournamentSelector::GetTournamentSize, &Operon::TournamentSelector::SetTournamentSize);
+        .def_prop_rw("TournamentSize", &Operon::TournamentSelector::GetTournamentSize, &Operon::TournamentSelector::SetTournamentSize);
 
-    py::class_<Operon::RankTournamentSelector, Operon::SelectorBase>(m, "RankTournamentSelector")
-        .def(py::init([](size_t i){
+    nb::class_<Operon::RankTournamentSelector, Operon::SelectorBase>(m, "RankTournamentSelector")
+        .def("__init__", [](Operon::RankTournamentSelector* op, size_t i){
             Operon::SingleObjectiveComparison comp(i);
-            return Operon::RankTournamentSelector(comp); }), py::arg("objective_index"))
-        .def(py::init([](Operon::SingleObjectiveComparison const& comp) {
+            new (op) Operon::RankTournamentSelector(comp); }, nb::arg("objective_index"))
+        .def("__init__", [](Operon::RankTournamentSelector* op, Operon::SingleObjectiveComparison const& comp) {
                 Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                return Operon::RankTournamentSelector(temp);
-            }))
-        .def(py::init([](Operon::CrowdedComparison const&) {
+                new (op) Operon::RankTournamentSelector(temp);
+            })
+        .def("__init__", [](Operon::RankTournamentSelector* op, Operon::CrowdedComparison const&) {
                 Operon::CrowdedComparison temp;
-                return Operon::RankTournamentSelector(temp);
-            }))
-        .def(py::init<Operon::ComparisonCallback const&>())
+                new (op) Operon::RankTournamentSelector(temp);
+            })
+        .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::RankTournamentSelector::operator())
         .def("Prepare", &Operon::RankTournamentSelector::Prepare)
-        .def_property("TournamentSize", &Operon::RankTournamentSelector::GetTournamentSize, &Operon::RankTournamentSelector::SetTournamentSize);
+        .def_prop_rw("TournamentSize", &Operon::RankTournamentSelector::GetTournamentSize, &Operon::RankTournamentSelector::SetTournamentSize);
 
-    py::class_<Operon::ProportionalSelector, Operon::SelectorBase>(m, "ProportionalSelector")
-        .def(py::init([](size_t i){
+    nb::class_<Operon::ProportionalSelector, Operon::SelectorBase>(m, "ProportionalSelector")
+        .def("__init__", [](Operon::ProportionalSelector* op, size_t i){
                 Operon::SingleObjectiveComparison comp(i);
-                return Operon::ProportionalSelector(comp); }), py::arg("objective_index"))
-        .def(py::init([](Operon::SingleObjectiveComparison const& comp) {
+                new (op) Operon::ProportionalSelector(comp); }, nb::arg("objective_index"))
+        .def("__init__", [](Operon::ProportionalSelector* op, Operon::SingleObjectiveComparison const& comp) {
                 Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                return Operon::ProportionalSelector(temp);
-            }))
-        .def(py::init([](Operon::CrowdedComparison const&) {
+                new (op) Operon::ProportionalSelector(temp);
+            })
+        .def("__init__", [](Operon::ProportionalSelector* op, Operon::CrowdedComparison const&) {
                 Operon::CrowdedComparison temp;
-                return Operon::ProportionalSelector(temp);
-            }))
-        .def(py::init<Operon::ComparisonCallback const&>())
+                new (op) Operon::ProportionalSelector(temp);
+            })
+        .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::ProportionalSelector::operator())
-        .def("Prepare", py::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::ProportionalSelector::Prepare, py::const_))
+        .def("Prepare", nb::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::ProportionalSelector::Prepare, nb::const_))
         .def("SetObjIndex", &Operon::ProportionalSelector::SetObjIndex);
 
-    py::class_<Operon::RandomSelector, Operon::SelectorBase>(m, "RandomSelector")
-        .def(py::init<>())
+    nb::class_<Operon::RandomSelector, Operon::SelectorBase>(m, "RandomSelector")
+        .def(nb::init<>())
         .def("__call__", &Operon::RandomSelector::operator())
-        .def("Prepare", py::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::RandomSelector::Prepare, py::const_));
+        .def("Prepare", nb::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::RandomSelector::Prepare, nb::const_));
 
 }

@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
-#include <pybind11/pybind11.h>
-#include <pybind11/operators.h>
-
 #include "pyoperon/pyoperon.hpp"
 
+#include <nanobind/operators.h>
 #include <operon/core/node.hpp>
+#include <utility>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-void InitNode(py::module_ &m)
+void InitNode(nb::module_ &m)
 {
     // node type
-    py::enum_<Operon::NodeType>(m, "NodeType")
+    nb::enum_<Operon::NodeType>(m, "NodeType", nb::is_arithmetic{})
         .value("Add", Operon::NodeType::Add)
         .value("Mul", Operon::NodeType::Mul)
         .value("Sub", Operon::NodeType::Sub)
@@ -46,40 +45,39 @@ void InitNode(py::module_ &m)
         .value("Constant", Operon::NodeType::Constant)
         .value("Variable", Operon::NodeType::Variable)
         // expose overloaded operators
-        .def(py::self & py::self)
-        .def(py::self &= py::self)
-        .def(py::self | py::self)
-        .def(py::self |= py::self)
-        .def(py::self ^ py::self)
-        .def(py::self ^= py::self)
-        .def(~py::self);
-
+        .def(nb::self & nb::self)
+        .def(nb::self &= nb::self)
+        .def(nb::self | nb::self)
+        .def(nb::self |= nb::self)
+        .def(nb::self ^ nb::self)
+        .def(nb::self ^= nb::self)
+        .def(~nb::self);
     // node
-    py::class_<Operon::Node>(m, "Node")
-        .def(py::init<Operon::NodeType>())
-        .def(py::init<Operon::NodeType, Operon::Hash>())
-        .def_property_readonly("Name", &Operon::Node::Name)
-        .def_property_readonly("IsLeaf", &Operon::Node::IsLeaf)
-        .def_property_readonly("IsConstant", &Operon::Node::IsConstant)
-        .def_property_readonly("IsVariable", &Operon::Node::IsVariable)
-        .def_property_readonly("IsCommutative", &Operon::Node::IsCommutative)
-        .def_readwrite("Value", &Operon::Node::Value)
-        .def_readwrite("HashValue", &Operon::Node::HashValue)
-        .def_readwrite("CalculatedHashValue", &Operon::Node::CalculatedHashValue)
-        .def_readwrite("Arity", &Operon::Node::Arity)
-        .def_readwrite("Length", &Operon::Node::Length)
-        .def_readwrite("Depth", &Operon::Node::Depth)
-        .def_readwrite("Level", &Operon::Node::Level)
-        .def_readwrite("Parent", &Operon::Node::Parent)
-        .def_readwrite("Type", &Operon::Node::Type)
-        .def_readwrite("IsEnabled", &Operon::Node::IsEnabled)
-        .def_readwrite("Optimize", &Operon::Node::Optimize)
-        .def(py::self == py::self)
-        .def(py::self != py::self)
-        .def(py::self < py::self)
-        .def(py::self <= py::self)
-        .def(py::self > py::self)
-        .def(py::self >= py::self)
+    nb::class_<Operon::Node>(m, "Node")
+        .def(nb::init<Operon::NodeType>())
+        .def(nb::init<Operon::NodeType, Operon::Hash>())
+        .def_prop_ro("Name", &Operon::Node::Name)
+        .def_prop_ro("IsLeaf", &Operon::Node::IsLeaf)
+        .def_prop_ro("IsConstant", &Operon::Node::IsConstant)
+        .def_prop_ro("IsVariable", &Operon::Node::IsVariable)
+        .def_prop_ro("IsCommutative", &Operon::Node::IsCommutative)
+        .def_rw("Value", &Operon::Node::Value)
+        .def_rw("HashValue", &Operon::Node::HashValue)
+        .def_rw("CalculatedHashValue", &Operon::Node::CalculatedHashValue)
+        .def_rw("Arity", &Operon::Node::Arity)
+        .def_rw("Length", &Operon::Node::Length)
+        .def_rw("Depth", &Operon::Node::Depth)
+        .def_rw("Level", &Operon::Node::Level)
+        .def_rw("Parent", &Operon::Node::Parent)
+        .def_rw("Type", &Operon::Node::Type)
+        .def_rw("IsEnabled", &Operon::Node::IsEnabled)
+        .def_rw("Optimize", &Operon::Node::Optimize)
+        .def(nb::self == nb::self)
+        .def(nb::self != nb::self)
+        .def(nb::self < nb::self)
+        .def(nb::self <= nb::self)
+        .def(nb::self > nb::self)
+        .def(nb::self >= nb::self)
         // node factory for convenience
         .def("Add", []() { return Operon::Node(Operon::NodeType::Add); })
         .def("Sub", []() { return Operon::Node(Operon::NodeType::Sub); })
@@ -108,10 +106,10 @@ void InitNode(py::module_ &m)
                 return variable;
                 })
         // pickle support
-        .def(py::pickle(
+        .def("__getstate__",
             [](Operon::Node const& n) { // __getstate__
                 /* Return a tuple that fully encodes the state of the object */
-                return py::make_tuple(
+                return std::make_tuple(
                     n.HashValue,
                     n.CalculatedHashValue,
                     n.Value,
@@ -124,32 +122,29 @@ void InitNode(py::module_ &m)
                     n.IsEnabled,
                     n.Optimize
                 );
-            },
-            [](py::tuple t) { // __setstate__
+            })
+        .def("__setstate__",
+            [](Operon::Node& n, std::tuple<Operon::Hash, Operon::Hash, Operon::Scalar, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, Operon::NodeType, bool, bool> const& t) {
                 auto constexpr tupleSize{ 11 };
-                if (t.size() != tupleSize) {
+                if (std::tuple_size_v<std::remove_cvref_t<decltype(t)>> != tupleSize) {
                     throw std::runtime_error("Invalid state!");
                 }
 
-                /* Create a new C++ instance */
-                Operon::Node n(t[8].cast<Operon::NodeType>());
-
-                /* Assign any additional state */
-                n.HashValue           = t[0].cast<Operon::Hash>();
-                n.CalculatedHashValue = t[1].cast<Operon::Hash>();
-                n.Value               = t[2].cast<Operon::Scalar>();
-                n.Arity               = t[3].cast<uint16_t>();
-                n.Length              = t[4].cast<uint16_t>();
-                n.Depth               = t[5].cast<uint16_t>();
-                n.Level               = t[6].cast<uint16_t>();
-                n.Parent              = t[7].cast<uint16_t>();
-                //n.Type                = t[8].cast<uint16_t>(); // type set above
-                n.IsEnabled           = t[9].cast<bool>();
-                n.Optimize            = t[10].cast<bool>();
+                // Use placement new to populate the node
+                n.HashValue           = std::get<0>(t);
+                n.CalculatedHashValue = std::get<1>(t);
+                n.Value               = std::get<2>(t);
+                n.Arity               = std::get<3>(t);
+                n.Length              = std::get<4>(t);
+                n.Depth               = std::get<5>(t);
+                n.Level               = std::get<6>(t);
+                n.Parent              = std::get<7>(t);
+                n.Type                = std::get<8>(t);
+                n.IsEnabled           = std::get<9>(t);
+                n.Optimize            = std::get<10>(t);
 
                 return n;
-            }
-        ))
+            })
         ;
 
 }

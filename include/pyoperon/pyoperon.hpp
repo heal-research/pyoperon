@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
-#include <pybind11/eigen.h>
-#include <pybind11/functional.h>
-#include <pybind11/numpy.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/pytypes.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/eigen/dense.h>
+#include <nanobind/stl/vector.h>
+
 #include <type_traits>
 
 #include <operon/core/types.hpp>
@@ -16,44 +12,45 @@
 #include <operon/core/individual.hpp>
 #include <operon/operators/evaluator.hpp>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 // enable pass-by-reference semantics for this vector type
-PYBIND11_MAKE_OPAQUE(std::vector<Operon::Variable>);
-PYBIND11_MAKE_OPAQUE(std::vector<Operon::Individual>);
+NB_MAKE_OPAQUE(std::vector<Operon::Variable>);
+NB_MAKE_OPAQUE(std::vector<Operon::Individual>);
 
 template<typename T>
-auto MakeView(Operon::Span<T const> view) -> py::array_t<T const>
+auto MakeView(Operon::Span<T const> view)
 {
-    auto sz = static_cast<pybind11::ssize_t>(view.size());
-    py::array_t<T const> arr(sz, view.data(), py::capsule(view.data()));
-    ENSURE(arr.owndata() == false);
-    ENSURE(arr.data() == view.data());
-    return arr;
+    std::array<std::size_t, 1> shape{-1UL};
+    return nb::ndarray<nb::numpy, T const, nb::ndim<1>>(
+        /* data = */ view.data(),
+        /* ndim = */ 1,
+        /* shape pointer =*/ shape.data(),
+        /* owner = */ nb::handle() // null owner
+    );
 }
 
-template<typename T, int F/*ExtraFlags*/>
-auto MakeSpan(py::array_t<T, F> arr) -> Operon::Span<T>
+template<typename T>
+auto MakeSpan(nanobind::ndarray<T> arr) -> Operon::Span<T>
 {
-    py::buffer_info info = arr.request();
-    return Operon::Span<T>(static_cast<T*>(info.ptr), static_cast<typename Operon::Span<T>::size_type>(info.size));
+    return Operon::Span<T>{ arr.data(), arr.size() };
 }
 
-void InitAlgorithm(py::module_&);
-void InitAutodiff(py::module_&);
-void InitBenchmark(py::module_&);
-void InitCreator(py::module_&);
-void InitCrossover(py::module_&);
-void InitDataset(py::module_&);
-void InitEval(py::module_&);
-void InitGenerator(py::module_&);
-void InitInitializer(py::module_&);
-void InitMutation(py::module_&);
-void InitNode(py::module_&);
-void InitNondominatedSorter(py::module_&);
-void InitOptimizer(py::module_&);
-void InitProblem(py::module_&);
-void InitPset(py::module_&);
-void InitReinserter(py::module_&m);
-void InitSelector(py::module_&m);
-void InitTree(py::module_&);
+void InitAlgorithm(nb::module_&);
+void InitAutodiff(nb::module_&);
+void InitBenchmark(nb::module_&);
+void InitCreator(nb::module_&);
+void InitCrossover(nb::module_&);
+void InitDataset(nb::module_&);
+void InitEval(nb::module_&);
+void InitGenerator(nb::module_&);
+void InitInitializer(nb::module_&);
+void InitMutation(nb::module_&);
+void InitNode(nb::module_&);
+void InitNondominatedSorter(nb::module_&);
+void InitOptimizer(nb::module_&);
+void InitProblem(nb::module_&);
+void InitPset(nb::module_&);
+void InitReinserter(nb::module_&m);
+void InitSelector(nb::module_&m);
+void InitTree(nb::module_&);

@@ -18,7 +18,7 @@
 using TDispatch    = Operon::DispatchTable<Operon::Scalar>;
 using TInterpreter = Operon::Interpreter<Operon::Scalar, TDispatch>;
 
-void InitBenchmark(py::module_ &m)
+void InitBenchmark(nb::module_ &m)
 {
     // benchmark functionality
     m.def("Bench", [](int nTrees = 10000, int maxLength = 50, int maxDepth = 100, int nRows = 10000, int nCols = 10, int seed = 0, int nThreads = 0) {
@@ -64,13 +64,13 @@ void InitBenchmark(py::module_ &m)
         });
         executor.run(taskflow).wait();
         return nTotal * range.Size();
-    }, py::call_guard<py::gil_scoped_release>(),
-       py::arg("num_trees") = 10000,
-       py::arg("max_length") = 50,
-       py::arg("max_depth") = 100,
-       py::arg("num_rows") = 10000,
-       py::arg("num_cols") = 10,
-       py::arg("random_state") = 0,
-       py::arg("num_threads") = 0
+    }, nb::call_guard<nb::gil_scoped_release>(),
+       nb::arg("num_trees") = 10000,
+       nb::arg("max_length") = 50,
+       nb::arg("max_depth") = 100,
+       nb::arg("num_rows") = 10000,
+       nb::arg("num_cols") = 10,
+       nb::arg("random_state") = 0,
+       nb::arg("num_threads") = 0
     );
 }
