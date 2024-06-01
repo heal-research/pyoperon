@@ -4,7 +4,7 @@ include(cmake/prelude.cmake)
 
 project(
     pyoperon
-    VERSION 0.3.6
+    VERSION 0.4.0
     DESCRIPTION "Scikit-learn module and python bindings and for the Operon library"
     HOMEPAGE_URL "https://operongp.readthedocs.io/en/latest/"
     LANGUAGES CXX
@@ -32,7 +32,8 @@ find_package(mdspan REQUIRED)
 find_package(operon REQUIRED)
 find_package(outcome REQUIRED)
 find_package(pratt-parser REQUIRED)
-find_package(pybind11 REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 find_package(unordered_dense REQUIRED)
 find_package(xxHash)
 if(NOT xxHash_FOUND)
@@ -47,7 +48,7 @@ endif()
 
 pybind11_add_module(
     pyoperon_pyoperon
-    SHARED
+    MODULE
     source/algorithm.cpp
     source/benchmark.cpp
     source/creator.cpp
@@ -69,19 +70,6 @@ pybind11_add_module(
 )
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
-# ---- Find python ----
-find_package(Python3 COMPONENTS Development REQUIRED)
-if(UNIX AND NOT APPLE)
-    # explicit linking is required on linux but not on macos
-    if (Python3_FOUND)
-        target_link_libraries(pyoperon_pyoperon PRIVATE Python3::Python)
-    else()
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(python REQUIRED IMPORTED_TARGET python3)
-        target_link_libraries(pyoperon_pyoperon PRIVATE PkgConfig::python)
-    endif()
-endif()
-
 # when operon is statically linked, dependency information will not be available
 # via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
 # all of the below will be added to INTERFACE_LINK_LIBRARIES, therefore we try to find them
@@ -102,10 +90,6 @@ generate_export_header(
     EXPORT_FILE_NAME export/pyoperon/pyoperon_export.hpp
     CUSTOM_CONTENT_FROM_VARIABLE pragma_suppress_c4251
 )
-
-if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(pyoperon_pyoperon PUBLIC PYOPERON_STATIC_DEFINE)
-endif()
 
 set_target_properties(
     pyoperon_pyoperon PROPERTIES
@@ -131,20 +115,11 @@ target_include_directories(
 
 target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_20)
 
-target_link_libraries(pyoperon_pyoperon PRIVATE
-    operon::operon # this will link in operon's public dependencies: fmt, ceres, etc.
-    pybind11::pybind11)
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(pyoperon_pyoperon PRIVATE "-fsized-deallocation")
-endif()
+# this will link in operon's public dependencies: fmt, ceres, etc.
+target_link_libraries(pyoperon_pyoperon PRIVATE operon::operon)
 
 if (MSVC)
     target_compile_options(pyoperon_pyoperon PRIVATE "/std:c++latest")
-else ()
-    if (UNIX AND NOT APPLE)
-        target_link_options(pyoperon_pyoperon PUBLIC "-Wl,--no-undefined")
-    endif()
 endif()
 
 # ---- Install rules ----
