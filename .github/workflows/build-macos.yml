@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
-        os: [ macos-11, macos-12, macos-13 ]
+        os: [ macos-11, macos-12, macos-13, macos-14 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -42,4 +42,3 @@ jobs:
           name: pyoperon-${{ matrix.version }}-${{ matrix.os }}
           path: dist/*.whl
           retention-days: 90
-
