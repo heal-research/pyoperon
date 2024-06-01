@@ -18,7 +18,7 @@ jobs:
         os: [ macos-11, macos-12, macos-13 ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Conda environment from environment.yml
         uses: mamba-org/setup-micromamba@v1
@@ -37,7 +37,7 @@ jobs:
           python setup.py bdist_wheel -- --preset build-osx # build the wheel
 
       - name: 'Build wheel'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pyoperon-wheel
           path: dist/*.whl
