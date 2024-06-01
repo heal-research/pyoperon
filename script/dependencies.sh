@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-if [[ -z "${CONDA_PREFIX}" ]]; then
-    INSTALL_PREFIX=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))")
-else
+if [[ -n "${VIRTUAL_ENV}" ]]; then
+    INSTALL_PREFIX="${VIRTUAL_ENV}"
+elif [[ -n "${CONDA_PREFIX}" ]]; then
     INSTALL_PREFIX="${CONDA_PREFIX}"
+else
+    INSTALL_PREFIX=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))")
 fi
 
 if [[ -z "${INSTALL_PREFIX}" ]]; then
@@ -22,19 +24,31 @@ fi
 
 # aria-csv
 git clone https://github.com/AriaFallah/csv-parser csv-parser
-mkdir -p ${CONDA_PREFIX}/include/aria-csv
+mkdir -p ${INSTALL_PREFIX}/include/aria-csv
 pushd csv-parser
 git checkout 4965c9f320d157c15bc1f5a6243de116a4caf101
 cmake -S . -B build \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf csv-parser
 
+# eigen
+git clone https://gitlab.com/libeigen/eigen.git
+pushd eigen
+git checkout 3.4.0
+cmake -S . -B build \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+cmake --build build
+cmake --install build
+popd
+rm -rf eigen
+
 ## eve
 git clone https://github.com/jfalcou/eve eve
-mkdir -p ${CONDA_PREFIX}/include/eve
-mkdir -p ${CONDA_PREFIX}/lib
+mkdir -p ${INSTALL_PREFIX}/include/eve
+mkdir -p ${INSTALL_PREFIX}/lib
 pushd eve
 git checkout 3d5821fe770a62c01328b78bb55880b39b8a0a26
 mkdir build
@@ -43,7 +57,7 @@ cmake -S . -B build \
     -DEVE_BUILD_TEST=OFF \
     -DEVE_BUILD_BENCHMARKS=OFF \
     -DEVE_BUILD_DOCUMENTATION=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf eve
@@ -56,7 +70,7 @@ mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf vstat
@@ -69,7 +83,7 @@ mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DFASTLOAT_TEST=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf fast_float
@@ -82,7 +96,7 @@ mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf pratt-parser-calculator
@@ -94,7 +108,7 @@ git checkout 231e48c9426bd21c273669e5fdcd042c146975cf
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf unordered_dense
@@ -108,7 +122,7 @@ cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCPPSORT_BUILD_TESTING=OFF \
     -DCPPSORT_BUILD_EXAMPLES=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf cpp-sort
@@ -124,7 +138,7 @@ cmake .. \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DFMT_TEST=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 make install
 popd
 popd
@@ -135,7 +149,7 @@ git clone https://github.com/ned14/quickcpplib.git
 pushd quickcpplib
 git checkout 72277c70f925829935a2af846731ab36063ec16f
 cmake -S . -B build \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
 cmake --install build
 popd
@@ -146,7 +160,7 @@ git clone https://github.com/ned14/status-code.git
 pushd status-code
 git checkout a35d88d692a23a89a39d45dee12a629fffa57207
 cmake -S . -B build \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
 cmake --install build
 popd
@@ -160,12 +174,12 @@ cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DPROJECT_IS_DEPENDENCY=ON \
     -DOUTCOME_BUNDLE_EMBEDDED_QUICKCPPLIB=OFF \
-    -Dquickcpplib_DIR=${CONDA_PREFIX}/quickcpplib \
+    -Dquickcpplib_DIR=${INSTALL_PREFIX}/quickcpplib \
     -DOUTCOME_BUNDLE_EMBEDDED_STATUS_CODE=OFF \
     -Dstatus-code_DIR=${CONDA_PREFXI}/status-code \
     -DOUTCOME_ENABLE_DEPENDENCY_SMOKE_TEST=OFF \
     -DCMAKE_DISABLE_FIND_PACKAGE_Git=ON \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf outcome
@@ -177,7 +191,8 @@ git checkout 0ac2cb5b8ffea5e3e71f264d8e2d37d585449512
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+    -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX}/lib64/cmake
 cmake --install build
 popd
 rm -rf lbfgs
@@ -190,7 +205,7 @@ mkdir build
 cmake -S . -B build \
     -DTF_BUILD_EXAMPLES=OFF \
     -DTF_BUILD_TESTS=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf taskflow
@@ -205,7 +220,7 @@ cmake -S . -B build \
     -DMDSPAN_CXX_STANDARD=20 \
     -DMDSPAN_ENABLE_TESTS=OFF \
     -DMDSPAN_ENABLE_BENCHMARKS=OFF \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf mdspan
@@ -215,7 +230,7 @@ git clone https://github.com/martinmoene/span-lite.git
 pushd span-lite
 git checkout 50f55c59d1b66910837313c40d11328d03447a41
 mkdir build
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf span-lite
@@ -224,7 +239,7 @@ rm -rf span-lite
 git clone https://github.com/martinmoene/byte-lite.git
 pushd byte-lite
 git checkout dd5b3827f7cd74c1f399d1ec2c063982d3442a99
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --install build
 popd
 rm -rf byte-lite
@@ -233,8 +248,8 @@ rm -rf byte-lite
 git clone https://github.com/jeremy-rifkin/cpptrace.git
 pushd cpptrace
 cmake -S . -B build \
-       -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
-       -DCPPTRACE_USE_EXTERNAL_ZSTD=1 \
+       -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+       -DCPPTRACE_USE_EXTERNAL_ZSTD=0 \
        -DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0
 cmake --build build
 cmake --install build
@@ -249,7 +264,10 @@ mkdir build
 cmake -S . -B build \
        -DCMAKE_BUILD_TYPE=Release \
        -DLIBASSERT_USE_EXTERNAL_CPPTRACE=1 \
-       -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+       -DBUILD_SHARED_LIBS=OFF \
+       -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+       -DCMAKE_CXX_FLAGS="-fPIC" \
+       -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 cmake --build build
 cmake --install build
 popd
@@ -267,8 +285,8 @@ cmake -S . -B build --preset build-${PLATFORM} \
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
-    -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}/lib64/cmake
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+    -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX}/lib64/cmake
 cmake --build build -j -t operon_operon
 cmake --install build
 popd
