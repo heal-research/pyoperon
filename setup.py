@@ -9,7 +9,7 @@ elif platform.system() == 'Darwin':
 
 setup(
     name="pyoperon",
-    version="0.3.6",
+    version="0.4.0",
     description="python bindings for the operon library",
     author='Bogdan Burlacu',
     packages=['pyoperon'],

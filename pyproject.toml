@@ -1,6 +1,6 @@
 [project]
 name = "pyoperon"
-version = "0.3.6"
+version = "0.4.0"
 authors = [
   { name = "Bogdan Burlacu", email="bogdan.burlacu@pm.me" },
 ]
