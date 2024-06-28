@@ -16,7 +16,9 @@ The [example](https://github.com/heal-research/pyoperon/tree/main/example) folde
 
 # Installation
 
-Due to ABI incompatiblity, the PyOperon version on PyPI is outdated. The wheels are instead released on github: https://github.com/heal-research/pyoperon/releases/
+New releases are published on [github](https://github.com/heal-research/pyoperon/releases/) and on [PyPI](https://pypi.org/manage/project/pyoperon/releases/).
+
+Most of the time `pip install pyoperon` should be enough.
 
 ## Building from source
 
