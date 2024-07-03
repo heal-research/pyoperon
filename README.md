@@ -16,7 +16,7 @@ The [example](https://github.com/heal-research/pyoperon/tree/main/example) folde
 
 # Installation
 
-New releases are published on [github](https://github.com/heal-research/pyoperon/releases/) and on [PyPI](https://pypi.org/manage/project/pyoperon/releases/).
+New releases are published on [github](https://github.com/heal-research/pyoperon/releases/) and on [PyPI](https://pypi.org/project/pyoperon/).
 
 Most of the time `pip install pyoperon` should be enough.
 
