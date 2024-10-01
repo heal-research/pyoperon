@@ -15,7 +15,7 @@ class LMOptimizer : public Optimizer {
     public:
     LMOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, std::size_t maxIter, std::size_t batchSize)
     {
-        Optimizer::Set(std::make_unique<TLMOptimizerEigen>(dispatch, problem));
+        Optimizer::Set(std::make_unique<TLMOptimizerEigen>(&dispatch, &problem));
         auto const* opt = Optimizer::Get();
         opt->SetIterations(maxIter);
         opt->SetBatchSize(batchSize);
@@ -27,11 +27,11 @@ public:
     LBFGSOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, std::string const& likelihood, std::size_t maxIter, std::size_t batchSize)
     {
         if (likelihood == "gaussian") {
-            Optimizer::Set(std::make_unique<TLBFGSOptimizerGauss>(dispatch, problem));
+            Optimizer::Set(std::make_unique<TLBFGSOptimizerGauss>(&dispatch, &problem));
         } else if (likelihood == "poisson") {
-            Optimizer::Set(std::make_unique<TLBFGSOptimizerPoisson>(dispatch, problem));
+            Optimizer::Set(std::make_unique<TLBFGSOptimizerPoisson>(&dispatch, &problem));
         } else if (likelihood == "poisson_log") {
-            Optimizer::Set(std::make_unique<TLBFGSOptimizerPoissonLog>(dispatch, problem));
+            Optimizer::Set(std::make_unique<TLBFGSOptimizerPoissonLog>(&dispatch, &problem));
         } else {
             throw std::invalid_argument(fmt::format("{} is not a valid likelihood\n", likelihood));
         }
@@ -49,11 +49,11 @@ public:
     SGDOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, Operon::UpdateRule::LearningRateUpdateRule const& updateRule, std::string const& likelihood, std::size_t maxIter, std::size_t batchSize)
     {
         if (likelihood == "gaussian") {
-            Optimizer::Set(std::make_unique<TSGDOptimizerGauss>(dispatch, problem, updateRule));
+            Optimizer::Set(std::make_unique<TSGDOptimizerGauss>(&dispatch, &problem, updateRule));
         } else if (likelihood == "poisson") {
-            Optimizer::Set(std::make_unique<TSGDOptimizerPoisson>(dispatch, problem, updateRule));
+            Optimizer::Set(std::make_unique<TSGDOptimizerPoisson>(&dispatch, &problem, updateRule));
         } else if (likelihood == "poisson_log") {
-            Optimizer::Set(std::make_unique<TSGDOptimizerPoissonLog>(dispatch, problem, updateRule));
+            Optimizer::Set(std::make_unique<TSGDOptimizerPoissonLog>(&dispatch, &problem, updateRule));
         } else {
             throw std::invalid_argument(fmt::format("{} is not a valid likelihood\n", likelihood));
         }
@@ -73,8 +73,8 @@ void InitOptimizer(nb::module_ &m)
     using std::size_t;
 
     nb::class_<Operon::CoefficientOptimizer>(m, "CoefficientOptimizer")
-        .def("__init__", [](Operon::CoefficientOptimizer* op, detail::Optimizer const& opt, double pLocal) {
-            new (op) Operon::CoefficientOptimizer(*opt.Get(), pLocal);
+        .def("__init__", [](Operon::CoefficientOptimizer* op, detail::Optimizer const& opt) {
+            new (op) Operon::CoefficientOptimizer(opt.Get());
         })
         .def("__call__", &Operon::CoefficientOptimizer::operator());
 

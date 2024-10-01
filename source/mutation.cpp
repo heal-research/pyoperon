@@ -48,7 +48,7 @@ void InitMutation(nb::module_ &m)
         .def("__call__", &Operon::ChangeFunctionMutation::operator());
 
     nb::class_<Operon::ReplaceSubtreeMutation, Operon::MutatorBase>(m, "ReplaceSubtreeMutation")
-        .def(nb::init<Operon::CreatorBase&, Operon::CoefficientInitializerBase&, size_t, size_t>())
+        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>())
         .def("__call__", &Operon::ReplaceSubtreeMutation::operator());
 
     nb::class_<Operon::RemoveSubtreeMutation, Operon::MutatorBase>(m, "RemoveSubtreeMutation")
@@ -56,13 +56,16 @@ void InitMutation(nb::module_ &m)
         .def("__call__", &Operon::RemoveSubtreeMutation::operator());
 
     nb::class_<Operon::InsertSubtreeMutation, Operon::MutatorBase>(m, "InsertSubtreeMutation")
-        .def(nb::init<Operon::CreatorBase&, Operon::CoefficientInitializerBase&, size_t, size_t>())
+        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>())
         .def("__call__", &Operon::InsertSubtreeMutation::operator());
 
     nb::class_<Operon::MultiMutation, Operon::MutatorBase>(m, "MultiMutation")
         .def(nb::init<>())
         .def("__call__", &Operon::MultiMutation::operator())
         .def("Add", &Operon::MultiMutation::Add)
+        .def("Add", [](Operon::MultiMutation& self, Operon::MutatorBase const& mut, double prob) {
+            self.Add(&mut, prob);
+        })
         .def_prop_ro("Count", &Operon::MultiMutation::Count);
 
 }

@@ -38,7 +38,7 @@ void InitBenchmark(nb::module_ &m)
         pset.SetConfig(Operon::PrimitiveSet::Arithmetic);
 
         std::uniform_int_distribution<size_t> sizeDistribution(1, maxLength);
-        auto creator = Operon::BalancedTreeCreator { pset, inputs };
+        auto creator = Operon::BalancedTreeCreator { &pset, inputs };
 
         if (nThreads == 0) { nThreads = std::thread::hardware_concurrency(); }
 
@@ -60,7 +60,7 @@ void InitBenchmark(nb::module_ &m)
         tf::Taskflow taskflow;
         taskflow.for_each(trees.begin(), trees.end(), [&](auto const& tree) {
             auto& val = values[executor.this_worker_id()];
-            TInterpreter{dtable, ds, tree}.Evaluate({}, range, val);
+            TInterpreter{&dtable, &ds, &tree}.Evaluate({}, range, val);
         });
         executor.run(taskflow).wait();
         return nTotal * range.Size();

@@ -14,9 +14,9 @@ void InitInitializer(nb::module_ &m)
     nb::class_<Operon::CoefficientInitializerBase> coeffInitializerBase(m, "CoefficientInitializerBase");
 
     nb::class_<UniformLengthTreeInitializer, Operon::TreeInitializerBase>(m, "UniformLengthTreeInitializer")
-        .def(nb::init<Operon::CreatorBase&>())
-        .def(nb::init<Operon::BalancedTreeCreator&>())
-        .def(nb::init<Operon::GrowTreeCreator&>())
+        .def(nb::init<Operon::CreatorBase const*>())
+        // .def(nb::init<Operon::BalancedTreeCreator&>())
+        // .def(nb::init<Operon::GrowTreeCreator&>())
         .def("__call__", [](UniformLengthTreeInitializer& self, Operon::RandomGenerator& random) {
                 return self(random);
             })

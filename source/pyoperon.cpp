@@ -180,5 +180,5 @@ NB_MODULE(pyoperon, m)
           , nb::arg("p_lamarck") = 1.0
           , nb::arg("epsilon") = 1e-5
           , nb::arg("seed") = 0
-          , nb::arg("time_limit") = ~size_t{0});
+          , nb::arg("max_time") = ~size_t{0});
 }

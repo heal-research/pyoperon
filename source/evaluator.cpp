@@ -39,15 +39,15 @@ class MDLEvaluator {
     enum { Gauss, Poisson, PoissonLog } lik_ = Gauss; // TODO: very ugly, find something better
 
 public:
-    MDLEvaluator(Operon::Problem& problem, TDispatch const& dtable, std::string const& lik) {
+    MDLEvaluator(Operon::Problem const& problem, TDispatch const& dtable, std::string const& lik) {
         if (lik == "gauss") {
-            eval_ = std::make_unique<TMDLEvaluatorGauss>(problem, dtable);
+            eval_ = std::make_unique<TMDLEvaluatorGauss>(&problem, &dtable);
             lik_ = Gauss;
         } else if (lik == "poisson") {
-            eval_ = std::make_unique<TMDLEvaluatorPoisson>(problem, dtable);
+            eval_ = std::make_unique<TMDLEvaluatorPoisson>(&problem, &dtable);
             lik_ = Poisson;
         } else if (lik == "poisson_log") {
-            eval_ = std::make_unique<TMDLEvaluatorPoissonLog>(problem, dtable);
+            eval_ = std::make_unique<TMDLEvaluatorPoissonLog>(&problem, &dtable);
             lik_ = PoissonLog;
         } else {
             throw std::runtime_error(fmt::format("unknown likelihood: {}", lik));
@@ -86,7 +86,7 @@ void InitEval(nb::module_ &m)
         Operon::Span<Operon::Scalar> span{data, r.Size()};
         nb::gil_scoped_release release;
         TDispatch dtable;
-        TInterpreter{dtable, d, t}.Evaluate({}, r, span);
+        TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span);
         nb::gil_scoped_acquire acquire;
         std::array shape{r.Size()};
         return nb::ndarray<nb::numpy, Operon::Scalar, nb::ndim<1>>(data, 1, shape.data(), owner);
@@ -97,7 +97,7 @@ void InitEval(nb::module_ &m)
         nb::capsule owner(data, [](void* p) noexcept { delete[] (Operon::Scalar*)p; });
         Operon::Span<Operon::Scalar> span{data, r.Size()};
         nb::gil_scoped_release release;
-        TInterpreter{dtable, d, t}.Evaluate({}, r, span);
+        TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span);
         nb::gil_scoped_acquire acquire;
         std::array shape{r.Size()};
         return nb::ndarray<nb::numpy, Operon::Scalar, nb::ndim<1>>(data, 1, shape.data(), owner);
@@ -106,7 +106,7 @@ void InitEval(nb::module_ &m)
     m.def("EvaluateTrees", [](std::vector<Operon::Tree> const& trees, Operon::Dataset const& ds, Operon::Range range, nb::ndarray<Operon::Scalar> result, size_t nthread) {
         auto span = MakeSpan(result);
         nb::gil_scoped_release release;
-        Operon::EvaluateTrees(trees, ds, range, span, nthread);
+        Operon::EvaluateTrees(trees, &ds, range, span, nthread);
         nb::gil_scoped_acquire acquire;
     }, nb::arg("trees"), nb::arg("dataset"), nb::arg("range"), nb::arg("result").noconvert(), nb::arg("nthread") = 1);
 
@@ -114,7 +114,7 @@ void InitEval(nb::module_ &m)
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
         TDispatch dtable;
-        auto estimated = TInterpreter{dtable, d, t}.Evaluate({}, r);
+        auto estimated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r);
 
         if (metric == "c2") { return Operon::C2{}(estimated, values); }
         if (metric == "r2") { return Operon::R2{}(estimated, values); }
@@ -153,7 +153,7 @@ void InitEval(nb::module_ &m)
 
         // TODO: make this run in parallel with taskflow
         std::transform(trees.begin(), trees.end(), data, [&](auto const& t) -> double {
-            auto estimated = TInterpreter{dtable, d, t}.Evaluate({}, r);
+            auto estimated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r);
             return (*error)(estimated, values);
         });
 
@@ -177,7 +177,6 @@ void InitEval(nb::module_ &m)
 
     // interpreter
     nb::class_<TInterpreter, TInterpreterBase>(m, "Interpreter")
-        .def(nb::init<TDispatch const&, Operon::Dataset const&, Operon::Tree const&>())
         .def("Evaluate", [](TInterpreter const& self, Operon::Range range){
             return self.Evaluate({}, range);
         });
@@ -200,17 +199,16 @@ void InitEval(nb::module_ &m)
     nb::class_<TEvaluatorBase>(m, "EvaluatorBase")
         .def_prop_rw("Budget", &TEvaluatorBase::Budget, &TEvaluatorBase::SetBudget)
         .def_prop_ro("TotalEvaluations", &TEvaluatorBase::TotalEvaluations)
-        //.def("__call__", &TEvaluatorBase::operator())
-        .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) { return self(rng, ind, {}); })
+        .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual const& ind) { return self(rng, ind); })
         .def_prop_ro("CallCount", [](TEvaluatorBase& self) { return self.CallCount.load(); })
         .def_prop_ro("ResidualEvaluations", [](TEvaluatorBase& self) { return self.ResidualEvaluations.load(); })
         .def_prop_ro("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     nb::class_<TEvaluator, TEvaluatorBase>(m, "Evaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&, Operon::ErrorMetric const&, bool>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*, Operon::ErrorMetric, bool>());
 
     nb::class_<Operon::UserDefinedEvaluator, TEvaluatorBase>(m, "UserDefinedEvaluator")
-        .def(nb::init<Operon::Problem&, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual&)> const&>())
+        .def(nb::init<Operon::Problem const*, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual const&)> const&>())
         .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
             nb::gil_scoped_release release;
             return self(rng, ind, {});
@@ -218,16 +216,16 @@ void InitEval(nb::module_ &m)
         });
 
     nb::class_<Operon::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
-        .def(nb::init<Operon::Problem&>());
+        .def(nb::init<Operon::Problem const*>());
 
     nb::class_<Operon::ShapeEvaluator, TEvaluatorBase>(m, "ShapeEvaluator")
-        .def(nb::init<Operon::Problem&>());
+        .def(nb::init<Operon::Problem const*>());
 
     nb::class_<Operon::DiversityEvaluator, TEvaluatorBase>(m, "DiversityEvaluator")
-        .def(nb::init<Operon::Problem&>());
+        .def(nb::init<Operon::Problem const*>());
 
     nb::class_<Operon::MultiEvaluator, TEvaluatorBase>(m, "MultiEvaluator")
-        .def(nb::init<Operon::Problem&>())
+        .def(nb::init<Operon::Problem const*>())
         .def("Add", &Operon::MultiEvaluator::Add);
 
     nb::enum_<Operon::AggregateEvaluator::AggregateType>(m, "AggregateType")
@@ -239,28 +237,28 @@ void InitEval(nb::module_ &m)
         .value("Sum", Operon::AggregateEvaluator::AggregateType::Sum);
 
     nb::class_<Operon::AggregateEvaluator, TEvaluatorBase>(m, "AggregateEvaluator")
-        .def(nb::init<TEvaluatorBase&>())
+        .def(nb::init<TEvaluatorBase const*>())
         .def_prop_rw("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
     nb::class_<detail::MDLEvaluator>(m, "MinimumDescriptionLengthEvaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&, std::string const&>())
-        .def("__call__", [](detail::MDLEvaluator const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
-            return (*self.Get())(rng, ind, std::span<Operon::Scalar>{});
+        .def(nb::init<Operon::Problem const&, TDispatch const&, std::string const&>())
+        .def("__call__", [](detail::MDLEvaluator const& self, Operon::RandomGenerator& rng, Operon::Individual const& ind) {
+            return (*self.Get())(rng, ind);
         })
         .def_prop_rw("Sigma", nullptr /*get*/ , &detail::MDLEvaluator::SetSigma /*set*/);
 
     nb::class_<TBICEvaluator, TEvaluator>(m, "BayesianInformationCriterionEvaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*>());
 
     nb::class_<TAIKEvaluator, TEvaluator>(m, "AkaikeInformationCriterionEvaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*>());
 
     nb::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&>())
+        .def(nb::init<Operon::Problem const*, TDispatch const*>())
         .def_prop_rw("Sigma", &TGaussEvaluator::Sigma , &TGaussEvaluator::SetSigma /*set*/);;
 
     nb::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
-        .def(nb::init<Operon::Problem&, TDispatch const&>())
+        .def(nb::init<Operon::Problem const*, TDispatch const*>())
         .def_prop_rw("Sigma", [](TPoissonEvaluator const& self) {
             auto sigma = self.Sigma();
             return std::vector<Operon::Scalar>(sigma.begin(), sigma.end());

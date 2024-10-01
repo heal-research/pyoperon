@@ -4,6 +4,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/unique_ptr.h>
 
 #include <type_traits>
 
@@ -11,6 +12,8 @@
 #include <operon/core/dataset.hpp>
 #include <operon/core/individual.hpp>
 #include <operon/operators/evaluator.hpp>
+
+#include <fmt/ranges.h>
 
 namespace nb = nanobind;
 
@@ -21,11 +24,9 @@ NB_MAKE_OPAQUE(std::vector<Operon::Individual>);
 template<typename T>
 auto MakeView(Operon::Span<T const> view)
 {
-    std::array<std::size_t, 1> shape{-1UL};
-    return nb::ndarray<nb::numpy, T const, nb::ndim<1>>(
+    return nb::ndarray<T const, nb::numpy, nb::shape<-1>, nb::f_contig>(
         /* data = */ view.data(),
-        /* ndim = */ 1,
-        /* shape pointer =*/ shape.data(),
+        /* ndim = */ {view.size()},
         /* owner = */ nb::handle() // null owner
     );
 }

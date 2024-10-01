@@ -14,33 +14,35 @@ void InitGenerator(nb::module_ &m)
             Operon::Span<const Operon::Individual> s(individuals.data(), individuals.size());
             self.Prepare(s);
         })
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pCross, double pMut, double pLocal, Operon::Span<Operon::Scalar> buf = {}) {
-                return self(rng, pCross, pMut, pLocal, buf);
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pCross, double pMut, double pLocal, double pLamarck, Operon::Span<Operon::Scalar> buf = {}) {
+                return self(rng, pCross, pMut, pLocal, pLamarck, buf);
                 },
             nb::arg("rng"),
             nb::arg("crossover_probability"),
             nb::arg("mutation_probability"),
             nb::arg("local search probability"),
+            nb::arg("lamarckian probability"),
             nb::arg("evaluation buffer")
         )
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pCross, double pMut, double pLocal) {
-                return self(rng, pCross, pMut, pLocal, std::span<Operon::Scalar>{});
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pCross, double pMut, double pLocal, double pLamarck) {
+                return self(rng, pCross, pMut, pLocal, pLamarck, std::span<Operon::Scalar>{});
                 },
             nb::arg("rng"),
             nb::arg("crossover_probability"),
             nb::arg("mutation_probability"),
-            nb::arg("local search probability")
+            nb::arg("local search probability"),
+            nb::arg("lamarckian probability")
         );
 
     // basic offspring generator
     nb::class_<Operon::BasicOffspringGenerator, Operon::OffspringGeneratorBase>(m, "BasicOffspringGenerator")
-        .def(nb::init<Operon::EvaluatorBase&, Operon::CrossoverBase&, Operon::MutatorBase&,
-                Operon::SelectorBase&, Operon::SelectorBase&, Operon::CoefficientOptimizer const*>())
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, size_t n) {
+        .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
             for (size_t i = 0; i < n; ++i) {
-                if (auto res = self(rng, pc, pm, pl, std::span<Operon::Scalar>{}); res.has_value()) {
+                if (auto res = self(rng, pc, pm, pl, pk, std::span<Operon::Scalar>{}); res.has_value()) {
                     v.push_back(res.value());
                 }
             }
@@ -49,13 +51,13 @@ void InitGenerator(nb::module_ &m)
 
     // offspring selection generator
     nb::class_<Operon::OffspringSelectionGenerator, Operon::OffspringGeneratorBase>(m, "OffspringSelectionGenerator")
-        .def(nb::init<Operon::EvaluatorBase&, Operon::CrossoverBase&, Operon::MutatorBase&,
-                Operon::SelectorBase&, Operon::SelectorBase&>())
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, size_t n) {
+        .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
             for (size_t i = 0; i < n; ++i) {
-                if (auto res = self(rng, pc, pm, pl, std::span<Operon::Scalar>{}); res.has_value()) {
+                if (auto res = self(rng, pc, pm, pl, pk,std::span<Operon::Scalar>{}); res.has_value()) {
                     v.push_back(res.value());
                 }
             }
@@ -73,13 +75,13 @@ void InitGenerator(nb::module_ &m)
 
     // brood generator
     nb::class_<Operon::BroodOffspringGenerator, Operon::OffspringGeneratorBase>(m, "BroodOffspringGenerator")
-        .def(nb::init<Operon::EvaluatorBase&, Operon::CrossoverBase&, Operon::MutatorBase&,
-                Operon::SelectorBase&, Operon::SelectorBase&>())
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, size_t n) {
+        .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
             for (size_t i = 0; i < n; ++i) {
-                if (auto res = self(rng, pc, pm, pl, std::span<Operon::Scalar>{}); res.has_value()) {
+                if (auto res = self(rng, pc, pm, pl, pk, std::span<Operon::Scalar>{}); res.has_value()) {
                     v.push_back(res.value());
                 }
             }
@@ -92,13 +94,13 @@ void InitGenerator(nb::module_ &m)
 
     // polygenic generator
     nb::class_<Operon::PolygenicOffspringGenerator, Operon::OffspringGeneratorBase>(m, "PolygenicOffspringGenerator")
-        .def(nb::init<Operon::EvaluatorBase&, Operon::CrossoverBase&, Operon::MutatorBase&,
-                Operon::SelectorBase&, Operon::SelectorBase&>())
-        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, size_t n) {
+        .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+        .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
             for (size_t i = 0; i < n; ++i) {
-                if (auto res = self(rng, pc, pm, pl, std::span<Operon::Scalar>{}); res.has_value()) {
+                if (auto res = self(rng, pc, pm, pl, pk, std::span<Operon::Scalar>{}); res.has_value()) {
                     v.push_back(res.value());
                 }
             }

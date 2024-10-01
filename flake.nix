@@ -6,7 +6,7 @@
     foolnotion.url = "github:foolnotion/nur-pkg";
     lbfgs.url = "github:foolnotion/lbfgs";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-    operon.url = "github:heal-research/operon";
+    operon.url = "github:heal-research/operon/better-ownership-semantics";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
     vstat.url = "github:heal-research/vstat";
 
@@ -36,6 +36,24 @@
           stdenv_ = pkgs.llvmPackages_18.stdenv;
           python_ = pkgs.python3;
           operon_ = if enableShared then operon.packages.${system}.library else operon.packages.${system}.library-static;
+
+          pythonPkgs = pkgs.python3Packages.override {
+            overrides = self: super: {
+              nanobind = super.nanobind.overridePythonAttrs (old: {
+                doCheck = false;
+                build-system = old.build-system ++ [ pythonPkgs.typing-extensions ];
+                src = pkgs.fetchFromGitHub {
+                  owner = "wjakob";
+                  repo = "nanobind";
+                  rev = "c1bab7e4207566b75bbc51c35079f66ae6f0afc0";
+                  hash = "sha256-KaGSHt6dNR4vpCkU/rJIQuwFs3e8S4afpyCcabiBM8w=";
+                  fetchSubmodules = true;
+                };
+              });
+            };
+          };
+          nanobind = pythonPkgs.nanobind;
+
 
           pyoperon = stdenv_.mkDerivation {
             name = "pyoperon";

@@ -57,7 +57,7 @@ using TYogiUpdateRule           = Operon::UpdateRule::Yogi<Operon::Scalar>;
 
 namespace detail {
 class Optimizer {
-    std::unique_ptr<TOptimizerBase> optimizer_;
+    std::unique_ptr<TOptimizerBase const> optimizer_;
 
 public:
     auto SetBatchSize(std::size_t value) const { optimizer_->SetBatchSize(value); }

@@ -12,7 +12,7 @@ namespace nb = nanobind;
 void InitNode(nb::module_ &m)
 {
     // node type
-    nb::enum_<Operon::NodeType>(m, "NodeType", nb::is_arithmetic{})
+    nb::enum_<Operon::NodeType>(m, "NodeType", nb::is_arithmetic())
         .value("Add", Operon::NodeType::Add)
         .value("Mul", Operon::NodeType::Mul)
         .value("Sub", Operon::NodeType::Sub)
@@ -43,15 +43,15 @@ void InitNode(nb::module_ &m)
         .value("Square", Operon::NodeType::Square)
         .value("Dyn", Operon::NodeType::Dynamic)
         .value("Constant", Operon::NodeType::Constant)
-        .value("Variable", Operon::NodeType::Variable)
+        .value("Variable", Operon::NodeType::Variable);
         // expose overloaded operators
-        .def(nb::self & nb::self)
-        .def(nb::self &= nb::self)
-        .def(nb::self | nb::self)
-        .def(nb::self |= nb::self)
-        .def(nb::self ^ nb::self)
-        .def(nb::self ^= nb::self)
-        .def(~nb::self);
+        // .def(nb::self & nb::self)
+        // .def(nb::self &= nb::self)
+        // .def(nb::self | nb::self)
+        // .def(nb::self |= nb::self)
+        // .def(nb::self ^ nb::self)
+        // .def(nb::self ^= nb::self)
+        // .def(~nb::self);
     // node
     nb::class_<Operon::Node>(m, "Node")
         .def(nb::init<Operon::NodeType>())

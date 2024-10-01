@@ -35,6 +35,20 @@ void InitDataset(nb::module_ &m)
         .def(nb::init<std::vector<std::string> const&, const std::vector<std::vector<Operon::Scalar>>&>())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::c_contig> array) {
+#ifdef DEBUG
+            fmt::print("warning: unsupported memory layout, data will be copied\n");
+#endif
+            nb::ndarray<float, nb::f_contig> copy(array);
+            InitDataset(ds, copy);
+        }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::c_contig> array) {
+#ifdef DEBUG
+            fmt::print("warning: unsupported memory layout, data will be copied\n");
+#endif
+            nb::ndarray<double, nb::f_contig> copy(array);
+            InitDataset(ds, copy);
+        }, nb::arg("data").noconvert())
         .def_prop_ro("Rows", &Operon::Dataset::Rows<int64_t>)
         .def_prop_ro("Cols", &Operon::Dataset::Cols<int64_t>)
         .def_prop_ro("Values", &Operon::Dataset::Values)
