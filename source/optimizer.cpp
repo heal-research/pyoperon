@@ -6,6 +6,8 @@
 #include <operon/operators/local_search.hpp>
 #include <operon/optimizer/solvers/sgd.hpp>
 
+#include <nanobind/stl/tuple.h>
+
 #include "pyoperon/pyoperon.hpp"
 #include "pyoperon/optimizer.hpp"
 
