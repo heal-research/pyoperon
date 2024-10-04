@@ -103,7 +103,7 @@
             nativeBuildInputs = pyoperon.nativeBuildInputs;
             buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 pkgs.vstat ])
               ++ (with python_.pkgs; [ scikit-build ]) # cmake integration and release preparation
-              ++ (with python_.pkgs; [ numpy scikit-learn pandas pyarrow ipdb sympy requests matplotlib optuna jax jaxlib-bin torch ])
+              ++ (with python_.pkgs; [ numpy scikit-learn pandas pyarrow ipdb sympy requests matplotlib optuna jax jaxlib-bin torch pytest ])
               ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
           };
         };
