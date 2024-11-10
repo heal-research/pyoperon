@@ -546,7 +546,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
             stats = {
                 'model' : op.InfixFormatter.Format(solution.Genotype, self.variables_, 6),
-                'variables' : set(self.variables_[x.HashValue] for x in solution.Genotype.Nodes if x.IsVariable),
+                'variables' : set(self.variables_[x.HashValue] for x in nodes if x.IsVariable),
+                'length' : len(nodes),
+                'complexity' : len(nodes) + sum(2 for x in nodes if x.IsVariable),
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
                 'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),
@@ -564,8 +566,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.model_ = best['tree']
 
         self.stats_ = {
-            'model_length': self.model_.Length - 4, # do not count scaling nodes?
-            'model_complexity': self.model_.Length - 4 + 2 * sum(1 for x in self.model_.Nodes if x.IsVariable),
+            'model_length': best['length'],
+            'model_complexity': best['complexity'],
             'generations': gp.Generation,
             'evaluation_count': evaluator.CallCount,
             'residual_evaluations': evaluator.ResidualEvaluations,
