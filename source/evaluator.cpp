@@ -122,11 +122,11 @@ void InitEval(py::module_ &m)
 
     }, py::arg("tree"), py::arg("dataset"), py::arg("range"), py::arg("target"), py::arg("metric") = "rsquared");
 
-    m.def("PoissonLikelihood", [](py::array_t<float> x, py::array_t<float> y){
+    m.def("PoissonLikelihood", [](py::array_t<Operon::Scalar> x, py::array_t<Operon::Scalar> y){
         return detail::PoissonLikelihood(std::move(x), std::move(y));
     });
 
-    m.def("PoissonLikelihood", [](py::array_t<float> x, py::array_t<float> y, py::array_t<float> w){
+    m.def("PoissonLikelihood", [](py::array_t<Operon::Scalar> x, py::array_t<Operon::Scalar> y, py::array_t<Operon::Scalar> w){
         return detail::PoissonLikelihood(std::move(x), std::move(y), std::move(w));
     });
 
@@ -142,12 +142,12 @@ void InitEval(py::module_ &m)
 
         TDispatch dtable;
 
-        auto result = py::array_t<double>(static_cast<pybind11::ssize_t>(trees.size()));
+        auto result = py::array_t<Operon::Scalar>(static_cast<pybind11::ssize_t>(trees.size()));
         auto buf = result.request();
         auto values = d.GetValues(target).subspan(r.Start(), r.Size());
 
         // TODO: make this run in parallel with taskflow
-        std::transform(trees.begin(), trees.end(), static_cast<double*>(buf.ptr), [&](auto const& t) -> double {
+        std::transform(trees.begin(), trees.end(), static_cast<Operon::Scalar*>(buf.ptr), [&](auto const& t) -> double {
             auto estimated = TInterpreter{dtable, d, t}.Evaluate({}, r);
             return (*error)(estimated, values);
         });
