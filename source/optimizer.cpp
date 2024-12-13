@@ -7,6 +7,7 @@
 #include <operon/optimizer/solvers/sgd.hpp>
 
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/string.h>
 
 #include "pyoperon/pyoperon.hpp"
 #include "pyoperon/optimizer.hpp"

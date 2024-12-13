@@ -126,11 +126,11 @@ void InitEval(nb::module_ &m)
 
     }, nb::arg("tree"), nb::arg("dataset"), nb::arg("range"), nb::arg("target"), nb::arg("metric") = "rsquared");
 
-    m.def("PoissonLikelihood", [](nb::ndarray<float> x, nb::ndarray<float> y){
+    m.def("PoissonLikelihood", [](nb::ndarray<Operon::Scalar> x, nb::ndarray<Operon::Scalar> y){
         return detail::PoissonLikelihood(std::move(x), std::move(y));
     });
 
-    m.def("PoissonLikelihood", [](nb::ndarray<float> x, nb::ndarray<float> y, nb::ndarray<float> w){
+    m.def("PoissonLikelihood", [](nb::ndarray<Operon::Scalar> x, nb::ndarray<Operon::Scalar> y, nb::ndarray<Operon::Scalar> w){
         return detail::PoissonLikelihood(std::move(x), std::move(y), std::move(w));
     });
 
