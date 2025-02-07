@@ -33,7 +33,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         symbolic_mode                  = False,
         crossover_probability          = 1.0,
         crossover_internal_probability = 0.9,
-        mutation                       = { 'onepoint' : 1.0, 'discretepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 },
+        mutation                       = { 'onepoint' : 1.0, 'multipoint': 1.0, 'discretepoint' : 1.0, 'changevar' : 1.0, 'changefunc' : 1.0, 'insertsubtree' : 1.0, 'replacesubtree' : 1.0, 'removesubtree' : 1.0 },
         mutation_probability           = 0.25,
         offspring_generator            = 'basic',
         reinserter                     = 'keep-best',
@@ -129,7 +129,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.symbolic_mode                  = check(self.symbolic_mode, False)
         self.crossover_probability          = check(self.crossover_probability, 1.0)
         self.crossover_internal_probability = check(self.crossover_internal_probability, 0.9)
-        self.mutation                       = check(self.mutation, { 'onepoint': 1.0, 'discretepoint': 1.0, 'changevar': 1.0, 'changefunc': 1.0, 'insertsubtree': 1.0, 'removesubtree': 1.0 })
+        self.mutation                       = check(self.mutation, { 'onepoint': 1.0, 'multipoint': 1.0, 'discretepoint': 1.0, 'changevar': 1.0, 'changefunc': 1.0, 'insertsubtree': 1.0, 'removesubtree': 1.0 })
         self.mutation_probability           = check(self.mutation_probability, 0.25)
         self.offspring_generator            = check(self.offspring_generator, 'basic')
         self.reinserter                     = check(self.reinserter, 'keep-best')
@@ -334,6 +334,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     def __init_mutation(self, mutation_name, inputs, pset, creator, coeff_initializer):
         if mutation_name == 'onepoint':
             mut = op.UniformIntOnePointMutation() if self.symbolic_mode else op.NormalOnePointMutation()
+            if self.symbolic_mode:
+                mut.ParameterizeDistribution(-5, +5)
+            else:
+                mut.ParameterizeDistribution(0, 1)
+            return mut
+
+        elif mutation_name == 'multipoint':
+            mut = op.UniformIntMultiPointMutation() if self.symbolic_mode else op.NormalMultiPointMutation()
             if self.symbolic_mode:
                 mut.ParameterizeDistribution(-5, +5)
             else:

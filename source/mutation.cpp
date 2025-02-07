@@ -30,6 +30,21 @@ void InitMutation(nb::module_ &m)
         .def("__call__", &Operon::OnePointMutation<UniformReal>::operator())
         .def("ParameterizeDistribution", &Operon::OnePointMutation<UniformReal>::ParameterizeDistribution<Operon::Scalar, Operon::Scalar>);
 
+    nb::class_<Operon::MultiPointMutation<NormalReal>, Operon::MutatorBase>(m, "NormalMultiPointMutation")
+        .def(nb::init<>())
+        .def("__call__", &Operon::MultiPointMutation<NormalReal>::operator())
+        .def("ParameterizeDistribution", &Operon::MultiPointMutation<NormalReal>::ParameterizeDistribution<Operon::Scalar, Operon::Scalar>);
+
+    nb::class_<Operon::MultiPointMutation<UniformInt>, Operon::MutatorBase>(m, "UniformIntMultiPointMutation")
+        .def(nb::init<>())
+        .def("__call__", &Operon::MultiPointMutation<UniformInt>::operator())
+        .def("ParameterizeDistribution", &Operon::MultiPointMutation<UniformInt>::ParameterizeDistribution<int, int>);
+
+    nb::class_<Operon::MultiPointMutation<UniformReal>, Operon::MutatorBase>(m, "UniformRealMultiPointMutation")
+        .def(nb::init<>())
+        .def("__call__", &Operon::MultiPointMutation<UniformReal>::operator())
+        .def("ParameterizeDistribution", &Operon::MultiPointMutation<UniformReal>::ParameterizeDistribution<Operon::Scalar, Operon::Scalar>);
+
     nb::class_<Operon::DiscretePointMutation, Operon::MutatorBase>(m, "DiscretePointMutation")
         .def(nb::init<>())
         .def("__call__", &Operon::DiscretePointMutation::operator())
