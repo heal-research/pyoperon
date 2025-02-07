@@ -145,12 +145,44 @@ void InitOptimizer(nb::module_ &m)
             , nb::arg("eps") = 1e-6
         );
 
-    nb::class_<TAdaMaxUpdateRule, TUpdateRule>(m, "AdaDeltaUpdateRule")
+    nb::class_<TAdaDeltaUpdateRule, TUpdateRule>(m, "AdaDeltaUpdateRule")
+        .def(nb::init<Eigen::Index, Operon::Scalar, Operon::Scalar>()
+            , nb::arg("dimension") = 0
+            , nb::arg("beta") = 0.9
+            , nb::arg("epsilon") = 1e-6
+        );
+
+    nb::class_<TAdaMaxUpdateRule, TUpdateRule>(m, "AdaMaxUpdateRule")
         .def(nb::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar>()
             , nb::arg("dimension") = 0
             , nb::arg("learning_rate") = 0.01
             , nb::arg("beta1") = 0.9
             , nb::arg("beta2") = 0.999
+        );
+
+    nb::class_<TAdamUpdateRule, TUpdateRule>(m, "AdamUpdateRule")
+        .def(nb::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar, Operon::Scalar>()
+            , nb::arg("dimension") = 0
+            , nb::arg("learning_rate") = 0.01
+            , nb::arg("epsilon") = 1e-8
+            , nb::arg("beta1") = 0.9
+            , nb::arg("beta2") = 0.999
+        );
+
+    nb::class_<TYamAdamUpdateRule, TUpdateRule>(m, "YamAdamUpdateRule")
+        .def(nb::init<Eigen::Index, Operon::Scalar>()
+            , nb::arg("dimension") = 0
+            , nb::arg("epsilon") = 1e-6
+        );
+
+    nb::class_<TYogiUpdateRule, TUpdateRule>(m, "YogiUpdateRule")
+        .def(nb::init<Eigen::Index, Operon::Scalar, Operon::Scalar, Operon::Scalar, Operon::Scalar, bool>()
+            , nb::arg("dimension") = 0
+            , nb::arg("learning_rate") = 0.01
+            , nb::arg("epsilon") = 1e-8
+            , nb::arg("beta1") = 0.9
+            , nb::arg("beta2") = 0.999
+            , nb::arg("debias") = false
         );
 
     nb::class_<TAmsGradUpdateRule, TUpdateRule>(m, "AmsGradUpdateRule")

@@ -49,6 +49,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         sgd_beta                       = 0.9,
         sgd_beta2                      = 0.999,
         sgd_epsilon                    = 1e-6,
+        sgd_debias                     = False,
         max_length                     = 50,
         max_depth                      = 10,
         initialization_method          = 'btc',
@@ -95,6 +96,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.sgd_beta                  = sgd_beta
         self.sgd_beta2                 = sgd_beta2
         self.sgd_epsilon               = sgd_epsilon
+        self.sgd_debias                = sgd_debias
         self.max_length                = max_length
         self.max_depth                 = max_depth
         self.initialization_method     = initialization_method
@@ -143,6 +145,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.sgd_beta                       = check(self.sgd_beta, 0.9)
         self.sgd_beta2                      = check(self.sgd_beta2, 0.999)
         self.sgd_epsilon                    = check(self.sgd_epsilon, 1e-6)
+        self.sgd_debias                     = check(self.sgd_debias, False)
         self.max_length                     = check(self.max_length, 50)
         self.max_depth                      = check(self.max_depth, 10)
         self.initialization_method          = check(self.initialization_method, 'btc')
@@ -368,11 +371,18 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return op.MomentumUpdateRule(0, self.sgd_learning_rate, self.sgd_beta)
         elif self.sgd_update_rule == 'rmsprop':
             return op.RmsPropUpdateRule(0, self.sgd_learning_rate, self.sgd_beta, self.sgd_epsilon)
+        elif self.sgd_update_rule == 'adadelta':
+            return op.AdaDeltaUpdateRule(0, self.sgd_beta, self.sgd_epsilon)
         elif self.sgd_update_rule == 'adamax':
             return op.AdaMaxUpdateRule(0, self.sgd_learning_rate, self.sgd_beta, self.sgd_beta2)
+        elif self.sgd_update_rule == 'adam':
+            return op.AdamUpdateRule(0, self.sgd_learning_rate, self.sgd_epsilon, self.sgd_beta, self.sgd_beta2)
+        elif self.sgd_update_rule == 'yamadam':
+            return op.YamAdamUpdateRule(0, self.sgd_epsilon)
         elif self.sgd_update_rule == 'amsgrad':
             return op.AmsGradUpdateRule(0, self.sgd_learning_rate, self.sgd_epsilon, self.sgd_beta, self.sgd_beta2)
-
+        elif self.sgd_update_rule == 'yogi':
+            return op.YogiUpdateRule(0, self.sgd_learning_rate, self.sgd_epsilon, self.sgd_beta, self.sgd_beta2, self.sgd_debias)
         raise ValueError('Unknown update rule {}'.format(self.sgd_update_rule))
 
 
