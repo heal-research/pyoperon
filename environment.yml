@@ -8,9 +8,9 @@ dependencies:
   - eigen
   - git
   - make
+  - nanobind
   - ninja
   - pkg-config
-  - pybind11
   - scikit-build
   - xxhash
   - zstd
