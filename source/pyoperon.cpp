@@ -136,6 +136,15 @@ NB_MODULE(pyoperon, m)
             return Operon::InfixFormatter::Format(tree, map, decimalPrecision);
         });
 
+    nb::class_<Operon::DotFormatter>(m, "DotFormatter")
+        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return Operon::DotFormatter::Format(tree, dataset, decimalPrecision);
+        })
+        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
+            return Operon::DotFormatter::Format(tree, map, decimalPrecision);
+        });
+
     nb::class_<Operon::InfixParser>(m, "InfixParser")
         .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& variables) {
             Operon::Map<std::string, Operon::Hash> map(variables.begin(), variables.end());
