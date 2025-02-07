@@ -1,6 +1,6 @@
 [project]
 name = "pyoperon"
-version = "0.4.0"
+version = "0.5.0"
 authors = [
   { name = "Bogdan Burlacu", email="bogdan.burlacu@pm.me" },
 ]
@@ -16,6 +16,7 @@ classifiers = [
     "Intended Audience :: Education",
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
+dependencies = ["numpy>=2.0.2", "pandas>=2.2.3", "scikit-learn>=1.6.1", "matplotlib>=3.9.4", "seaborn>=0.13.2", "jupyter>=1.1.1", "sympy>=1.13.3"]
 
 [project.urls]
 "Homepage" = "https://github.com/heal-research/pyoperon"
