@@ -91,7 +91,7 @@ rm -rf fast_float
 ## pratt-parser
 git clone https://github.com/foolnotion/pratt-parser-calculator.git
 pushd pratt-parser-calculator
-git checkout 025ba103339bb69e3b719b62f3457d5cbb9644e6
+git checkout 5093c67e2e642178cce1bc455f7dee8720820642
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -104,7 +104,7 @@ rm -rf pratt-parser-calculator
 ## unordered_dense
 git clone https://github.com/martinus/unordered_dense.git
 pushd unordered_dense
-git checkout 231e48c9426bd21c273669e5fdcd042c146975cf
+git checkout v4.5.0 
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -132,7 +132,7 @@ git clone https://github.com/fmtlib/fmt.git
 pushd fmt
 mkdir build
 pushd build
-git checkout e69e5f977d458f2650bb346dadf2ad30c5320281
+git checkout 11.1.3 
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -143,6 +143,22 @@ make install
 popd
 popd
 rm -rf fmt
+
+## microsoft-gsl
+git clone https://github.com/microsoft/GSL.git
+pushd GSL
+mkdir build
+pushd build
+git checkout 355982daf6c54ccb11bef8a1c511be2622dec402
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+    -DGSL_INSTALL=1 \
+    -DGSL_TEST=0
+make install
+popd
+popd
+rm -rf GSL
 
 ## quickcpplib
 git clone https://github.com/ned14/quickcpplib.git
@@ -200,7 +216,7 @@ rm -rf lbfgs
 # taskflow
 git clone https://github.com/taskflow/taskflow.git
 pushd taskflow
-git checkout 12f8bd4e970ab27fd3dee3bffa24b5b48b54ba39
+git checkout v3.9.0 
 mkdir build
 cmake -S . -B build \
     -DTF_BUILD_EXAMPLES=OFF \
@@ -259,7 +275,7 @@ rm -rf cpptrace
 # libassert
 git clone https://github.com/jeremy-rifkin/libassert.git
 pushd libassert
-git checkout v2.0.2
+git checkout v2.1.4
 mkdir build
 cmake -S . -B build \
        -DCMAKE_BUILD_TYPE=Release \
@@ -277,7 +293,7 @@ rm -rf libassert
 [ -d operon ] && rm -rf operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout 4a93f98af108dbb98eb1cc10efe0f057b723293c
+git checkout 1dbe27597ebdfb7e4fe4b421ce2daa134b51f2fd 
 mkdir build
 cmake -S . -B build --preset build-${PLATFORM} \
     -DCMAKE_BUILD_TYPE=Release \
