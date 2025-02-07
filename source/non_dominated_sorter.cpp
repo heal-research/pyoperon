@@ -3,17 +3,14 @@
 
 #include "pyoperon/pyoperon.hpp"
 
-#include <pybind11/stl.h>
 #include <operon/operators/non_dominated_sorter.hpp>
 
-namespace py = pybind11;
-
-void InitNondominatedSorter(py::module_ &m)
+void InitNondominatedSorter(nb::module_ &m)
 {
-    py::class_<Operon::NondominatedSorterBase>(m, "NonDominatedSorterBase");
+    nb::class_<Operon::NondominatedSorterBase>(m, "NonDominatedSorterBase");
 
-    py::class_<Operon::RankIntersectSorter, Operon::NondominatedSorterBase>(m, "RankSorter")
-        .def(py::init<>())
+    nb::class_<Operon::RankIntersectSorter, Operon::NondominatedSorterBase>(m, "RankSorter")
+        .def(nb::init<>())
         .def("Sort", [](Operon::RankIntersectSorter const& self, std::vector<std::vector<Operon::Scalar>> const& points) {
             auto sz = points.size();
 

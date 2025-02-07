@@ -74,7 +74,7 @@
             "hidden": false,
             "inherits": ["cpp-std", "cpp-build"],
             "environment": {
-                "CXX_WARNINGS": "-Wall -Wextra -pedantic",
+                "CXX_WARNINGS": "-Wall -Wextra -pedantic -Wno-zero-length-array -Wno-deprecated-anon-enum-enum-conversion",
                 "CXX_OPT": "-fsized-deallocation -fno-math-errno -march=x86-64-v3"
             }
         },
@@ -84,7 +84,7 @@
             "hidden": false,
             "inherits": ["cpp-std", "cpp-build"],
             "environment": {
-                "CXX_WARNINGS": "-Wall -Wextra -pedantic",
+                "CXX_WARNINGS": "-Wall -Wextra -pedantic -Wno-zero-length-array -Wno-deprecated-anon-enum-enum-conversion",
                 "CXX_OPT": "-fsized-deallocation -fno-math-errno"
             }
         }

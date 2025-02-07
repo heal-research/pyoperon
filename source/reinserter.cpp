@@ -4,42 +4,42 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/operators/reinserter.hpp>
 
-void InitReinserter(py::module_ &m)
+void InitReinserter(nb::module_ &m)
 {
     // reinserter
-    py::class_<Operon::ReinserterBase> rb(m, "ReinserterBase");
+    nb::class_<Operon::ReinserterBase> rb(m, "ReinserterBase");
 
-    py::class_<Operon::ReplaceWorstReinserter, Operon::ReinserterBase>(m, "ReplaceWorstReinserter")
-        .def(py::init([](size_t i) { 
+    nb::class_<Operon::ReplaceWorstReinserter, Operon::ReinserterBase>(m, "ReplaceWorstReinserter")
+        .def("__init__", [](Operon::ReplaceWorstReinserter* op, size_t i) {
             Operon::SingleObjectiveComparison comp(i);
-            return Operon::ReplaceWorstReinserter(comp); }), py::arg("objective_index"))
+            new (op) Operon::ReplaceWorstReinserter(comp); }, nb::arg("objective_index"))
         // these next two constructors are provided to substitute a python-allocated comparison object (SLOW to call)
         // to an identical one allocated on the C++ side (FAST)
-        .def(py::init([](Operon::SingleObjectiveComparison const& comp) {
+        .def("__init__", [](Operon::ReplaceWorstReinserter* op, Operon::SingleObjectiveComparison const& comp) {
                 Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                return Operon::ReplaceWorstReinserter(temp);
-            }))
-        .def(py::init([](Operon::CrowdedComparison const&) {
+                new (op) Operon::ReplaceWorstReinserter(temp);
+            })
+        .def("__init__", [](Operon::ReplaceWorstReinserter* op, Operon::CrowdedComparison const&) {
                 Operon::CrowdedComparison temp;
-                return Operon::ReplaceWorstReinserter(temp);
-            }))
-        .def(py::init<Operon::ComparisonCallback const&>())
+                new (op) Operon::ReplaceWorstReinserter(temp);
+            })
+        .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::ReplaceWorstReinserter::operator());
 
-    py::class_<Operon::KeepBestReinserter, Operon::ReinserterBase>(m, "KeepBestReinserter")
-        .def(py::init([](size_t i) {
+    nb::class_<Operon::KeepBestReinserter, Operon::ReinserterBase>(m, "KeepBestReinserter")
+        .def("__init__", [](Operon::KeepBestReinserter* op, size_t i) {
             Operon::SingleObjectiveComparison comp(i);
-            return Operon::KeepBestReinserter(comp); }), py::arg("objective_index"))
+            new (op) Operon::KeepBestReinserter(comp); }, nb::arg("objective_index"))
         // these next two constructors are provided to substitute a python-allocated comparison object (SLOW to call)
         // to an identical one allocated on the C++ side (FAST)
-        .def(py::init([](Operon::SingleObjectiveComparison const& comp) {
+        .def("__init__", [](Operon::KeepBestReinserter* op, Operon::SingleObjectiveComparison const& comp) {
                 Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                return Operon::KeepBestReinserter(temp);
-            }))
-        .def(py::init([](Operon::CrowdedComparison const&) {
+                new (op) Operon::KeepBestReinserter(temp);
+            })
+        .def("__init__", [](Operon::KeepBestReinserter* op, Operon::CrowdedComparison const&) {
                 Operon::CrowdedComparison temp;
-                return Operon::KeepBestReinserter(temp);
-            }))
-        .def(py::init<Operon::ComparisonCallback const&>())
+                new (op) Operon::KeepBestReinserter(temp);
+            })
+        .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::KeepBestReinserter::operator());
 }

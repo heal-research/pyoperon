@@ -1,102 +1,65 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-#include <pybind11/eigen.h>
-#include <pybind11/functional.h>
-
 #include <operon/core/dataset.hpp>
 #include <utility>
 
 #include "pyoperon/pyoperon.hpp"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 template<typename T>
-auto MakeDataset(py::array_t<T> array) -> Operon::Dataset
+auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::f_contig> arr)
 {
-    static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type.");
-
-    // sanity check
-    if (array.ndim() != 2) {
-        throw std::runtime_error("The input array must have exactly two dimensions.\n");
-    }
-
-    // check if the array satisfies our data storage requirements (contiguous, column-major order)
-    if (std::is_same_v<T, Operon::Scalar> && (array.flags() & py::array::f_style)) { // NOLINT
-        auto ref = array.template cast<Eigen::Ref<Operon::Dataset::Matrix const>>();
-        return Operon::Dataset(ref);
-    }
-
-#if defined(DEBUG)
-    std::cerr << "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n";
+    auto const* data = arr.data();
+    auto rows = arr.shape(0);
+    auto cols = arr.shape(1);
+    if constexpr (std::is_same_v<T, Operon::Scalar>) {
+        new (ds) Operon::Dataset(data, rows, cols);
+    } else {
+#ifdef DEBUG
+        fmt::print("warning: data types do not match, data will be copied\n");
 #endif
-    auto mat = array.template cast<Operon::Dataset::Matrix>();
-    return Operon::Dataset(std::move(mat));
+        Eigen::Matrix<Operon::Scalar, -1, -1> values(rows, cols);
+        values = Eigen::Map<Eigen::Matrix<T, -1, -1> const>(data, rows, cols).template cast<Operon::Scalar>();
+        new (ds) Operon::Dataset(values);
+    }
 }
 
-template<typename T>
-auto MakeDataset(std::vector<std::vector<T>> const& values) -> Operon::Dataset
-{
-    static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type.");
-
-    auto rows = values[0].size();
-    auto cols = values.size();
-
-    Operon::Dataset::Matrix mat(rows, cols);
-
-    for (size_t i = 0; i < values.size(); ++i) {
-        mat.col(static_cast<int>(i)) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1, Eigen::ColMajor> const>(values[i].data(), rows).template cast<Operon::Scalar>();
-    }
-    return Operon::Dataset(std::move(mat));
-}
-
-auto MakeDataset(py::buffer buf) -> Operon::Dataset // NOLINT
-{
-    auto info = buf.request();
-
-    if (info.ndim != 2) {
-        throw std::runtime_error("The buffer must have two dimensions.\n");
-    }
-
-    if (info.format == py::format_descriptor<Operon::Scalar>::format()) {
-        auto ref = buf.template cast<Eigen::Ref<Operon::Dataset::Matrix const>>();
-        return Operon::Dataset(ref);
-    }
-
-#if defined(DEBUG)
-    std::cerr << "operon warning: array does not satisfy contiguity or storage-order requirements. data will be copied.\n";
-#endif
-    auto mat = buf.template cast<Operon::Dataset::Matrix>();
-    return Operon::Dataset(std::move(mat));
-}
-
-
-void InitDataset(py::module_ &m)
+void InitDataset(nb::module_ &m)
 {
     // dataset
-    py::class_<Operon::Dataset>(m, "Dataset")
-        .def(py::init<std::string const&, bool>(), py::arg("filename"), py::arg("has_header"))
-        .def(py::init<Operon::Dataset const&>())
-        .def(py::init<std::vector<std::string> const&, const std::vector<std::vector<Operon::Scalar>>&>())
-        .def(py::init([](py::array_t<float> array){ return MakeDataset(std::move(array)); }), py::arg("data").noconvert())
-        .def(py::init([](py::array_t<double> array){ return MakeDataset(std::move(array)); }), py::arg("data").noconvert())
-        .def(py::init([](std::vector<std::vector<float>> const& values) { return MakeDataset(values); }), py::arg("data").noconvert())
-        .def(py::init([](std::vector<std::vector<double>> const& values) { return MakeDataset(values); }), py::arg("data").noconvert())
-        .def(py::init([](py::buffer buf) { return MakeDataset(std::move(buf)); }), py::arg("data").noconvert())
-        .def_property_readonly("Rows", &Operon::Dataset::Rows<int64_t>)
-        .def_property_readonly("Cols", &Operon::Dataset::Cols<int64_t>)
-        .def_property_readonly("Values", &Operon::Dataset::Values)
-        .def_property("VariableNames", &Operon::Dataset::VariableNames, &Operon::Dataset::SetVariableNames)
-        .def_property_readonly("VariableHashes", &Operon::Dataset::VariableHashes)
+    nb::class_<Operon::Dataset>(m, "Dataset")
+        .def(nb::init<std::string const&, bool>(), nb::arg("filename"), nb::arg("has_header"))
+        .def(nb::init<Operon::Dataset const&>())
+        .def(nb::init<std::vector<std::string> const&, const std::vector<std::vector<Operon::Scalar>>&>())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::c_contig> array) {
+#ifdef DEBUG
+            fmt::print("warning: unsupported memory layout, data will be copied\n");
+#endif
+            nb::ndarray<float, nb::f_contig> copy(array);
+            InitDataset(ds, copy);
+        }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::c_contig> array) {
+#ifdef DEBUG
+            fmt::print("warning: unsupported memory layout, data will be copied\n");
+#endif
+            nb::ndarray<double, nb::f_contig> copy(array);
+            InitDataset(ds, copy);
+        }, nb::arg("data").noconvert())
+        .def_prop_ro("Rows", &Operon::Dataset::Rows<int64_t>)
+        .def_prop_ro("Cols", &Operon::Dataset::Cols<int64_t>)
+        .def_prop_ro("Values", &Operon::Dataset::Values)
+        .def_prop_rw("VariableNames", &Operon::Dataset::VariableNames, &Operon::Dataset::SetVariableNames)
+        .def_prop_ro("VariableHashes", &Operon::Dataset::VariableHashes)
         .def("GetValues", [](Operon::Dataset const& self, std::string const& name) { return MakeView(self.GetValues(name)); })
         .def("GetValues", [](Operon::Dataset const& self, Operon::Hash hash) { return MakeView(self.GetValues(hash)); })
         .def("GetValues", [](Operon::Dataset const& self, int64_t index) { return MakeView(self.GetValues(index)); })
-        .def("GetVariable", py::overload_cast<const std::string&>(&Operon::Dataset::GetVariable, py::const_))
-        .def("GetVariable", py::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, py::const_))
-        .def_property_readonly("Variables", &Operon::Dataset::GetVariables) 
+        .def("GetVariable", nb::overload_cast<const std::string&>(&Operon::Dataset::GetVariable, nb::const_))
+        .def("GetVariable", nb::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, nb::const_))
+        .def_prop_ro("Variables", &Operon::Dataset::GetVariables)
         .def("Shuffle", &Operon::Dataset::Shuffle)
         .def("Normalize", &Operon::Dataset::Normalize)
         .def("Standardize", &Operon::Dataset::Standardize)

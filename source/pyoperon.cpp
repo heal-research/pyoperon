@@ -8,16 +8,19 @@
 #include <operon/formatter/formatter.hpp>
 #include <operon/parser/infix.hpp>
 
-namespace py = pybind11;
+#include <nanobind/stl/bind_vector.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/array.h>
+#include <nanobind/stl/unordered_map.h>
 
-PYBIND11_MODULE(pyoperon, m)
+NB_MODULE(pyoperon, m)
 {
     m.doc() = "Operon Python Module";
     m.attr("__version__") = 0.1;
 
     // binding code
-    py::bind_vector<std::vector<Operon::Variable>>(m, "VariableCollection");
-    py::bind_vector<std::vector<Operon::Individual>>(m, "IndividualCollection");
+    nb::bind_vector<std::vector<Operon::Variable>>(m, "VariableCollection");
+    nb::bind_vector<std::vector<Operon::Individual>>(m, "IndividualCollection");
 
     InitAlgorithm(m);
     InitBenchmark(m);
@@ -45,80 +48,77 @@ PYBIND11_MODULE(pyoperon, m)
     m.def("UniformReal", &Operon::Random::Uniform<Operon::RandomGenerator, double>);
 
     // mathematical constants
-    py::module math = m.def_submodule("Math");
+    auto math = m.def_submodule("Math");
     math.attr("Constants") = Operon::Math::Constants;
 
     // classes
-    py::class_<Operon::Individual>(m, "Individual")
-        .def(py::init<>())
-        .def(py::init<size_t>())
-        .def("__getitem__", py::overload_cast<size_t>(&Operon::Individual::operator[]))
-        .def("__getitem__", py::overload_cast<size_t>(&Operon::Individual::operator[], py::const_))
-        .def_readwrite("Genotype", &Operon::Individual::Genotype)
+    nb::class_<Operon::Individual>(m, "Individual")
+        .def(nb::init<>())
+        .def(nb::init<size_t>())
+        .def("__getitem__", nb::overload_cast<size_t>(&Operon::Individual::operator[]))
+        .def("__getitem__", nb::overload_cast<size_t>(&Operon::Individual::operator[], nb::const_))
+        .def_rw("Genotype", &Operon::Individual::Genotype)
         .def("SetFitness", [](Operon::Individual& self, Operon::Scalar f, size_t i) { self[i] = f; })
         .def("GetFitness", [](Operon::Individual& self, size_t i) { return self[i]; })
-        .def(py::pickle(
+        .def("__getstate__",
             [](Operon::Individual const& ind) {
-                return py::make_tuple(ind.Genotype, ind.Fitness, ind.Rank, ind.Distance);
-            },
-            [](py::tuple t) {
-                if (t.size() != 4) { throw std::runtime_error("Invalid state!"); }
-                auto fit { t[1].cast<Operon::Vector<Operon::Scalar>>() };
-                Operon::Individual ind(fit.size());
-                ind.Genotype = t[0].cast<Operon::Tree>();
-                ind.Fitness = std::move(fit);
-                ind.Rank     = t[2].cast<std::size_t>();
-                ind.Distance = t[3].cast<Operon::Scalar>();
-                return ind;
+                return std::make_tuple(ind.Genotype, ind.Fitness, ind.Rank, ind.Distance);
+            })
+        .def("__setstate__",
+            [](Operon::Individual& ind, std::tuple<Operon::Tree, std::vector<Operon::Scalar>, std::size_t, Operon::Scalar> const& t) {
+                if (std::tuple_size_v<std::remove_cvref_t<decltype(t)>> != 4) { throw std::runtime_error("Invalid state!"); }
+                ind.Genotype = std::get<0>(t);
+                ind.Fitness  = std::get<1>(t);
+                ind.Rank     = std::get<2>(t);
+                ind.Distance = std::get<3>(t);
             }
-        ));
+        );
 
-    py::class_<Operon::SingleObjectiveComparison>(m, "SingleObjectiveComparison")
-        .def(py::init<size_t>())
+    nb::class_<Operon::SingleObjectiveComparison>(m, "SingleObjectiveComparison")
+        .def(nb::init<size_t>())
         .def("__call__", &Operon::SingleObjectiveComparison::operator());
 
-    py::class_<Operon::CrowdedComparison>(m, "CrowdedComparison")
-        .def(py::init<>())
+    nb::class_<Operon::CrowdedComparison>(m, "CrowdedComparison")
+        .def(nb::init<>())
         .def("__call__", &Operon::CrowdedComparison::operator());
 
-    py::class_<Operon::Variable>(m, "Variable")
-        .def_readwrite("Name", &Operon::Variable::Name)
-        .def_readwrite("Hash", &Operon::Variable::Hash)
-        .def_readwrite("Index", &Operon::Variable::Index)
-        .def(py::pickle(
+    nb::class_<Operon::Variable>(m, "Variable")
+        .def_rw("Name", &Operon::Variable::Name)
+        .def_rw("Hash", &Operon::Variable::Hash)
+        .def_rw("Index", &Operon::Variable::Index)
+        .def("__getstate__",
             [](Operon::Variable const& variable) {
-                return py::make_tuple(variable.Name, variable.Hash, variable.Index);
-            },
-            [](py::tuple t) {
-                if (t.size() != 3) {
+                return std::make_tuple(variable.Name, variable.Hash, variable.Index);
+            })
+        .def("__setstate__",
+            [](Operon::Variable& v, std::tuple<std::string, Operon::Hash, int64_t> const& t) {
+                if (std::tuple_size_v<std::remove_cvref_t<decltype(t)>> != 3) {
                     throw std::runtime_error("Invalid state!");
                 }
-                return Operon::Variable{
-                    t[0].cast<std::string>(),
-                    t[1].cast<Operon::Hash>(),
-                    t[2].cast<std::int64_t>()
-                };
+                v.Name = std::get<0>(t);
+                v.Hash = std::get<1>(t);
+                v.Index = std::get<2>(t);
             }
-        ));
+        );
 
-    py::class_<Operon::Range>(m, "Range")
-        .def(py::init<size_t, size_t>())
-        .def(py::init<std::pair<size_t, size_t>>())
-        .def_property_readonly("Start", &Operon::Range::Start)
-        .def_property_readonly("End", &Operon::Range::End)
-        .def_property_readonly("Size", &Operon::Range::Size);
+    nb::class_<Operon::Range>(m, "Range")
+        .def(nb::init<size_t, size_t>())
+        .def(nb::init<std::pair<size_t, size_t>>())
+        .def_prop_ro("Start", &Operon::Range::Start)
+        .def_prop_ro("End", &Operon::Range::End)
+        .def_prop_ro("Size", &Operon::Range::Size);
 
     // random generators
-    py::class_<Operon::Random::RomuTrio>(m, "RomuTrio")
-        .def(py::init<uint64_t>())
+    nb::class_<Operon::Random::RomuTrio>(m, "RomuTrio")
+        .def(nb::init<uint64_t>())
         .def("__call__", &Operon::Random::RomuTrio::operator());
 
-    py::class_<Operon::Random::Sfc64>(m, "Sfc64")
-        .def(py::init<uint64_t>())
+    nb::class_<Operon::Random::Sfc64>(m, "Sfc64")
+        .def(nb::init<uint64_t>())
         .def("__call__", &Operon::Random::Sfc64::operator());
 
     // tree format
-    py::class_<Operon::TreeFormatter>(m, "TreeFormatter")
+    nb::class_<Operon::TreeFormatter>(m, "TreeFormatter")
         .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
             return Operon::TreeFormatter::Format(tree, dataset, decimalPrecision);
         })
@@ -127,7 +127,7 @@ PYBIND11_MODULE(pyoperon, m)
             return Operon::TreeFormatter::Format(tree, map, decimalPrecision);
         });
 
-    py::class_<Operon::InfixFormatter>(m, "InfixFormatter")
+    nb::class_<Operon::InfixFormatter>(m, "InfixFormatter")
         .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
             return Operon::InfixFormatter::Format(tree, dataset, decimalPrecision);
         })
@@ -136,51 +136,49 @@ PYBIND11_MODULE(pyoperon, m)
             return Operon::InfixFormatter::Format(tree, map, decimalPrecision);
         });
 
-    py::class_<Operon::InfixParser>(m, "InfixParser")
+    nb::class_<Operon::InfixParser>(m, "InfixParser")
         .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& variables) {
             Operon::Map<std::string, Operon::Hash> map(variables.begin(), variables.end());
             return Operon::InfixParser::Parse(expr, map);
         });
 
     // genetic algorithm
-    py::class_<Operon::GeneticAlgorithmConfig>(m, "GeneticAlgorithmConfig")
-        .def_readwrite("Generations", &Operon::GeneticAlgorithmConfig::Generations)
-        .def_readwrite("Evaluations", &Operon::GeneticAlgorithmConfig::Evaluations)
-        .def_readwrite("Iterations", &Operon::GeneticAlgorithmConfig::Iterations)
-        .def_readwrite("PopulationSize", &Operon::GeneticAlgorithmConfig::PopulationSize)
-        .def_readwrite("PoolSize", &Operon::GeneticAlgorithmConfig::PoolSize)
-        .def_readwrite("CrossoverProbability", &Operon::GeneticAlgorithmConfig::CrossoverProbability)
-        .def_readwrite("MutationProbability", &Operon::GeneticAlgorithmConfig::MutationProbability)
-        .def_readwrite("LocalSearchProbability", &Operon::GeneticAlgorithmConfig::LocalSearchProbability)
-        .def_readwrite("LamarckianProbability", &Operon::GeneticAlgorithmConfig::LamarckianProbability)
-        .def_readwrite("Seed", &Operon::GeneticAlgorithmConfig::Seed)
-        .def_readwrite("Epsilon", &Operon::GeneticAlgorithmConfig::Epsilon)
-        .def_readwrite("TimeLimit", &Operon::GeneticAlgorithmConfig::TimeLimit)
-        .def(py::init([](size_t gen, size_t evals, size_t iter, size_t popsize, size_t poolsize, double pc, double pm, double ps, double plm, double epsilon, size_t seed, size_t timelimit) {
-            Operon::GeneticAlgorithmConfig config;
-            config.Generations = gen;
-            config.Evaluations = evals;
-            config.Iterations = iter;
-            config.PopulationSize = popsize;
-            config.PoolSize = poolsize;
-            config.CrossoverProbability = pc;
-            config.MutationProbability = pm;
-            config.LocalSearchProbability = ps;
-            config.LamarckianProbability = plm;
-            config.Epsilon = epsilon;
-            config.Seed = seed;
-            config.TimeLimit = timelimit;
-            return config;
-        }), py::arg("generations")
-          , py::arg("max_evaluations")
-          , py::arg("local_iterations")
-          , py::arg("population_size")
-          , py::arg("pool_size")
-          , py::arg("p_crossover")
-          , py::arg("p_mutation")
-          , py::arg("p_local") = 1.0
-          , py::arg("p_lamarck") = 1.0
-          , py::arg("epsilon") = 1e-5
-          , py::arg("seed") = 0
-          , py::arg("time_limit") = ~size_t{0});
+    nb::class_<Operon::GeneticAlgorithmConfig>(m, "GeneticAlgorithmConfig")
+        .def_rw("Generations", &Operon::GeneticAlgorithmConfig::Generations)
+        .def_rw("Evaluations", &Operon::GeneticAlgorithmConfig::Evaluations)
+        .def_rw("Iterations", &Operon::GeneticAlgorithmConfig::Iterations)
+        .def_rw("PopulationSize", &Operon::GeneticAlgorithmConfig::PopulationSize)
+        .def_rw("PoolSize", &Operon::GeneticAlgorithmConfig::PoolSize)
+        .def_rw("CrossoverProbability", &Operon::GeneticAlgorithmConfig::CrossoverProbability)
+        .def_rw("MutationProbability", &Operon::GeneticAlgorithmConfig::MutationProbability)
+        .def_rw("LocalSearchProbability", &Operon::GeneticAlgorithmConfig::LocalSearchProbability)
+        .def_rw("LamarckianProbability", &Operon::GeneticAlgorithmConfig::LamarckianProbability)
+        .def_rw("Seed", &Operon::GeneticAlgorithmConfig::Seed)
+        .def_rw("Epsilon", &Operon::GeneticAlgorithmConfig::Epsilon)
+        .def_rw("TimeLimit", &Operon::GeneticAlgorithmConfig::TimeLimit)
+        .def("__init__", [](Operon::GeneticAlgorithmConfig* config, size_t gen, size_t evals, size_t iter, size_t popsize, size_t poolsize, double pc, double pm, double ps, double plm, double epsilon, size_t seed, size_t timelimit) {
+            config->Generations = gen;
+            config->Evaluations = evals;
+            config->Iterations = iter;
+            config->PopulationSize = popsize;
+            config->PoolSize = poolsize;
+            config->CrossoverProbability = pc;
+            config->MutationProbability = pm;
+            config->LocalSearchProbability = ps;
+            config->LamarckianProbability = plm;
+            config->Epsilon = epsilon;
+            config->Seed = seed;
+            config->TimeLimit = timelimit;
+        } , nb::arg("generations")
+          , nb::arg("max_evaluations")
+          , nb::arg("local_iterations")
+          , nb::arg("population_size")
+          , nb::arg("pool_size")
+          , nb::arg("p_crossover")
+          , nb::arg("p_mutation")
+          , nb::arg("p_local") = 1.0
+          , nb::arg("p_lamarck") = 1.0
+          , nb::arg("epsilon") = 1e-5
+          , nb::arg("seed") = 0
+          , nb::arg("max_time") = ~size_t{0});
 }

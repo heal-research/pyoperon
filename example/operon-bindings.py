@@ -7,17 +7,16 @@ import pandas as pd
 from scipy import stats
 
 import pyoperon as Operon
-from pmlb import fetch_data
-
-
 
 
 if __name__ == '__main__':
-    # get some training data - see https://epistasislab.github.io/pmlb/
-    D = fetch_data('1027_ESL', return_X_y=False, local_cache_dir='./datasets').to_numpy()
+    D = pd.read_csv('./datasets/1027_ESL/1027_ESL.tsv.gz', sep='\t').to_numpy()
+    X, y = D[:,:-1], D[:,-1]
 
     # initialize a dataset from a numpy array
-    ds             = Operon.Dataset(D)
+    print(X.shape, y.shape)
+    A = np.column_stack((X, y))
+    ds             = Operon.Dataset(np.asfortranarray(A))
 
     # define the training and test ranges
     training_range = Operon.Range(0, ds.Rows // 2)
@@ -33,12 +32,14 @@ if __name__ == '__main__':
     rng            = Operon.RomuTrio(random.randint(1, 1000000))
 
     # initialize a problem object which encapsulates the data, input, target and training/test ranges
-    problem        = Operon.Problem(ds, training_range, test_range)
+    problem        = Operon.Problem(ds)
+    problem.TrainingRange = training_range
+    problem.TestRange = test_range
     problem.Target = target
     problem.InputHashes = inputs
 
     # initialize an algorithm configuration
-    config         = Operon.GeneticAlgorithmConfig(generations=1000, max_evaluations=1000000, local_iterations=1, population_size=1000, pool_size=1000, p_crossover=1.0, p_mutation=0.25, epsilon=1e-5, seed=1, time_limit=86400)
+    config         = Operon.GeneticAlgorithmConfig(generations=1000, max_evaluations=1000000, local_iterations=1, population_size=1000, pool_size=1000, p_crossover=1.0, p_mutation=0.25, epsilon=1e-5, seed=1, max_time=86400)
 
     # use tournament selection with a group size of 5
     # we are doing single-objective optimization so the objective index is 0
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     selector.TournamentSize = 5
 
     # initialize the primitive set (add, sub, mul, div, exp, log, sin, cos), constants and variables are implicitly added
-    problem.ConfigurePrimitiveSet(Operon.PrimitiveSet.Arithmetic | Operon.NodeType.Exp | Operon.NodeType.Log | Operon.NodeType.Sin | Operon.NodeType.Cos)
+    problem.ConfigurePrimitiveSet(Operon.NodeType.Constant | Operon.NodeType.Variable | Operon.NodeType.Add | Operon.NodeType.Mul | Operon.NodeType.Div | Operon.NodeType.Exp | Operon.NodeType.Log | Operon.NodeType.Sin | Operon.NodeType.Cos)
     pset = problem.PrimitiveSet
 
     # define tree length and depth limits
@@ -87,14 +88,14 @@ if __name__ == '__main__':
     evaluator.Budget = config.Evaluations # computational budget
 
     optimizer      = Operon.LMOptimizer(dtable, problem, max_iter=config.Iterations)
-    local_search   = Operon.CoefficientOptimizer(optimizer, config.LamarckianProbability)
+    local_search   = Operon.CoefficientOptimizer(optimizer)
 
     # define how new offspring are created
     generator      = Operon.BasicOffspringGenerator(evaluator, crossover, mutation, selector, selector, local_search)
 
     # define how the offspring are merged back into the population - here we replace the worst parents with the best offspring
     reinserter     = Operon.ReplaceWorstReinserter(objective_index=0)
-    gp             = Operon.GeneticProgrammingAlgorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter)
+    gp             = Operon.GeneticProgrammingAlgorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter)
 
     # report some progress
     gen = 0
@@ -103,36 +104,21 @@ if __name__ == '__main__':
     t0 = time.time()
 
     def report():
-        # print('report')
         global gen
         best = gp.BestModel
         bestfit = best.GetFitness(0)
-        # avgLen = np.mean(ind.Genotype.Length for ind in gp.Offspring)
-        # avgLen = 0
         sys.stdout.write('\r')
-        # # print('evaluator.TotalEvaluations:', evaluator.TotalEvaluations)
-        # # print('config.Evaluations: ', config.Evaluations)
         cursor = int(np.round(evaluator.TotalEvaluations/config.Evaluations * max_ticks))
-        # # print('cursor:', cursor)
         for i in range(cursor):
             sys.stdout.write('\u2588')
         sys.stdout.write(' ' * (max_ticks-cursor))
         sys.stdout.write(f'{100 * evaluator.TotalEvaluations/config.Evaluations:.1f}%, generation {gen}/{config.Generations}, train quality: {-bestfit:.6f}, elapsed: {time.time()-t0:.2f}s')
         sys.stdout.flush()
-        # print('terminate = ', generator.Terminate)
         gen += 1
-        # pass
 
-
-    # def report():
-        # print(gp.Generation)
-        # pass
 
     # run the algorithm
-    try:
-        gp.Run(rng, report, threads=16)
-    except e:
-        print(e)
+    gp.Run(rng, report, threads=16)
 
     # get the best solution and print it
     best = gp.BestModel

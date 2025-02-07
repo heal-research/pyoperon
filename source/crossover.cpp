@@ -5,15 +5,15 @@
 
 #include <operon/operators/crossover.hpp>
 
-void InitCrossover(py::module_ &m)
+void InitCrossover(nb::module_ &m)
 {
     // crossover
-    py::class_<Operon::CrossoverBase> crossoverBase(m, "CrossoverBase");
+    nb::class_<Operon::CrossoverBase> crossoverBase(m, "CrossoverBase");
 
-    py::class_<Operon::SubtreeCrossover, Operon::CrossoverBase>(m, "SubtreeCrossover")
-        .def(py::init<double, size_t, size_t>(),
-                py::arg("internal_probability"),
-                py::arg("depth_limit"),
-                py::arg("length_limit"))
+    nb::class_<Operon::SubtreeCrossover, Operon::CrossoverBase>(m, "SubtreeCrossover")
+        .def(nb::init<double, size_t, size_t>(),
+                nb::arg("internal_probability"),
+                nb::arg("depth_limit"),
+                nb::arg("length_limit"))
         .def("__call__", &Operon::SubtreeCrossover::operator());
 }

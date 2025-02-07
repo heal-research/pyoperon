@@ -71,7 +71,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         add_model_intercept_term       = True,
         uncertainty                    = [1],
         n_threads                      = 1,
-        time_limit                     = None,
+        max_time                       = None,
         random_state                   = None
         ):
 
@@ -117,7 +117,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.add_model_scale_term      = add_model_scale_term
         self.add_model_intercept_term  = add_model_intercept_term
         self.uncertainty               = uncertainty
-        self.time_limit                = time_limit
+        self.max_time                  = max_time
         self.random_state              = random_state
 
 
@@ -165,7 +165,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.add_model_intercept_term       = check(self.add_model_intercept_term, True)
         self.uncertainty                    = check(self.uncertainty, [1])
         self.n_threads                      = check(self.n_threads, 1)
-        self.time_limit                     = check(self.time_limit, sys.maxsize)
+        self.max_time                       = check(self.max_time, sys.maxsize)
         self.random_state                   = check(self.random_state, random.getrandbits(64))
 
 
@@ -205,10 +205,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'variable' : op.NodeType.Variable,
         }
 
-        config = op.NodeType(0)
+        config = 0
         for s in symbols:
             if s in known_symbols:
-                config |= known_symbols[s]
+                v = int(known_symbols[s])
+                config |= v
             else:
                 raise ValueError('Unknown symbol type {}'.format(s))
 
@@ -422,19 +423,21 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.__check_parameters()
 
         X, y                  = check_X_y(X, y, accept_sparse=False)
-        D                     = np.column_stack((X, y))
-
+        D                     = np.asfortranarray(np.column_stack((X, y)))
         ds                    = op.Dataset(D)
+
         target                = max(ds.Variables, key=lambda x: x.Index) # last column is the target
         self.variables_       = { v.Hash : v.Name for v in sorted(ds.Variables, key=lambda x: x.Index) if v.Hash != target.Hash }
         self.inputs_          = [ k for k in self.variables_ ]
         training_range        = op.Range(0, ds.Rows)
         test_range            = op.Range(ds.Rows-1, ds.Rows) # hackish, because it can't be empty
-        problem               = op.Problem(ds, training_range, test_range)
+        problem               = op.Problem(ds)
+        problem.TrainingRange = training_range
+        problem.TestRange     = test_range
         problem.Target        = target
         problem.InputHashes   = self.inputs_
-        pcfg                  = self.__init_primitive_config(self.allowed_symbols)
-        problem.ConfigurePrimitiveSet(pcfg)
+        primitive_set_config  = self.__init_primitive_config(self.allowed_symbols)
+        problem.ConfigurePrimitiveSet(primitive_set_config)
         pset = problem.PrimitiveSet
 
         creator               = self.__init_creator(self.initialization_method, pset, self.inputs_)
@@ -492,7 +495,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             mut.Add(m, v)
             mut_list.append(m)
 
-        coeff_optimizer       = op.CoefficientOptimizer(optimizer, self.lamarckian_probability)
+        coeff_optimizer       = op.CoefficientOptimizer(optimizer)
         generator             = self.__init_generator(self.offspring_generator, evaluator, cx, mut, female_selector, male_selector, coeff_optimizer)
 
         min_arity, max_arity  = pset.FunctionArityLimits()
@@ -507,26 +510,27 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             self.random_state = self.random_state.bit_generator.random_raw()
 
         config = op.GeneticAlgorithmConfig(
-                     generations      = self.generations,
-                     max_evaluations  = self.max_evaluations,
-                     local_iterations = self.optimizer_iterations,
-                     population_size  = self.population_size,
-                     pool_size        = self.pool_size,
-                     p_crossover      = self.crossover_probability,
-                     p_mutation       = self.mutation_probability,
-                     p_local          = self.local_search_probability,
-                     p_lamarck        = self.lamarckian_probability,
-                     epsilon          = self.epsilon,
-                     seed             = self.random_state,
-                     time_limit       = self.time_limit
-                     )
+            generations      = self.generations,
+            max_evaluations  = self.max_evaluations,
+            local_iterations = self.optimizer_iterations,
+            population_size  = self.population_size,
+            pool_size        = self.pool_size,
+            p_crossover      = self.crossover_probability,
+            p_mutation       = self.mutation_probability,
+            p_local          = self.local_search_probability,
+            p_lamarck        = self.lamarckian_probability,
+            epsilon          = self.epsilon,
+            seed             = self.random_state,
+            max_time         = self.max_time
+            )
 
         sorter = None if single_objective else op.RankSorter()
-        gp     = op.GeneticProgrammingAlgorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter) if single_objective \
-                 else op.NSGA2Algorithm(problem, config, tree_initializer, coeff_initializer, generator, reinserter, sorter)
+        gp     = op.GeneticProgrammingAlgorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter) if single_objective else \
+                 op.NSGA2Algorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter, sorter)
         rng    = op.RomuTrio(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
+
 
         def get_solution_stats(solution):
             """Takes a solution (operon individual) and computes a set of stats"""
@@ -540,12 +544,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 nodes += [ op.Node.Constant(offset), op.Node.Add() ]
             solution.Genotype = op.Tree(nodes).UpdateNodes()
 
-            # get solution variables
-            solution_vars = [self.variables_[x.HashValue] for x in solution.Genotype.Nodes if x.IsVariable]
-
             stats = {
                 'model' : op.InfixFormatter.Format(solution.Genotype, self.variables_, 6),
-                'variables' : set(solution_vars),
+                'variables' : set(self.variables_[x.HashValue] for x in nodes if x.IsVariable),
+                'length' : len(nodes),
+                'complexity' : len(nodes) + sum(2 for x in nodes if x.IsVariable),
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
                 'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),
@@ -563,8 +566,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.model_ = best['tree']
 
         self.stats_ = {
-            'model_length': self.model_.Length - 4, # do not count scaling nodes?
-            'model_complexity': self.model_.Length - 4 + 2 * sum(1 for x in self.model_.Nodes if x.IsVariable),
+            'model_length': best['length'],
+            'model_complexity': best['complexity'],
             'generations': gp.Generation,
             'evaluation_count': evaluator.CallCount,
             'residual_evaluations': evaluator.ResidualEvaluations,

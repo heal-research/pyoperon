@@ -10,20 +10,22 @@ from sklearn.ensemble import RandomForestRegressor
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, MSE, InfixFormatter, FitLeastSquares, Interpreter
 
-df = pd.read_csv('./datasets/1027_ESL/1027_ESL.tsv.gz', sep='\t')
-X = df.iloc[:,:-1]
-y = df.iloc[:, -1]
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5)
+D_train = pd.read_csv('../experiment/data/stage1/6589_noise_easy_data_train.csv', sep=',')
+D_test = pd.read_csv('../experiment/data/stage1/6589_noise_easy_data_test.csv', sep=',')
+
+X_train, y_train = D_train.iloc[:,:-1], D_train.iloc[:,-1]
+X_test, y_test = D_test.iloc[:,:-1], D_train.iloc[:,-1]
+# X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5, shuffle=False)
 
 y_pred = RandomForestRegressor(n_estimators=100).fit(X_train, y_train).predict(X_train)
-sErr = np.sqrt(mean_squared_error(y_train,  y_pred))
+sErr = np.sqrt(mean_squared_error(y_train,  y_pred)) # estimate of the uncertainty (empirical error)
 
 from sympy import parse_expr
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
 reg = SymbolicRegressor(
-        allowed_symbols= "add,sub,mul,div,constant,variable",
+        allowed_symbols= "add,sub,mul,aq,sin,constant,variable",
         brood_size= 10,
         comparison_factor= 0,
         crossover_internal_probability= 0.9,
@@ -35,7 +37,9 @@ reg = SymbolicRegressor(
         initialization_max_length= 10,
         initialization_method= "btc",
         irregularity_bias= 0.0,
-        optimizer_iterations= 5,
+        local_search_probability=1.0,
+        lamarckian_probability=1.0,
+        optimizer_iterations=1,
         optimizer='lm',
         male_selector= "tournament",
         max_depth= 10,
@@ -46,23 +50,19 @@ reg = SymbolicRegressor(
         mutation_probability= 0.25,
         n_threads= 32,
         objectives= [ 'r2', 'length' ],
-        offspring_generator= "basic",
+        offspring_generator= "os",
         pool_size= 1000,
         population_size= 1000,
         random_state= None,
         reinserter= "keep-best",
-        time_limit= 900,
-        tournament_size= 3,
-        uncertainty= [sErr]
+        max_time= 900,
+        tournament_size=3,
+        uncertainty= [sErr],
+        add_model_intercept_term=True,
+        add_model_scale_term=True
         )
-
-print(X_train.shape, y_train.shape)
 
 reg.fit(X_train, y_train)
 res = [(s['objective_values'], s['tree'], s['minimum_description_length']) for s in reg.pareto_front_]
 for obj, expr, mdl in res:
-    print(obj, mdl, reg.get_model_string(expr, 16))
-
-m = reg.model_
-s = reg.get_model_string(m, 3)
-print(s)
+    print(f'{obj}, {mdl:.2f}, {reg.get_model_string(expr, 12)}')
