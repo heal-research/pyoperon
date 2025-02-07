@@ -6,7 +6,8 @@
     foolnotion.url = "github:foolnotion/nur-pkg";
     lbfgs.url = "github:foolnotion/lbfgs";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-    operon.url = "github:heal-research/operon/better-ownership-semantics";
+    operon.url = "github:heal-research/operon";
+    #operon.url = "path:/home/bogdb/src/operon_tmp";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
     vstat.url = "github:heal-research/vstat";
 
@@ -33,7 +34,7 @@
             ];
           };
           enableShared = false;
-          stdenv_ = pkgs.llvmPackages_18.stdenv;
+          stdenv_ = pkgs.llvmPackages_19.stdenv;
           python_ = pkgs.python3;
           operon_ = if enableShared then operon.packages.${system}.library else operon.packages.${system}.library-static;
 
@@ -45,8 +46,8 @@
                 src = pkgs.fetchFromGitHub {
                   owner = "wjakob";
                   repo = "nanobind";
-                  rev = "c1bab7e4207566b75bbc51c35079f66ae6f0afc0";
-                  hash = "sha256-KaGSHt6dNR4vpCkU/rJIQuwFs3e8S4afpyCcabiBM8w=";
+                  rev = "4ccbe6e005fc017652312305f280742da49d3dd5";
+                  hash = "sha256-sH+qZHd9OKDxl2yTAeDh4xLwW64k6nIToyLfd3cR6kE=";
                   fetchSubmodules = true;
                 };
               });
@@ -73,7 +74,7 @@
 
             buildInputs = with pkgs; [
               (python_.withPackages (ps: with ps; [ setuptools wheel requests nanobind ]))
-              operon_
+              (operon_.overrideAttrs(old: { cmakeFlags = old.cmakeFlags ++ [ "-DUSE_SINGLE_PRECISION=1" ]; }))
             ] ++ operon_.buildInputs;
           };
         in
@@ -101,10 +102,8 @@
           devShells.pyenv = stdenv_.mkDerivation {
             name = "pyoperon-dev";
             nativeBuildInputs = pyoperon.nativeBuildInputs;
-            buildInputs = pyoperon.buildInputs ++ (with pkgs; [ gdb valgrind gcc13 pkgs.vstat ])
-              ++ (with python_.pkgs; [ scikit-build ]) # cmake integration and release preparation
-              ++ (with python_.pkgs; [ numpy scikit-learn pandas pyarrow ipdb sympy requests matplotlib optuna jax jaxlib-bin torch pytest ])
-              ++ (with pkgs; [ (pmlb.override { pythonPackages = python_.pkgs; }) ]);
+            buildInputs = pyoperon.buildInputs ++ (with pkgs; [ pdm virtualenv gcc14 gfortran14 zlib ]);
+              LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib/:${pkgs.zlib}/lib/";
           };
         };
     };
