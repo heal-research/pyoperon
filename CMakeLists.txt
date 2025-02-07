@@ -53,7 +53,7 @@ endif()
 
 nanobind_add_module(
     pyoperon_pyoperon
-    MODULE
+    MODULE NB_SUPPRESS_WARNINGS
     source/algorithm.cpp
     source/benchmark.cpp
     source/creator.cpp
