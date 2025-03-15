@@ -7,6 +7,7 @@
 #include <operon/core/version.hpp>
 #include <operon/formatter/formatter.hpp>
 #include <operon/parser/infix.hpp>
+#include <operon/random/random.hpp>
 
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/stl/string.h>
@@ -107,15 +108,6 @@ NB_MODULE(pyoperon, m)
         .def_prop_ro("Start", &Operon::Range::Start)
         .def_prop_ro("End", &Operon::Range::End)
         .def_prop_ro("Size", &Operon::Range::Size);
-
-    // random generators
-    nb::class_<Operon::Random::RomuTrio>(m, "RomuTrio")
-        .def(nb::init<uint64_t>())
-        .def("__call__", &Operon::Random::RomuTrio::operator());
-
-    nb::class_<Operon::Random::Sfc64>(m, "Sfc64")
-        .def(nb::init<uint64_t>())
-        .def("__call__", &Operon::Random::Sfc64::operator());
 
     // tree format
     nb::class_<Operon::TreeFormatter>(m, "TreeFormatter")
