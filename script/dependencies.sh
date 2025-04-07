@@ -62,6 +62,16 @@ cmake --install build
 popd
 rm -rf eve
 
+## fluky
+git clone https://github.com/foolnotion/fluky fluky
+pushd fluky
+cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+cmake --install build
+popd
+rm -rf fluky
+
 ## vstat
 git clone https://github.com/heal-research/vstat.git
 pushd vstat
