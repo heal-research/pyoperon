@@ -545,7 +545,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         sorter = None if single_objective else op.RankSorter()
         gp     = op.GeneticProgrammingAlgorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter) if single_objective else \
                  op.NSGA2Algorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter, sorter)
-        rng    = op.RomuTrio(np.uint64(config.Seed))
+        rng    = op.RandomGenerator(np.uint64(config.Seed))
 
         gp.Run(rng, None, self.n_threads)
 

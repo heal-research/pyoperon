@@ -109,6 +109,11 @@ NB_MODULE(pyoperon, m)
         .def_prop_ro("End", &Operon::Range::End)
         .def_prop_ro("Size", &Operon::Range::Size);
 
+    // random generator
+    nb::class_<Operon::RandomGenerator>(m, "RandomGenerator")
+	.def(nb::init<uint64_t>())
+    	.def("__call__", &Operon::RandomGenerator::operator());
+
     // tree format
     nb::class_<Operon::TreeFormatter>(m, "TreeFormatter")
         .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
