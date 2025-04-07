@@ -7,7 +7,6 @@
     lbfgs.url = "github:foolnotion/lbfgs";
     nixpkgs.url = "github:nixos/nixpkgs/master";
     operon.url = "github:heal-research/operon";
-    #operon.url = "path:/home/bogdb/src/operon_tmp";
     pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
     vstat.url = "github:heal-research/vstat";
 

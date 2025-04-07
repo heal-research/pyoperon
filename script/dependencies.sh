@@ -170,6 +170,25 @@ popd
 popd
 rm -rf GSL
 
+# span-lite
+git clone https://github.com/martinmoene/span-lite.git
+pushd span-lite
+git checkout 50f55c59d1b66910837313c40d11328d03447a41
+mkdir build
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+cmake --install build
+popd
+rm -rf span-lite
+
+# byte-lite
+git clone https://github.com/martinmoene/byte-lite.git
+pushd byte-lite
+git checkout dd5b3827f7cd74c1f399d1ec2c063982d3442a99
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+cmake --install build
+popd
+rm -rf byte-lite
+
 ## quickcpplib
 git clone https://github.com/ned14/quickcpplib.git
 pushd quickcpplib
@@ -250,25 +269,6 @@ cmake -S . -B build \
 cmake --install build
 popd
 rm -rf mdspan
-
-# span-lite
-git clone https://github.com/martinmoene/span-lite.git
-pushd span-lite
-git checkout 50f55c59d1b66910837313c40d11328d03447a41
-mkdir build
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
-cmake --install build
-popd
-rm -rf span-lite
-
-# byte-lite
-git clone https://github.com/martinmoene/byte-lite.git
-pushd byte-lite
-git checkout dd5b3827f7cd74c1f399d1ec2c063982d3442a99
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
-cmake --install build
-popd
-rm -rf byte-lite
 
 # cpptrace
 git clone https://github.com/jeremy-rifkin/cpptrace.git
