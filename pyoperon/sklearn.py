@@ -420,7 +420,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return op.InfixFormatter.Format(model, names_map, precision)
 
 
-    def fit(self, X, y):
+    def fit(self, X, y, warm_start=False):
         """A reference implementation of a fitting function.
 
         Parameters
@@ -430,6 +430,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         y : array-like, shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
+        warm_start : bool, when set to True reuse the individuals of the 
+            previous call to `fit` to continue training
 
         Returns
         -------
@@ -547,7 +549,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                  op.NSGA2Algorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter, sorter)
         rng    = op.RandomGenerator(np.uint64(config.Seed))
 
-        gp.Run(rng, None, self.n_threads)
+        gp.Run(rng, None, self.n_threads, warm_start)
 
 
         def get_solution_stats(solution):

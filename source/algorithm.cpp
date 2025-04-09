@@ -23,8 +23,8 @@ void InitAlgorithm(nb::module_ &m)
 
     nb::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
         .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*>())
-        .def("Run", nb::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t>(&Operon::GeneticProgrammingAlgorithm::Run),
-                nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0)
+        .def("Run", nb::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t, bool>(&Operon::GeneticProgrammingAlgorithm::Run),
+                nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("BestModel", [](Operon::GeneticProgrammingAlgorithm const& self) {
                 auto minElem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
