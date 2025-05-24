@@ -73,7 +73,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         uncertainty                    = [1],
         n_threads                      = 1,
         max_time                       = None,
-        random_state                   = None
+        random_state                   = None,
+        warm_start                     = False,
         ):
 
         self.allowed_symbols           = allowed_symbols
@@ -121,6 +122,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.uncertainty               = uncertainty
         self.max_time                  = max_time
         self.random_state              = random_state
+        self.warm_start                = warm_start
 
 
     def __check_parameters(self):
@@ -170,6 +172,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.n_threads                      = check(self.n_threads, 1)
         self.max_time                       = check(self.max_time, sys.maxsize)
         self.random_state                   = check(self.random_state, random.getrandbits(64))
+        self.warm_start                     = check(self.warm_start, False)
 
 
     def __init_primitive_config(self, allowed_symbols):
@@ -545,10 +548,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         sorter = None if single_objective else op.RankSorter()
         gp     = op.GeneticProgrammingAlgorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter) if single_objective else \
                  op.NSGA2Algorithm(config, problem, tree_initializer, coeff_initializer, generator, reinserter, sorter)
+
+        # Restore individuals if the model has been previously fit and warm_start is enabled.
+        # Otherwise, continue as if it were a cold start.
+        if self.warm_start and hasattr(self, "is_fitted_") and self.is_fitted_:
+            gp.RestoreIndividuals(self.individuals_)
+            gp.IsFitted = True
+
         rng    = op.RandomGenerator(np.uint64(config.Seed))
 
-        gp.Run(rng, None, self.n_threads)
-
+        gp.Run(rng, None, self.n_threads, self.warm_start)
 
         def get_solution_stats(solution):
             """Takes a solution (operon individual) and computes a set of stats"""
