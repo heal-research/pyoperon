@@ -4,6 +4,7 @@
 #include "pyoperon/pyoperon.hpp"
 #include <operon/core/subtree.hpp>
 #include <operon/core/tree.hpp>
+#include <nanobind/make_iterator.h>
 
 void InitTree(nb::module_ &m)
 {
@@ -26,9 +27,18 @@ void InitTree(nb::module_ &m)
         // .def_prop_ro("Nodes", static_cast<Operon::Vector<Operon::Node> const& (Operon::Tree::*)() const&>(&Operon::Tree::Nodes))
         // .def_prop_ro("Nodes", static_cast<Operon::Vector<Operon::Node> const& (Operon::Tree::*)() const&>(&Operon::Tree::Nodes))
         //.def_prop_ro("Nodes", static_cast<Operon::Vector<Operon::Node>&& (Operon::Tree::*)() &&>(&Operon::Tree::Nodes))
-        .def_prop_ro("Indices", [](Operon::Tree const& tree, std::size_t i) { return tree.Indices(i); })
-        .def_prop_ro("Children", nb::overload_cast<std::size_t>(&Operon::Tree::Children))
-        .def_prop_ro("Children", nb::overload_cast<std::size_t>(&Operon::Tree::Children, nb::const_))
+        .def("Indices", [](Operon::Tree const& tree, std::size_t i) {
+            const auto iterator = tree.Indices(i);
+            return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node const>>(), "IndexIterator", iterator.begin(), iterator.end());
+        })
+        .def("Children", [](Operon::Tree & tree, std::size_t i) {
+            const auto iterator = tree.Children(i);
+            return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node>>(), "NodeIterator", iterator.begin(), iterator.end());
+        })
+        .def("Children", [](Operon::Tree const& tree, std::size_t i) {
+            const auto iterator = tree.Children(i);
+            return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node const>>(), "NodeIterator", iterator.begin(), iterator.end());
+        })
         .def_prop_ro("Length", &Operon::Tree::Length)
         .def_prop_ro("AdjustedLength", &Operon::Tree::AdjustedLength)
         .def_prop_ro("VisitationLength", &Operon::Tree::VisitationLength)
