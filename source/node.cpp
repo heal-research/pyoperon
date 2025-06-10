@@ -4,6 +4,7 @@
 #include "pyoperon/pyoperon.hpp"
 
 #include <nanobind/operators.h>
+#include <nanobind/stl/string.h>
 #include <operon/core/node.hpp>
 #include <utility>
 
