@@ -25,6 +25,7 @@ dependencies = ["numpy>=2.0.2", "pandas>=2.2.3", "scikit-learn>=1.6.1", "matplot
 [build-system]
 requires = [
     "scikit-build>=0.16",
+    "nanobind>=2.5.0",
     "setuptools>=42",
     "cmake>=3.18",
 ]
