@@ -79,15 +79,12 @@ add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 # when operon is statically linked, dependency information will not be available
 # via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
 # all of the below will be added to INTERFACE_LINK_LIBRARIES, therefore we try to find them
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(openlibm IMPORTED_TARGET openlibm)
 find_package(Taskflow)
 find_package(cpp-sort)
 find_package(fmt)
 find_package(libassert)
 find_package(vstat)
 find_package(eve)
-find_package(openlibm)
 
 include(GenerateExportHeader)
 generate_export_header(
