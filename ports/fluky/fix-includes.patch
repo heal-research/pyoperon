@@ -1,0 +1,36 @@
+diff --git a/include/fluky/jsf64.hpp b/include/fluky/jsf64.hpp
+index 5532c63..19304fb 100644
+--- a/include/fluky/jsf64.hpp
++++ b/include/fluky/jsf64.hpp
+@@ -2,6 +2,7 @@
+ #define FLUKY_JSF64_RANDOM_HPP
+
+ #include <array>
++#include <bit>
+ #include <cstdint>
+ #include <limits>
+ namespace fluky {
+diff --git a/include/fluky/romu.hpp b/include/fluky/romu.hpp
+index b2fc262..72d5cb8 100644
+--- a/include/fluky/romu.hpp
++++ b/include/fluky/romu.hpp
+@@ -2,6 +2,7 @@
+ #define FLUKY_ROMU_RANDOM_HPP
+
+ #include <array>
++#include <bit>
+ #include <cstdint>
+ #include <limits>
+ #include "splitmix64.hpp"
+diff --git a/include/fluky/xoshiro256ss.hpp b/include/fluky/xoshiro256ss.hpp
+index 7ae960d..1fe3351 100644
+--- a/include/fluky/xoshiro256ss.hpp
++++ b/include/fluky/xoshiro256ss.hpp
+@@ -2,6 +2,7 @@
+ #define FLUKY_XOSHIRO256SS_RANDOM_HPP
+
+ #include <array>
++#include <bit>
+ #include <cstdint>
+ #include <limits>
+ #include "splitmix64.hpp"

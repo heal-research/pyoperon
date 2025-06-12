@@ -1,0 +1,33 @@
+{
+    "name": "fluky",
+    "version-semver": "0.1.0",
+    "description": "A small, header-only C++20 library of 64-bit pseudo-random number generators. The library is motivated by the need for a collection of reliable PRNGs that is easy to install and package.",
+    "homepage": "https://github.com/foolnotion/fluky",
+    "dependencies": [
+      {
+        "name": "fmt",
+        "version>=": "11.0.2#1"
+      },
+      {
+        "name": "vcpkg-cmake",
+        "host": true
+      },
+      {
+        "name": "vcpkg-cmake-config",
+        "host": true
+      }
+    ],
+    "default-features": [],
+    "features": {
+      "test": {
+        "description": "Dependencies for testing",
+        "dependencies": [
+          {
+            "name": "catch2",
+            "version>=": "3.7.1"
+          }
+        ]
+      }
+    },
+    "builtin-baseline": "d7112d1a4fb50410d3639f5f586972591d848beb"
+  }
