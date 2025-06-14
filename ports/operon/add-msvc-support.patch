@@ -1,0 +1,77 @@
+﻿diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ca62fff..643ecbe 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -268,7 +268,7 @@ endif()
+ target_compile_features(operon_operon PUBLIC cxx_std_20)
+
+ if(MSVC)
+-    target_compile_options(operon_operon PRIVATE "/std:c++latest")
++    target_compile_options(operon_operon PRIVATE "/bigobj")
+ else()
+     if (UNIX AND NOT APPLE)
+         target_link_options(operon_operon PRIVATE "-Wl,--no-undefined")
+diff --git a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp b/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
+index d1f2e98..9db3ec8 100644
+--- a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
++++ b/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
+@@ -6,6 +6,7 @@
+ 
+ #include <array>
+ #include <functional>
++#include <random>
+ #include <limits>
+
+ #include "operon/core/concepts.hpp"
+diff --git a/include/operon/optimizer/likelihood/poisson_likelihood.hpp b/include/operon/optimizer/likelihood/poisson_likelihood.hpp
+index b3e8827..90032da 100644
+--- a/include/operon/optimizer/likelihood/poisson_likelihood.hpp
++++ b/include/operon/optimizer/likelihood/poisson_likelihood.hpp
+@@ -10,6 +10,7 @@
+ #include "likelihood_base.hpp"
+
+ #include <functional>
++#include <random>
+ #include <type_traits>
+ #include <vstat/univariate.hpp>
+ #include <vstat/vstat.hpp>
+diff --git a/source/operators/non_dominated_sorter/rank_intersect.cpp b/source/operators/non_dominated_sorter/rank_intersect.cpp
+index e067f47..ebecf6b 100644
+--- a/source/operators/non_dominated_sorter/rank_intersect.cpp
++++ b/source/operators/non_dominated_sorter/rank_intersect.cpp
+@@ -56,7 +56,7 @@ namespace {
+         for (auto i = 0; i < n; ++i) {
+             auto const j = items[i].Index;
+             auto [q, r] = std::div(j, DIGITS);
+-            mask[q] &= ~(1UL << static_cast<uint>(r)); // reset bit j
++            mask[q] &= ~(1UL << static_cast<unsigned int>(r)); // reset bit j
+
+             auto lo = 0;
+             auto hi = nb-q-1;
+@@ -72,7 +72,7 @@ namespace {
+             auto sz = hi-lo+1;
+             if (sz == 0) { lo = hi+1; } else {
+                 p = MakeUnique<uint64_t[]>(sz);
+-                p[0] = (ONES << static_cast<uint>(r)) & mask[q];
++                p[0] = (ONES << static_cast<unsigned int>(r)) & mask[q];
+                 std::copy_n(mask.get()+q+1, sz-1, p.get()+1);
+                 while (lo <= hi && (p[lo] == ZEROS)) { ++lo; }
+                 while (lo <= hi && (p[hi] == ZEROS)) { --hi; }
+@@ -153,7 +153,7 @@ auto RankIntersectSorter::Sort(Operon::Span<Operon::Individual const> pop, Opero
+         auto last = items.back().Index;
+
+         std::get<1>(bitsets[last]) = std::get<2>(bitsets[last])+1; // lo = hi+1
+-        mask[first / DIGITS] &= ~(1UL << static_cast<uint>(first % DIGITS));
++        mask[first / DIGITS] &= ~(1UL << static_cast<unsigned int>(first % DIGITS));
+
+         auto mmin = static_cast<int>(first / DIGITS);
+         auto mmax = static_cast<int>(first / DIGITS);
+@@ -161,7 +161,7 @@ auto RankIntersectSorter::Sort(Operon::Span<Operon::Individual const> pop, Opero
+         // [items.begin()+1, items.end()-1] must be a valid range
+         for (auto [i, _] : std::span{items.begin()+1, items.end()-1}) {
+             auto [q, r] = std::div(i, DIGITS);
+-            mask[q] &= ~(1UL << static_cast<uint>(r)); // reset bit i
++            mask[q] &= ~(1UL << static_cast<unsigned int>(r)); // reset bit i
+             auto& [bits, lo, hi] = bitsets[i];
+             if (lo > hi) { ++done; continue; }
+

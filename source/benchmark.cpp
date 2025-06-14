@@ -51,9 +51,8 @@ void InitBenchmark(nb::module_ &m)
         auto nTotal = std::reduce(trees.begin(), trees.end(), 0UL, [](size_t partial, const auto& t) { return partial + t.Length(); });
 #else
         auto nTotal = std::transform_reduce(trees.begin(), trees.end(), 0UL, std::plus<> {}, [](auto& tree) { return tree.Length(); });
-
-        TDispatch dtable;
 #endif
+        TDispatch dtable;
         tf::Executor executor(nThreads);
         std::vector<std::vector<Operon::Scalar>> values(executor.num_workers());
         for (auto& val : values) { val.resize(range.Size()); }

@@ -6,6 +6,8 @@ if platform.system() == 'Linux':
     build_preset = 'build-linux'
 elif platform.system() == 'Darwin':
     build_preset = 'build-osx'
+elif platform.system() == 'Windows':
+    build_preset = 'build-windows'
 
 setup(
     name="pyoperon",
