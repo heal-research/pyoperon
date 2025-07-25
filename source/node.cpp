@@ -5,6 +5,7 @@
 
 #include <nanobind/operators.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
 #include <operon/core/node.hpp>
 #include <utility>
 

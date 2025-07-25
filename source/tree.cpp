@@ -5,6 +5,8 @@
 #include <operon/core/subtree.hpp>
 #include <operon/core/tree.hpp>
 #include <nanobind/make_iterator.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/tuple.h>
 
 void InitTree(nb::module_ &m)
 {
