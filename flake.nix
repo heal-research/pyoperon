@@ -33,27 +33,9 @@
             ];
           };
           enableShared = false;
-          stdenv_ = pkgs.llvmPackages_19.stdenv;
+          stdenv_ = pkgs.llvmPackages_latest.stdenv;
           python_ = pkgs.python3;
           operon_ = if enableShared then operon.packages.${system}.library else operon.packages.${system}.library-static;
-
-          pythonPkgs = pkgs.python3Packages.override {
-            overrides = self: super: {
-              nanobind = super.nanobind.overridePythonAttrs (old: {
-                doCheck = false;
-                build-system = old.build-system ++ [ pythonPkgs.typing-extensions ];
-                src = pkgs.fetchFromGitHub {
-                  owner = "wjakob";
-                  repo = "nanobind";
-                  rev = "4ccbe6e005fc017652312305f280742da49d3dd5";
-                  hash = "sha256-sH+qZHd9OKDxl2yTAeDh4xLwW64k6nIToyLfd3cR6kE=";
-                  fetchSubmodules = true;
-                };
-              });
-            };
-          };
-          nanobind = pythonPkgs.nanobind;
-
 
           pyoperon = stdenv_.mkDerivation {
             name = "pyoperon";
