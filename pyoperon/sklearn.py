@@ -252,24 +252,27 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         raise ValueError('Unknown selection method {}'.format(selection_method))
 
 
-    def __init_evaluator(self, objective, problem, dtable):
+    def __init_evaluator(self, objective, problem, dtable, error_weights=None):
+        if error_weights is None:
+            error_weights = []
+        
         if objective == 'r2':
-            return op.Evaluator(problem, dtable, op.R2(), True)
+            return op.Evaluator(problem, dtable, op.R2(), True, error_weights)
 
         elif objective == 'c2':
-            return op.Evaluator(problem, dtable, op.C2(), False)
+            return op.Evaluator(problem, dtable, op.C2(), False, error_weights)
 
         elif objective == 'nmse':
-            return op.Evaluator(problem, dtable, op.NMSE(), True)
+            return op.Evaluator(problem, dtable, op.NMSE(), True, error_weights)
 
         elif objective == 'rmse':
-            return op.Evaluator(problem, dtable, op.RMSE(), True)
+            return op.Evaluator(problem, dtable, op.RMSE(), True, error_weights)
 
         elif objective == 'mse':
-            return op.Evaluator(problem, dtable, op.MSE(), True)
+            return op.Evaluator(problem, dtable, op.MSE(), True, error_weights)
 
         elif objective == 'mae':
-            return op.Evaluator(problem, dtable, op.MAE(), True)
+            return op.Evaluator(problem, dtable, op.MAE(), True, error_weights)
 
         elif objective == 'length':
             return op.LengthEvaluator(problem)
@@ -423,7 +426,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return op.InfixFormatter.Format(model, names_map, precision)
 
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """A reference implementation of a fitting function.
 
         Parameters
@@ -446,6 +449,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         X, y                  = check_X_y(X, y, accept_sparse=False)
         D                     = np.asfortranarray(np.column_stack((X, y)))
         ds                    = op.Dataset(D)
+        if sample_weight is not None:
+            sample_weight     = check_array(sample_weight, ensure_2d=False, accept_sparse=False)
 
         target                = max(ds.Variables, key=lambda x: x.Index) # last column is the target
         self.variables_       = { v.Hash : v.Name for v in sorted(ds.Variables, key=lambda x: x.Index) if v.Hash != target.Hash }
@@ -489,7 +494,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         aik_eval = op.AkaikeInformationCriterionEvaluator(problem, dtable)
 
         for obj in self.objectives:
-            eval_        = self.__init_evaluator(obj, problem, dtable)
+            eval_        = self.__init_evaluator(obj, problem, dtable, error_weights=sample_weight)
             eval_.Budget = self.max_evaluations
             evaluators.append(eval_)
 

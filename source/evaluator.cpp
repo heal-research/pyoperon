@@ -205,7 +205,7 @@ void InitEval(nb::module_ &m)
         .def_prop_ro("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     nb::class_<TEvaluator, TEvaluatorBase>(m, "Evaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*, Operon::ErrorMetric, bool>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*, Operon::ErrorMetric, bool, std::vector<Operon::Scalar>>());
 
     nb::class_<Operon::UserDefinedEvaluator, TEvaluatorBase>(m, "UserDefinedEvaluator")
         .def(nb::init<Operon::Problem const*, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual const&)> const&>())
