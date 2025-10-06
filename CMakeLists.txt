@@ -36,9 +36,8 @@ find_package(pratt-parser REQUIRED)
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 # Detect the installed nanobind package and import it into CMake
 execute_process(
-    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
-list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
 find_package(nanobind CONFIG REQUIRED)
 find_package(unordered_dense REQUIRED)
 find_package(xxHash)
