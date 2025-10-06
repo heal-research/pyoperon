@@ -5,6 +5,7 @@
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/unique_ptr.h>
+#include <nanobind/stl/function.h>
 
 #include <type_traits>
 
