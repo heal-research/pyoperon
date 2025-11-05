@@ -31,7 +31,6 @@ auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::ndim<2>, nb::f_contig> 
 template<typename T>
 auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::ndim<2>, nb::c_contig> const& arr)
 {
-    auto const* data = arr.data();
     auto rows = arr.shape(0);
     auto cols = arr.shape(1);
 
@@ -42,6 +41,37 @@ auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::ndim<2>, nb::c_contig> 
         }
     }
     new (ds) Operon::Dataset(values);
+}
+
+// handles the case of a generic, unspecified ndarray
+// (a copy will potentially be made)
+auto InitDataset(Operon::Dataset* ds, nb::object arr)
+{
+#ifdef DEBUG
+    fmt::print("received an nb::object parameter, trying to deduce type.\n");
+#endif
+
+    nb::ndarray<float,  nb::ndim<2>, nb::c_contig> a1;
+    nb::ndarray<float,  nb::ndim<2>, nb::c_contig> a2;
+    nb::ndarray<double, nb::ndim<2>, nb::c_contig> a3;
+    nb::ndarray<double, nb::ndim<2>, nb::c_contig> a4;
+
+    nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a5;
+    nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a6;
+    nb::ndarray<double, nb::ndim<2>, nb::f_contig> a7;
+    nb::ndarray<double, nb::ndim<2>, nb::f_contig> a8;
+
+    if (nb::try_cast(arr, a1)) { return InitDataset(ds, a1); }
+    if (nb::try_cast(arr, a2)) { return InitDataset(ds, a2); }
+    if (nb::try_cast(arr, a3)) { return InitDataset(ds, a3); }
+    if (nb::try_cast(arr, a4)) { return InitDataset(ds, a4); }
+    if (nb::try_cast(arr, a5)) { return InitDataset(ds, a5); }
+    if (nb::try_cast(arr, a6)) { return InitDataset(ds, a6); }
+    if (nb::try_cast(arr, a7)) { return InitDataset(ds, a7); }
+    if (nb::try_cast(arr, a8)) { return InitDataset(ds, a8); }
+
+    std::string repr = nb::repr(arr).c_str();
+    throw std::runtime_error(fmt::format("dataset initialization failedd: unable to convert object of type {} to ndarray.", repr));
 }
 } // namespace
 
@@ -61,6 +91,12 @@ void InitDataset(nb::module_ &m)
             InitDataset(ds, array);
         }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::ndim<2>, nb::c_contig> array) -> void {
+#ifdef DEBUG
+            fmt::print("warning: unsupported memory layout, data will be copied\n");
+#endif
+            InitDataset(ds, array);
+        }, nb::arg("data").noconvert())
+        .def("__init__", [](Operon::Dataset* ds, nb::object array) -> void {
 #ifdef DEBUG
             fmt::print("warning: unsupported memory layout, data will be copied\n");
 #endif
