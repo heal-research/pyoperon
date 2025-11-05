@@ -114,7 +114,7 @@ rm -rf pratt-parser-calculator
 ## unordered_dense
 git clone https://github.com/martinus/unordered_dense.git
 pushd unordered_dense
-git checkout v4.5.0 
+git checkout v4.5.0
 mkdir build
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
@@ -142,7 +142,7 @@ git clone https://github.com/fmtlib/fmt.git
 pushd fmt
 mkdir build
 pushd build
-git checkout 11.1.3 
+git checkout 11.1.3
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -192,7 +192,7 @@ rm -rf byte-lite
 ## quickcpplib
 git clone https://github.com/ned14/quickcpplib.git
 pushd quickcpplib
-git checkout 72277c70f925829935a2af846731ab36063ec16f
+git checkout 8d5ddc873686aeb036612a4200c3bd924150c23c
 cmake -S . -B build \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
@@ -203,7 +203,7 @@ rm -rf quickcpplib
 ## status-code
 git clone https://github.com/ned14/status-code.git
 pushd status-code
-git checkout a35d88d692a23a89a39d45dee12a629fffa57207
+git checkout 525e324b1b85fbd1bf74046d760068b7e27b8cda
 cmake -S . -B build \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DCMAKE_BUILD_TYPE=Release
@@ -214,7 +214,7 @@ rm -rf status-code
 ## outcome
 git clone https://github.com/ned14/outcome.git
 pushd outcome
-git checkout 571f9c930e672950e99d5d30f743603aaaf8014c
+git checkout 744da6b7536f2850df972ab01504e3c4d9530149
 cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DPROJECT_IS_DEPENDENCY=ON \
@@ -232,7 +232,7 @@ rm -rf outcome
 ## lbfgs
 git clone https://github.com/foolnotion/lbfgs.git
 pushd lbfgs
-git checkout 0ac2cb5b8ffea5e3e71f264d8e2d37d585449512
+git checkout 9fc1df5e1826c5007a233001931ab5d56f516f11
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
@@ -245,7 +245,7 @@ rm -rf lbfgs
 # taskflow
 git clone https://github.com/taskflow/taskflow.git
 pushd taskflow
-git checkout v3.9.0 
+git checkout v3.9.0
 mkdir build
 cmake -S . -B build \
     -DTF_BUILD_EXAMPLES=OFF \
@@ -303,7 +303,7 @@ rm -rf libassert
 [ -d operon ] && rm -rf operon
 git clone https://github.com/heal-research/operon.git
 pushd operon
-git checkout 1dbe27597ebdfb7e4fe4b421ce2daa134b51f2fd 
+git checkout 1dbe27597ebdfb7e4fe4b421ce2daa134b51f2fd
 mkdir build
 cmake -S . -B build --preset build-${PLATFORM} \
     -DCMAKE_BUILD_TYPE=Release \
