@@ -83,7 +83,7 @@
           devShells.pyenv = stdenv_.mkDerivation {
             name = "pyoperon-dev";
             nativeBuildInputs = pyoperon.nativeBuildInputs;
-            buildInputs = pyoperon.buildInputs ++ (with pkgs; [ pdm virtualenv gcc14 gfortran14 zlib ]) ++ (with python_.pkgs; [numpy pandas scikit-learn ]);
+            buildInputs = pyoperon.buildInputs ++ (with pkgs; [ pdm virtualenv zlib ]) ++ (with python_.pkgs; [numpy pandas scikit-learn ]);
               LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib/:${pkgs.zlib}/lib/";
           };
         };
