@@ -14,8 +14,8 @@ jobs:
   mamba-build:
     strategy:
       matrix:
-        version: [ "3.9", "3.10", "3.11", "3.12" ]
-        os: [ macos-11, macos-12, macos-13, macos-14 ]
+        version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        os: [ macos-11, macos-12, macos-13, macos-14, macos-15 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
         run: |
           export CC=clang
           export CXX=clang++
-          bash script/dependencies.sh # install dependencies
+          python script/dependencies.py
           python setup.py bdist_wheel -- --preset build-osx # build the wheel
 
       - name: 'Build wheel'
