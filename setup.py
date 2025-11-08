@@ -15,6 +15,6 @@ setup(
     description="python bindings for the operon library",
     author='Bogdan Burlacu',
     packages=['pyoperon'],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     cmake_args=[f'--preset {build_preset}' if build_preset != '' else '']
 )
