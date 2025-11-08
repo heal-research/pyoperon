@@ -35,7 +35,7 @@ if __name__ == '__main__':
         ('pratt-parser', 'https://github.com/foolnotion/pratt-parser-calculator', '5093c67e2e642178cce1bc455f7dee8720820642', default_cmake_args),
         ('unordered_dense', 'https://github.com/martinus/unordered_dense', '4.5.0', default_cmake_args),
         ('cpp-sort', 'https://github.com/Morwenn/cpp-sort', '1.17.0', default_cmake_args + ['-DBUILD_TESTING=0']),
-        ('fmt', 'https://github.com/fmtlib/fmt', '11.2.0', default_cmake_args + ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DFMT_TEST=OFF', 'DBUILD_SHARED_LIBS=OFF']),
+        ('fmt', 'https://github.com/fmtlib/fmt', '12.1.0', default_cmake_args + ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DFMT_TEST=OFF', 'DBUILD_SHARED_LIBS=OFF']),
         ('Microsoft.GSL', 'https://github.com/microsoft/GSL', 'v4.2.0', default_cmake_args + ['DGSL_INSTALL=1', '-DGSL_TEST=0']),
         ('tl-expected', 'https://github.com/TartanLlama/expected', 'v1.3.1', default_cmake_args),
         ('lbfgs', 'https://github.com/foolnotion/lbfgs', '9e384ec6f597d4be4edc72fbf9dcadf70189df21', default_cmake_args),
