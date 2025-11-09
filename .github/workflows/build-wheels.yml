@@ -1,0 +1,59 @@
+name: build-wheels
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux-wheels:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64
+      options: --user root
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: build wheel
+        run: |
+          pipx install git+https://github.com/ami-iit/cmake-package-check
+          dnf install -y clang libzstd-devel xxhash-devel
+
+          for n in {9..14}; do
+            python3.${n} -m venv venv-pyoperon3.${n}
+            source venv-pyoperon3.${n}/bin/activate
+            pip install nanobind scikit-build
+            python script/dependencies.py
+            python setup.py bdist_wheel -- --preset build-linux
+            auditwheel repair dist/*.whl
+            deactivate
+          done
+
+  macos-wheels:
+    runs-on: macos-latest
+    container:
+      image: quay.io/pypa/manylinux_2_28_aarch64
+      options: --user root
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: build wheel
+        run: |
+          pipx install git+https://github.com/ami-iit/cmake-package-check
+          dnf install -y clang libzstd-devel xxhash-devel
+
+          for n in {9..14}; do
+            python3.${n} -m venv venv-pyoperon3.${n}
+            source venv-pyoperon3.${n}/bin/activate
+            pip install nanobind scikit-build
+            python script/dependencies.py
+            python setup.py bdist_wheel -- --preset build-osx
+            auditwheel repair dist/*.whl
+            deactivate
+          done
+
