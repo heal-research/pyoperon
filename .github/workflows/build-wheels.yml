@@ -37,14 +37,14 @@ jobs:
       - name: Upload wheel
         uses: actions/upload-artifact@v5
         with:
-          name: pyoperon-${{ matrix.version }}-${{ matrix.os }}
-          path: dist/*.whl
+          name: pyoperon-manylinux-package-distributions
+          path: wheelhouse/
           retention-days: 90
 
   macos-wheels:
     strategy:
       matrix:
-        version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        version: [ "3.9", "3.10", "3.11", "3.12", "3.13", "3.14" ]
         os: [ macos-14, macos-15 ]
     runs-on: ${{ matrix.os }}
     steps:
