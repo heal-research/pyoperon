@@ -18,4 +18,3 @@ dependencies:
   - zstd-static
   - zlib
   - cmake-package-check
-  - auditwheel
