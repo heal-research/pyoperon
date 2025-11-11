@@ -13,7 +13,8 @@
         "taskflow",
         "vectorclass",
         "vstat",
-        "xxhash"
+        "xxhash",
+	"tl-expected"
     ],
     "builtin-baseline": "d9ccd77bb554e67137f3f754a2e2f11f4188c82c"
 }
