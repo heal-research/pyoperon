@@ -1,0 +1,77 @@
+name: build-wheels
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux-wheels:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64
+      options: --user root
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install prerequisites
+        run: |
+          pipx install git+https://github.com/ami-iit/cmake-package-check
+          dnf install -y clang libzstd-devel xxhash-devel
+
+      - name: Build wheel
+        run: |
+          for n in {9..14}; do
+            python3.${n} -m venv venv-pyoperon3.${n}
+            source venv-pyoperon3.${n}/bin/activate
+            pip install nanobind scikit-build
+            python script/dependencies.py
+            python setup.py bdist_wheel -- --preset build-linux
+            auditwheel repair dist/*.whl
+            deactivate
+          done
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v5
+        with:
+          name: pyoperon-manylinux-package-distributions
+          path: wheelhouse/
+          retention-days: 90
+
+  macos-wheels:
+    strategy:
+      matrix:
+        version: [ "3.9", "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        os: [ macos-14, macos-15 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          create-args: >-
+            python=${{ matrix.version }}
+          cache-environment: true
+
+      - name: Build wheel
+        shell: bash -l {0}
+        run: |
+          export CC=clang
+          export CXX=clang++
+          python script/dependencies.py
+          python setup.py bdist_wheel -- --preset build-osx # build the wheel
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v5
+        with:
+          name: pyoperon-${{ matrix.version }}-${{ matrix.os }}
+          path: dist/*.whl
+          retention-days: 90
+
+
