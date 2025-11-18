@@ -604,7 +604,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'model' : op.InfixFormatter.Format(solution.Genotype, self.variables_, 6),
                 'variables' : set(self.variables_[x.HashValue] for x in nodes if x.IsVariable),
                 'length' : len(nodes),
-                'complexity' : solution.Genotype.AdjustedLength(),
+                'complexity' : solution.Genotype.AdjustedLength,
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
                 'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),
