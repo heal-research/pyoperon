@@ -256,7 +256,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     def __init_evaluator(self, objective, problem, dtable):
         if objective == 'r2':
             if not self.add_model_scale_term or not self.add_model_intercept_term:
-                warnings.warn('MSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                warnings.warn('R2 evaluator requires model scaling and intercept terms to be added; overriding settings.')
                 self.add_model_scale_term    = True
                 self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.R2(), True)
