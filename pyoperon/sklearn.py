@@ -266,14 +266,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         elif objective == 'nmse':
             if not self.add_model_scale_term or not self.add_model_intercept_term:
-                warnings.warn('MSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                warnings.warn('NMSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
                 self.add_model_scale_term    = True
                 self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.NMSE(), True)
 
         elif objective == 'rmse':
             if not self.add_model_scale_term or not self.add_model_intercept_term:
-                warnings.warn('MSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                warnings.warn('RMSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
                 self.add_model_scale_term    = True
                 self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.RMSE(), True)
@@ -287,7 +287,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         elif objective == 'mae':
             if not self.add_model_scale_term or not self.add_model_intercept_term:
-                warnings.warn('MSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                warnings.warn('MAE evaluator requires model scaling and intercept terms to be added; overriding settings.')
                 self.add_model_scale_term    = True
                 self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.MAE(), True)
