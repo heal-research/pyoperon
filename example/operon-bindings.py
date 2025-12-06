@@ -29,7 +29,7 @@ if __name__ == '__main__':
     inputs         = [ h for h in ds.VariableHashes if h != target.Hash ]
 
     # initialize a rng
-    rng            = Operon.RomuTrio(random.randint(1, 1000000))
+    rng            = Operon.RandomGenerator(random.randint(1, 1000000))
 
     # initialize a problem object which encapsulates the data, input, target and training/test ranges
     problem        = Operon.Problem(ds)
