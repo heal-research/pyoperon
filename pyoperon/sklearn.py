@@ -188,6 +188,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'fmax' : op.NodeType.Fmax,
             'aq' : op.NodeType.Aq,
             'pow' : op.NodeType.Pow,
+            'powabs' : op.NodeType.Powabs,
             'abs' : op.NodeType.Abs,
             'acos' : op.NodeType.Acos,
             'asin' : op.NodeType.Asin,
