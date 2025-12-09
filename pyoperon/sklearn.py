@@ -5,6 +5,7 @@ import sys
 import random
 import numpy as np
 import pyoperon as op
+import warnings
 
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -187,6 +188,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'fmax' : op.NodeType.Fmax,
             'aq' : op.NodeType.Aq,
             'pow' : op.NodeType.Pow,
+            'powabs' : op.NodeType.Powabs,
             'abs' : op.NodeType.Abs,
             'acos' : op.NodeType.Acos,
             'asin' : op.NodeType.Asin,
@@ -254,21 +256,41 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
     def __init_evaluator(self, objective, problem, dtable):
         if objective == 'r2':
+            if not self.add_model_scale_term or not self.add_model_intercept_term:
+                warnings.warn('R2 evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                self.add_model_scale_term    = True
+                self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.R2(), True)
 
         elif objective == 'c2':
             return op.Evaluator(problem, dtable, op.C2(), False)
 
         elif objective == 'nmse':
+            if not self.add_model_scale_term or not self.add_model_intercept_term:
+                warnings.warn('NMSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                self.add_model_scale_term    = True
+                self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.NMSE(), True)
 
         elif objective == 'rmse':
+            if not self.add_model_scale_term or not self.add_model_intercept_term:
+                warnings.warn('RMSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                self.add_model_scale_term    = True
+                self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.RMSE(), True)
 
         elif objective == 'mse':
+            if not self.add_model_scale_term or not self.add_model_intercept_term:
+                warnings.warn('MSE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                self.add_model_scale_term    = True
+                self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.MSE(), True)
 
         elif objective == 'mae':
+            if not self.add_model_scale_term or not self.add_model_intercept_term:
+                warnings.warn('MAE evaluator requires model scaling and intercept terms to be added; overriding settings.')
+                self.add_model_scale_term    = True
+                self.add_model_intercept_term = True
             return op.Evaluator(problem, dtable, op.MAE(), True)
 
         elif objective == 'length':
@@ -281,6 +303,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return op.DiversityEvaluator(problem)
 
         elif objective == 'mdl':
+            if self.uncertainty == [1]: # default uncertainty
+                warnings.warn('It seems you have not set uncertainty (or have set it to [1]). MDL requires an estimate for the noise standard deviation. Your results will be unreliable.')
             evaluator = op.MinimumDescriptionLengthEvaluator(problem, dtable)
             evaluator.Sigma = self.uncertainty
             return evaluator
@@ -291,6 +315,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return evaluator
 
         elif objective == 'gauss':
+            if self.uncertainty == [1]: # default uncertainty
+                warnings.warn('It seems you have not set uncertainty (or have set it to [1]). Optimizing a Gaussian likelihood requires an estimate for the noise standard deviation. Your results will be unreliable.')
             evaluator = op.GaussianLikelihoodEvaluator(problem, dtable)
             evaluator.Sigma = self.uncertainty
             return evaluator
@@ -412,7 +438,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         """Returns an infix string representation of an operon tree model"""
         hashes = set(x.HashValue for x in model.Nodes if x.IsVariable)
         if len(hashes) == 0:
-            print('warning: model contains no variables', file=sys.stderr)
+            warnings.warn('Model contains no variables')
 
         if names is None:
             return op.InfixFormatter.Format(model, self.variables_, precision)
@@ -479,7 +505,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         update_rule = self.__init_sgd_update_rule()
         optimizer = self.__init_optimizer(dtable, problem, self.optimizer, self.optimizer_likelihood, self.optimizer_iterations, self.optimizer_batch_size, update_rule)
-        mdl_opt = self.__init_optimizer(dtable, problem, self.optimizer, self.optimizer_likelihood, 100, self.optimizer_batch_size, update_rule)
 
         # evaluators for minimum description length and information criteria
         mdl_eval = op.MinimumDescriptionLengthEvaluator(problem, dtable, 'gauss')
@@ -565,9 +590,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             y_pred = op.Evaluate(dtable, solution.Genotype, ds, training_range)
             scale, offset = op.FitLeastSquares(y_pred, y)
             nodes = solution.Genotype.Nodes
-            if scale != 1 and self.add_model_scale_term:
+            
+            # below scale and offset are used for MSE calculation further down. 
+            # Ensure that the calculated MSE is consistent with the scaling parameters.
+            if not self.add_model_scale_term:     scale  = 1.0
+            if not self.add_model_intercept_term: offset = 0.0
+            if scale != 1:
                 nodes += [ op.Node.Constant(scale), op.Node.Mul() ]
-            if offset != 0 and self.add_model_intercept_term:
+            if offset != 0:
                 nodes += [ op.Node.Constant(offset), op.Node.Add() ]
             solution.Genotype = op.Tree(nodes).UpdateNodes()
 
@@ -575,7 +605,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'model' : op.InfixFormatter.Format(solution.Genotype, self.variables_, 6),
                 'variables' : set(self.variables_[x.HashValue] for x in nodes if x.IsVariable),
                 'length' : len(nodes),
-                'complexity' : len(nodes) + sum(1 for x in nodes if x.IsVariable),
+                'complexity' : solution.Genotype.AdjustedLength,
                 'tree' : solution.Genotype,
                 'objective_values' : evaluator(rng, solution),
                 'mean_squared_error' : mean_squared_error(y, scale * y_pred + offset),

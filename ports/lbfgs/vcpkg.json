@@ -12,6 +12,6 @@
         "name": "vcpkg-cmake-config",
         "host": true
       },
-      "outcome"
+      "tl-expected"
     ]
   }

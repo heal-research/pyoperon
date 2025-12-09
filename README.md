@@ -40,7 +40,7 @@ micromamba activate pyoperon
 ```
 export CC=${CONDA_PREFIX}/bin/clang
 export CXX=${CONDA_PREFIX}/bin/clang++
-./script/dependencies.sh
+python script/dependencies.py
 ```
 
 4. Install `pyoperon`
