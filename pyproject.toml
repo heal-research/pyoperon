@@ -24,9 +24,7 @@ dependencies = ["numpy>=2.0.2", "pandas>=2.2.3", "scikit-learn>=1.6.1", "matplot
 
 [build-system]
 requires = [
-    "scikit-build>=0.16",
-    "nanobind>=2.5.0",
-    "setuptools>=42",
-    "cmake>=3.18",
+    "scikit-build-core>=0.11.6",
+    "nanobind>=2.11.0",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
