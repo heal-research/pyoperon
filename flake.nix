@@ -46,6 +46,7 @@
             ];
 
             nativeBuildInputs = with pkgs; [
+              act
               cmake
               ninja
               pkg-config
