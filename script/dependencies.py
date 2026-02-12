@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+import platform
 
 from multiprocessing import cpu_count
 from pathlib import Path
@@ -25,6 +26,9 @@ if __name__ == '__main__':
     ]
     print('DEFAULT ARGS:', *default_cmake_args)
 
+    current_system = platform.system().lower()
+    operon_build_preset = 'build-linux' if current_system == 'linux' else 'build-osx'
+
     dependencies = [
         ('AriaCsvParser', 'https://github.com/AriaFallah/csv-parser', '4965c9f320d157c15bc1f5a6243de116a4caf101', default_cmake_args),
         ('Eigen3', 'https://gitlab.com/libeigen/eigen', '3.4.0', default_cmake_args),
@@ -44,7 +48,7 @@ if __name__ == '__main__':
         ('cpptrace', 'https://github.com/jeremy-rifkin/cpptrace', 'v1.0.4', default_cmake_args + ['-DCPPTRACE_USE_EXTERNAL_ZSTD=0', '-DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0']),
         ('libassert', 'https://github.com/jeremy-rifkin/libassert', 'v2.2.1', default_cmake_args + ['-DLIBASSERT_USE_EXTERNAL_CPPTRACE=1', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=1', '-DCMAKE_CXX_FLAGS=-fPIC']),
         ('xxHash', 'https://github.com/Cyan4973/xxHash', '7aee8d0a341bb574f7c139c769e1db115b42cc3c', default_cmake_args + ['-S', 'build/cmake']),
-        ('operon', 'https://github.com/heal-research/operon', 'f8239706b42053b465d51082d27277c8161fdd7d', default_cmake_args + ['--preset', 'build-osx', '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
+        ('operon', 'https://github.com/heal-research/operon', 'f8239706b42053b465d51082d27277c8161fdd7d', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=ON', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON'])
     ]
 
     working_directory = os.getcwd()
