@@ -20,7 +20,6 @@ X_test, y_test = D_test.iloc[:,:-1], D_train.iloc[:,-1]
 y_pred = RandomForestRegressor(n_estimators=100).fit(X_train, y_train).predict(X_train)
 sErr = np.sqrt(mean_squared_error(y_train,  y_pred)) # estimate of the uncertainty (empirical error)
 
-from sympy import parse_expr
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
