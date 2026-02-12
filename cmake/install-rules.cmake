@@ -8,13 +8,6 @@ include(GNUInstallDirs)
 # find_package(<package>) call for consumers to find this project
 set(package pyoperon)
 
-#install(
-#    DIRECTORY
-#    include/
-#    "${PROJECT_BINARY_DIR}/export/"
-#    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-#    COMPONENT pyoperon_Development
-#)
 install(
     TARGETS pyoperon_pyoperon
     EXPORT pyoperonTargets
@@ -39,26 +32,6 @@ set(
     CACHE PATH "CMake package config location relative to the install prefix"
 )
 mark_as_advanced(pyoperon_INSTALL_CMAKEDIR)
-
-#install(
-#    FILES cmake/install-config.cmake
-#    DESTINATION "${pyoperon_INSTALL_CMAKEDIR}"
-#    RENAME "${package}Config.cmake"
-#    COMPONENT pyoperon_Development
-#)
-#
-#install(
-#    FILES "${PROJECT_BINARY_DIR}/${package}ConfigVersion.cmake"
-#    DESTINATION "${pyoperon_INSTALL_CMAKEDIR}"
-#    COMPONENT pyoperon_Development
-#)
-#
-#install(
-#    EXPORT pyoperonTargets
-#    NAMESPACE pyoperon::
-#    DESTINATION "${pyoperon_INSTALL_CMAKEDIR}"
-#    COMPONENT pyoperon_Development
-#)
 
 if(PROJECT_IS_TOP_LEVEL)
   include(CPack)

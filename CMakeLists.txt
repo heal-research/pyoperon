@@ -19,18 +19,6 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
 # ---- Find dependencies ----
-find_package(AriaCsvParser REQUIRED)
-find_package(Ceres CONFIG)
-find_package(Eigen3 REQUIRED)
-find_package(FastFloat REQUIRED)
-find_package(Threads REQUIRED)
-find_package(fluky REQUIRED)
-find_package(tl-expected REQUIRED)
-find_package(lbfgs REQUIRED)
-find_package(libassert REQUIRED)
-find_package(mdspan REQUIRED)
-find_package(operon REQUIRED)
-find_package(pratt-parser REQUIRED)
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 # Detect the installed nanobind package and import it into CMake
 execute_process(
@@ -73,15 +61,7 @@ nanobind_add_module(
 )
 add_library(pyoperon::pyoperon ALIAS pyoperon_pyoperon)
 
-# when operon is statically linked, dependency information will not be available
-# via any external means (e.g., ldd), therefore cmake treats all PRIVATE deps as PUBLIC
-# all of the below will be added to INTERFACE_LINK_LIBRARIES, therefore we try to find them
-find_package(Taskflow)
-find_package(cpp-sort)
-find_package(fmt)
-find_package(libassert)
-find_package(vstat)
-find_package(eve)
+find_package(operon CONFIG REQUIRED)
 
 include(GenerateExportHeader)
 generate_export_header(
