@@ -1,0 +1,53 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-wheels:
+    uses: ./.github/workflows/build-wheels.yml
+
+  publish-to-test-pypi:
+    name: Publish to TestPyPI
+    needs: build-wheels
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: dist/
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: List downloaded wheels
+        run: ls -lh dist/
+
+      - name: Publish distribution to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-to-pypi:
+    name: Publish Python distribution to PyPI
+    needs: publish-to-test-pypi
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: dist/
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: List downloaded wheels
+        run: ls -lh dist/
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

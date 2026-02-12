@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_call:  # Allow this workflow to be called by other workflows
 
 jobs:
   linux-wheels:
@@ -31,13 +32,14 @@ jobs:
             python script/dependencies.py
             python setup.py bdist_wheel -- --preset build-linux
             auditwheel repair dist/*.whl
+            rm -rf dist/*.whl  # Remove unfixed wheels, keep only the fixed ones in wheelhouse/
             deactivate
           done
 
       - name: Upload wheel
         uses: actions/upload-artifact@v5
         with:
-          name: pyoperon-manylinux-package-distributions
+          name: wheels-linux
           path: wheelhouse/
           retention-days: 90
 
@@ -70,7 +72,7 @@ jobs:
       - name: Upload wheel
         uses: actions/upload-artifact@v5
         with:
-          name: pyoperon-${{ matrix.version }}-${{ matrix.os }}
+          name: wheels-macos-${{ matrix.version }}-${{ matrix.os }}
           path: dist/*.whl
           retention-days: 90
 
