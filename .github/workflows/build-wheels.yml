@@ -43,11 +43,12 @@ jobs:
       - name: Build wheels
         run: |
           for n in {10..14}; do
+            rm -rf build/ pyoperon/*.so
             python3.${n} -m venv venv-pyoperon3.${n}
             source venv-pyoperon3.${n}/bin/activate
             pip install nanobind scikit-build-core
             python script/dependencies.py
-            SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation
+            SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation --no-deps
             auditwheel repair dist/*.whl
             rm -rf dist/*.whl
             deactivate
@@ -85,7 +86,7 @@ jobs:
           export CC=clang
           export CXX=clang++
           python script/dependencies.py
-          SKBUILD_CMAKE_ARGS="--preset=build-osx" pip wheel . -w dist/ --no-build-isolation
+          SKBUILD_CMAKE_ARGS="--preset=build-osx" pip wheel . -w dist/ --no-build-isolation --no-deps
 
       - name: Upload wheel
         uses: actions/upload-artifact@v5
