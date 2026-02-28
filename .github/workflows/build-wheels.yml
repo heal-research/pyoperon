@@ -5,10 +5,27 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_call:  # Allow this workflow to be called by other workflows
+  workflow_call:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v30
+
+      - name: Build and run tests
+        run: |
+          nix develop .#pyenv --command bash << 'NIXEOF'
+          python -m venv --system-site-packages .venv
+          source .venv/bin/activate
+          pip install scikit-build-core
+          pip install --no-build-isolation .[test]
+          pytest tests/ -v
+          NIXEOF
+
   linux-wheels:
+    needs: [test]
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux_2_28_x86_64
@@ -23,20 +40,20 @@ jobs:
           pipx install git+https://github.com/ami-iit/cmake-package-check
           dnf install -y clang libzstd-devel xxhash-devel
 
-      - name: Build wheel
+      - name: Build wheels
         run: |
-          for n in {9..14}; do
+          for n in {10..14}; do
             python3.${n} -m venv venv-pyoperon3.${n}
             source venv-pyoperon3.${n}/bin/activate
-            pip install nanobind scikit-build
+            pip install nanobind scikit-build-core
             python script/dependencies.py
-            python setup.py bdist_wheel -- --preset build-linux
+            SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation
             auditwheel repair dist/*.whl
-            rm -rf dist/*.whl  # Remove unfixed wheels, keep only the fixed ones in wheelhouse/
+            rm -rf dist/*.whl
             deactivate
           done
 
-      - name: Upload wheel
+      - name: Upload wheels
         uses: actions/upload-artifact@v5
         with:
           name: wheels-linux
@@ -44,9 +61,10 @@ jobs:
           retention-days: 90
 
   macos-wheels:
+    needs: [test]
     strategy:
       matrix:
-        version: [ "3.9", "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
         os: [ macos-14, macos-15 ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -67,7 +85,7 @@ jobs:
           export CC=clang
           export CXX=clang++
           python script/dependencies.py
-          python setup.py bdist_wheel -- --preset build-osx # build the wheel
+          SKBUILD_CMAKE_ARGS="--preset=build-osx" pip wheel . -w dist/ --no-build-isolation
 
       - name: Upload wheel
         uses: actions/upload-artifact@v5
@@ -75,5 +93,3 @@ jobs:
           name: wheels-macos-${{ matrix.version }}-${{ matrix.os }}
           path: dist/*.whl
           retention-days: 90
-
-
