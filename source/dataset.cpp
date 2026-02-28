@@ -52,26 +52,17 @@ auto InitDataset(Operon::Dataset* ds, nb::object arr)
 #endif
 
     nb::ndarray<float,  nb::ndim<2>, nb::c_contig> a1;
-    nb::ndarray<float,  nb::ndim<2>, nb::c_contig> a2;
-    nb::ndarray<double, nb::ndim<2>, nb::c_contig> a3;
-    nb::ndarray<double, nb::ndim<2>, nb::c_contig> a4;
-
-    nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a5;
-    nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a6;
-    nb::ndarray<double, nb::ndim<2>, nb::f_contig> a7;
-    nb::ndarray<double, nb::ndim<2>, nb::f_contig> a8;
+    nb::ndarray<double, nb::ndim<2>, nb::c_contig> a2;
+    nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a3;
+    nb::ndarray<double, nb::ndim<2>, nb::f_contig> a4;
 
     if (nb::try_cast(arr, a1)) { return InitDataset(ds, a1); }
     if (nb::try_cast(arr, a2)) { return InitDataset(ds, a2); }
     if (nb::try_cast(arr, a3)) { return InitDataset(ds, a3); }
     if (nb::try_cast(arr, a4)) { return InitDataset(ds, a4); }
-    if (nb::try_cast(arr, a5)) { return InitDataset(ds, a5); }
-    if (nb::try_cast(arr, a6)) { return InitDataset(ds, a6); }
-    if (nb::try_cast(arr, a7)) { return InitDataset(ds, a7); }
-    if (nb::try_cast(arr, a8)) { return InitDataset(ds, a8); }
 
     std::string repr = nb::repr(arr).c_str();
-    throw std::runtime_error(fmt::format("dataset initialization failedd: unable to convert object of type {} to ndarray.", repr));
+    throw std::runtime_error(fmt::format("dataset initialization failed: unable to convert object of type {} to ndarray.", repr));
 }
 } // namespace
 

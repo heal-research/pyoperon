@@ -33,6 +33,5 @@ void InitProblem(nb::module_ &m)
         .def_prop_rw("PrimitiveSet",
             [](Operon::Problem const& self) { return self.GetPrimitiveSet(); },
             [](Operon::Problem& self, Operon::PrimitiveSet pset) { self.GetPrimitiveSet() = pset; }
-        )
-        .def_prop_ro("PrimitiveSet", [](Operon::Problem& self) { return self.GetPrimitiveSet(); });
+        );
 }

@@ -211,8 +211,8 @@ void InitEval(nb::module_ &m)
         .def(nb::init<Operon::Problem const*, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual const&)> const&>())
         .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
             nb::gil_scoped_release release;
-            return self(rng, ind, {});
-            nb::gil_scoped_acquire acquire;
+            auto result = self(rng, ind, {});
+            return result;
         });
 
     nb::class_<Operon::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
