@@ -39,7 +39,6 @@ auto MakeSpan(nanobind::ndarray<T> arr) -> Operon::Span<T>
 }
 
 void InitAlgorithm(nb::module_&);
-void InitAutodiff(nb::module_&);
 void InitBenchmark(nb::module_&);
 void InitCreator(nb::module_&);
 void InitCrossover(nb::module_&);
