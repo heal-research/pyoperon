@@ -10,18 +10,14 @@ from sklearn.ensemble import RandomForestRegressor
 from pyoperon.sklearn import SymbolicRegressor
 from pyoperon import R2, MSE, InfixFormatter, FitLeastSquares, Interpreter
 
-D_train = pd.read_csv('../experiment/data/stage1/6589_noise_easy_data_train.csv', sep=',')
-D_test = pd.read_csv('../experiment/data/stage1/6589_noise_easy_data_test.csv', sep=',')
+df = pd.read_csv('./datasets/1027_ESL/1027_ESL.tsv.gz', sep='\t')
 
-X_train, y_train = D_train.iloc[:,:-1], D_train.iloc[:,-1]
-X_test, y_test = D_test.iloc[:,:-1], D_train.iloc[:,-1]
+X_train, y_train = df.iloc[:,:-1], df.iloc[:,-1]
+X_test, y_test = df.iloc[:,:-1], df.iloc[:,-1]
 # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5, shuffle=False)
 
 y_pred = RandomForestRegressor(n_estimators=100).fit(X_train, y_train).predict(X_train)
 sErr = np.sqrt(mean_squared_error(y_train,  y_pred)) # estimate of the uncertainty (empirical error)
-
-import matplotlib.pyplot as plt
-from copy import deepcopy
 
 reg = SymbolicRegressor(
         allowed_symbols= "add,sub,mul,aq,sin,constant,variable",
