@@ -12,7 +12,7 @@ dependencies:
   - nanobind
   - ninja
   - pkg-config
-  - scikit-build
+  - scikit-build-core
   - xxhash
   - zstd
   - zstd-static
