@@ -32,6 +32,7 @@ jobs:
 
       - name: Build wheel
         run: |
+          rm -rf build/ dist/ pyoperon/*.so
           python${{ matrix.version }} -m venv venv
           source venv/bin/activate
           pip install nanobind scikit-build-core
