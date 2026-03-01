@@ -30,6 +30,9 @@ jobs:
     container:
       image: quay.io/pypa/manylinux_2_28_x86_64
       options: --user root
+    strategy:
+      matrix:
+        version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
 
     steps:
       - name: Checkout repository
@@ -40,24 +43,19 @@ jobs:
           pipx install git+https://github.com/ami-iit/cmake-package-check
           dnf install -y clang libzstd-devel xxhash-devel
 
-      - name: Build wheels
+      - name: Build wheel
         run: |
-          for n in {10..14}; do
-            rm -rf build/ pyoperon/*.so
-            python3.${n} -m venv venv-pyoperon3.${n}
-            source venv-pyoperon3.${n}/bin/activate
-            pip install nanobind scikit-build-core
-            python script/dependencies.py
-            SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation --no-deps
-            auditwheel repair dist/*.whl
-            rm -rf dist/*.whl
-            deactivate
-          done
+          python${{ matrix.version }} -m venv venv
+          source venv/bin/activate
+          pip install nanobind scikit-build-core
+          python script/dependencies.py
+          SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation --no-deps
+          auditwheel repair dist/*.whl
 
-      - name: Upload wheels
+      - name: Upload wheel
         uses: actions/upload-artifact@v5
         with:
-          name: wheels-linux
+          name: wheels-linux-${{ matrix.version }}
           path: wheelhouse/
           retention-days: 90
 
