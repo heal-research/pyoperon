@@ -1,8 +1,8 @@
 # pyoperon
 
 [![License](https://img.shields.io/github/license/heal-research/pyoperon)](https://github.com/heal-research/pyoperon/blob/master/LICENSE)
-[![Build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
-[![Build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
+[![Build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml)
+[![Build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml)
 [![Matrix chat](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/#operon:matrix.org)
 
 **pyoperon** is the python bindings library of [**Operon**](https://github.com/heal-research/operon), a modern C++ framework for symbolic regression developed by [Heal-Research](https://github.com/heal-research) at the University of Applied Sciences Upper Austria.
@@ -25,38 +25,55 @@ Most of the time `pip install pyoperon` should be enough.
 ### Conda/Mamba
 
 1. Clone the repository
-```
+
+```bash
 git clone https://github.com/heal-research/pyoperon.git
 cd pyoperon
 ```
 
-2. Install and activate the environment (replace micromamba with your actual program)
-```
+2. Install and activate the environment (replace `micromamba` with your package manager)
+
+```bash
 micromamba env create -f environment.yml
 micromamba activate pyoperon
 ```
 
-3. Install the dependencies
-```
-export CC=${CONDA_PREFIX}/bin/clang
-export CXX=${CONDA_PREFIX}/bin/clang++
-python script/dependencies.py
-```
+3. Build the C++ dependencies and install `pyoperon`
 
-4. Install `pyoperon`
-```
-pip install .
+```bash
+export CC=clang
+export CXX=clang++
+python script/dependencies.py
+pip install . --no-build-isolation
 ```
 
 ### Nix
 
-Use this [environment](https://github.com/foolnotion/poetryenv) created with [poetry2nix](https://github.com/nix-community/poetry2nix)
+The repository includes a `flake.nix` with a development shell that provides all C++ and Python dependencies.
 
-```
-nix develop github:foolnotion/poetryenv --no-write-lock-file
+1. Clone the repository
+
+```bash
+git clone https://github.com/heal-research/pyoperon.git
+cd pyoperon
 ```
 
-This will install operon and dependencies. Modify the flake file if you need additional python libraries (see https://github.com/nix-community/poetry2nix#how-to-guides)
+2. Enter the dev shell and install `pyoperon` into a virtual environment
+
+```bash
+nix develop .#pyenv
+virtualenv --system-site-packages .venv
+source .venv/bin/activate
+pip install scikit-build-core
+pip install --no-build-isolation .
+```
+
+3. Run the tests (optional)
+
+```bash
+pip install --no-build-isolation '.[test]'
+pytest tests/ -v
+```
 
 
 # Contributing
