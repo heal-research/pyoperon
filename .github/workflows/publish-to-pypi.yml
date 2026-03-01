@@ -6,12 +6,15 @@ on:
       - 'v*'
 
 jobs:
-  build-wheels:
-    uses: ./.github/workflows/build-wheels.yml
+  build-linux:
+    uses: ./.github/workflows/build-linux.yml
+
+  build-macos:
+    uses: ./.github/workflows/build-macos.yml
 
   publish-to-test-pypi:
     name: Publish to TestPyPI
-    needs: build-wheels
+    needs: [build-linux, build-macos]
     runs-on: ubuntu-latest
 
     steps:
