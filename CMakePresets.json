@@ -74,7 +74,6 @@
         },
         {
             "name": "build-linux",
-            "generator": "Unix Makefiles",
             "hidden": false,
             "inherits": ["cpp-std", "cpp-build"],
             "environment": {
@@ -84,7 +83,6 @@
         },
         {
             "name": "build-osx",
-            "generator": "Unix Makefiles",
             "hidden": false,
             "inherits": ["cpp-std", "cpp-build"],
             "environment": {
