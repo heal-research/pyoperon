@@ -1,0 +1,45 @@
+name: build-macos
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  macos-wheels:
+    needs: [test]
+    strategy:
+      matrix:
+        version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        os: [ macos-14, macos-15 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          create-args: >-
+            python=${{ matrix.version }}
+          cache-environment: true
+
+      - name: Build wheel
+        shell: bash -l {0}
+        run: |
+          export CC=clang
+          export CXX=clang++
+          python script/dependencies.py
+          SKBUILD_CMAKE_ARGS="--preset=build-osx" pip wheel . -w dist/ --no-build-isolation --no-deps
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v5
+        with:
+          name: wheels-macos-${{ matrix.version }}-${{ matrix.os }}
+          path: dist/*.whl
+          retention-days: 90

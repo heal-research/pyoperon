@@ -1,8 +1,8 @@
 # pyoperon
 
 [![License](https://img.shields.io/github/license/heal-research/pyoperon)](https://github.com/heal-research/pyoperon/blob/master/LICENSE)
-[![Build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml)
-[![Build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-wheels.yml)
+[![build-linux](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-linux.yml)
+[![build-macos](https://github.com/heal-research/pyoperon/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/heal-research/pyoperon/actions/workflows/build-macos.yml)
 [![Matrix chat](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/#operon:matrix.org)
 
 **pyoperon** is the python bindings library of [**Operon**](https://github.com/heal-research/operon), a modern C++ framework for symbolic regression developed by [Heal-Research](https://github.com/heal-research) at the University of Applied Sciences Upper Austria.

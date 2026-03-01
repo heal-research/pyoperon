@@ -1,0 +1,21 @@
+name: test
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v30
+
+      - name: Build and run tests
+        run: |
+          nix develop .#pyenv --command bash << 'NIXEOF'
+          python -m venv --system-site-packages .venv
+          source .venv/bin/activate
+          pip install scikit-build-core
+          pip install --no-build-isolation .[test]
+          pytest tests/ -v
+          NIXEOF
