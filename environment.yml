@@ -10,7 +10,6 @@ dependencies:
   - git
   - make
   - nanobind
-  - ninja
   - pkg-config
   - scikit-build-core
   - xxhash
