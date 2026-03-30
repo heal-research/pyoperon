@@ -1,11 +1,8 @@
-vcpkg_minimum_required(VERSION 2022-10-12) # for ${VERSION}
-
-string(REGEX REPLACE "^(v[0-9]+)[.]([0-9])[.]([0-9]+)\$" "\\1.0\\2.\\3" git_ref "v${VERSION}")
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO jfalcou/eve
-    REF "${git_ref}"
-    SHA512 20b55996465fa5016d43cee95541510b6470b2358635b0e269965d3fb43731e83b92bc2df0502fcdfadd31de47f877f22b1c6ae84638f1f3db92c70315cc1b29
+    REF 2cb833a3e0abfe25b78ec6cff51a9b50a9da49a7
+    SHA512 de2673bf72d8cf4178a0e8f2500fd74318128e5b88257c57151f7c553bba202a6387cfa5db74503a0ca5949a0eb959850266fcc755e1f623f3533785c34244f0
     HEAD_REF main
 )
 

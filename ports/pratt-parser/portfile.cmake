@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO foolnotion/pratt-parser-calculator 
-    REF a15528b1a9acfe6adefeb41334bce43bdb8d578c
-    SHA512 f2ca7f5ce05c5d5be636c2b5351390347622067eedeef2a94cfe880b532a50e7d7e1aecc8a99e149297d60249592953ac2a46c6023bf6f662729cced9dc0abc9
+    REF 2e0b13615c6ff1fb6381c0ac87796932b326bc89
+    SHA512 d5ae2aa783e2929a0ad8296e8fe0a6213762a658e6c232797cdd4f4eb9f79ce686ce1ab372e42fd1445df5261bf1f115e8eeb00524d275df6367ec1a7930987d
     HEAD_REF main
 )
 
