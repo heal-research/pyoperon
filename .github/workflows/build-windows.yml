@@ -37,9 +37,10 @@ jobs:
         env:
           VCPKG_ROOT: C:/vcpkg
         run: |
-          vcpkg install operon `
+          vcpkg install `
             --overlay-ports="${{ github.workspace }}/ports" `
-            --triplet=x64-windows-static
+            --overlay-triplets="${{ github.workspace }}/triplets" `
+            --triplet=x64-windows-static-clang
 
       - name: Build wheel
         env:
