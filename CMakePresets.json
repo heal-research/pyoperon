@@ -66,6 +66,8 @@
             "hidden": false,
             "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
                 "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded",
                 "VCPKG_TARGET_TRIPLET": "x64-windows-static",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/ports",
