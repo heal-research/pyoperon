@@ -1,3 +1,2 @@
-find_program(CLANG_CL clang-cl REQUIRED)
-set(CMAKE_C_COMPILER "${CLANG_CL}" CACHE STRING "" FORCE)
-set(CMAKE_CXX_COMPILER "${CLANG_CL}" CACHE STRING "" FORCE)
+set(CMAKE_C_COMPILER "C:/Program Files/LLVM/bin/clang-cl.exe" CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER "C:/Program Files/LLVM/bin/clang-cl.exe" CACHE STRING "" FORCE)
