@@ -29,21 +29,19 @@ jobs:
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Cache vcpkg downloads
+        uses: actions/cache@v4
+        with:
+          path: C:/vcpkg/downloads
+          key: vcpkg-downloads-windows-${{ hashFiles('ports/**', 'triplets/**') }}
+          restore-keys: vcpkg-downloads-windows-
+
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
           path: C:/vcpkg/installed
-          key: vcpkg-windows-${{ hashFiles('ports/**') }}
+          key: vcpkg-windows-${{ hashFiles('ports/**', 'triplets/**') }}
           restore-keys: vcpkg-windows-
-
-      - name: Install dependencies via vcpkg
-        env:
-          VCPKG_ROOT: C:/vcpkg
-        run: |
-          vcpkg install `
-            --overlay-ports="${{ github.workspace }}/ports" `
-            --overlay-triplets="${{ github.workspace }}/triplets" `
-            --triplet=x64-windows-static-clang
 
       - name: Build wheel
         env:
