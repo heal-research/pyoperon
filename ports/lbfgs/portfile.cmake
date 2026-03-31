@@ -1,11 +1,12 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO foolnotion/lbfgs
-    REF 9e384ec6f597d4be4edc72fbf9dcadf70189df21
-    SHA512 86863b2402318bad10b1a879efdb912feb805afb252421fbae323740e748fcdb9fed6371b34950cf918128c610af2216f43d59371dd5426dce7c0acd2d618e8a
+    REF a9b2a47da72a5544c8766d73bb1ef4e8d5550ca3
+    SHA512 a4e46b123da11cc347cc54c78791105fa543e5a57f33b32dea208824414a24a0ec54887e95252eb2f3ad4eaef00023a7a7859fb38c5d374a975418033e3d0d50
     HEAD_REF main
 )
 
+set(VCPKG_BUILD_TYPE release) # header-only port
 set(VCPKG_POLICY_SKIP_COPYRIGHT_CHECK enabled) # foolnotion/lbfgs has no license file
 
 vcpkg_cmake_configure(

@@ -1,20 +1,7 @@
 {
     "name": "pyoperon",
-    "version-string": "0.5.0",
+    "version": "0.6.1",
     "dependencies": [
-        "aria-csv",
-        "ceres",
-        "eigen3",
-        "fast-float",
-        "operon",
-        "pratt-parser",
-        "robin-hood-hashing",
-        "span-lite",
-        "taskflow",
-        "vectorclass",
-        "vstat",
-        "xxhash",
-	"tl-expected"
-    ],
-    "builtin-baseline": "d9ccd77bb554e67137f3f754a2e2f11f4188c82c"
+        "operon"
+    ]
 }
