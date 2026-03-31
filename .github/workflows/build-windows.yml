@@ -8,7 +8,11 @@ on:
   workflow_call:
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   windows-wheels:
+    needs: [test]
     runs-on: windows-latest
     strategy:
       matrix:

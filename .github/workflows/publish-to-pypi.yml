@@ -13,9 +13,12 @@ jobs:
   build-macos:
     uses: ./.github/workflows/build-macos.yml
 
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
+
   publish-to-test-pypi:
     name: Publish to TestPyPI
-    needs: [build-linux, build-macos]
+    needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +37,7 @@ jobs:
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
 
   publish-to-pypi:
     name: Publish Python distribution to PyPI
@@ -55,3 +59,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
