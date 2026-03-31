@@ -6,6 +6,7 @@ vcpkg_from_github(
     HEAD_REF main
 )
 
+set(VCPKG_BUILD_TYPE release) # header-only port
 set(VCPKG_POLICY_SKIP_COPYRIGHT_CHECK enabled) # foolnotion/lbfgs has no license file
 
 vcpkg_cmake_configure(
