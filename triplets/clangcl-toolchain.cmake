@@ -1,5 +1,5 @@
-set(CMAKE_C_COMPILER "clang-cl" CACHE STRING "" FORCE)
-set(CMAKE_CXX_COMPILER "clang-cl" CACHE STRING "" FORCE)
+set(CMAKE_C_COMPILER "C:/Program Files/LLVM/bin/clang-cl.exe" CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER "C:/Program Files/LLVM/bin/clang-cl.exe" CACHE STRING "" FORCE)
 
 # Force static CRT (/MT) to match VCPKG_CRT_LINKAGE=static in the triplet.
 # This is required because vcpkg's manifest-mode install during the pip wheel
