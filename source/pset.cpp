@@ -3,11 +3,33 @@
 
 #include "pyoperon/pyoperon.hpp"
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/string.h>
 
+#include <operon/core/node.hpp>
 #include <operon/core/pset.hpp>
 
 void InitPset(nb::module_ &m)
 {
+    nb::class_<Operon::PrimitiveSetConfig>(m, "PrimitiveSetConfig")
+        .def(nb::init<>())
+        .def("__init__", [](Operon::PrimitiveSetConfig* cfg, std::vector<Operon::NodeType> const& types) {
+            new (cfg) Operon::PrimitiveSetConfig{};
+            for (auto t : types) { cfg->Set(Operon::NodeTypes::GetIndex(t)); }
+        })
+        .def("__or__", [](Operon::PrimitiveSetConfig a, Operon::PrimitiveSetConfig b) { return a | b; })
+        .def("__ior__", [](Operon::PrimitiveSetConfig& a, Operon::PrimitiveSetConfig b) -> Operon::PrimitiveSetConfig& { return a |= b; })
+        .def("__repr__", [](Operon::PrimitiveSetConfig const& cfg) {
+            std::string s = "PrimitiveSetConfig{";
+            bool first = true;
+            cfg.ForEach([&](std::size_t i) {
+                if (!first) { s += ", "; }
+                s += Operon::Node(static_cast<Operon::NodeType>(i)).Name();
+                first = false;
+            });
+            s += "}";
+            return s;
+        });
+
     // primitive set
     nb::class_<Operon::PrimitiveSet>(m, "PrimitiveSet")
         .def(nb::init<>())

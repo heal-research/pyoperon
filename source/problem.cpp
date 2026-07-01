@@ -13,9 +13,6 @@ void InitProblem(nb::module_ &m)
             new (problem) Operon::Problem(gsl::not_null<Operon::Dataset*>(dataset));
         })
         .def("ConfigurePrimitiveSet", &Operon::Problem::ConfigurePrimitiveSet)
-        .def("ConfigurePrimitiveSet", [](Operon::Problem& self, uint32_t config){
-            self.ConfigurePrimitiveSet(static_cast<Operon::NodeType>(config));
-        })
         .def_prop_rw("TrainingRange", &Operon::Problem::TrainingRange, [](Operon::Problem& self, Operon::Range range) {
             self.SetTrainingRange(range);
         })
