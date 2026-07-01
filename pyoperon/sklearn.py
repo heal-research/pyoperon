@@ -488,7 +488,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     # --- Component construction helpers ---
 
     @staticmethod
-    def _init_primitive_config(allowed_symbols: str):
+    def _init_primitive_config(allowed_symbols: str) -> op.PrimitiveSetConfig:
         node_types = [_KNOWN_SYMBOLS[s.strip()] for s in allowed_symbols.split(',')]
         return op.PrimitiveSetConfig(node_types)
 

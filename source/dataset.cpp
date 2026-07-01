@@ -84,10 +84,14 @@ void InitDataset(nb::module_ &m)
         .def_prop_ro("Rows", &Operon::Dataset::Rows<int64_t>)
         .def_prop_ro("Cols", &Operon::Dataset::Cols<int64_t>)
         .def_prop_ro("Values", [](Operon::Dataset const& ds) {
+            // Data() returns the SIMD-padded mdspan ((rows+7)&~7 rows for owning
+            // datasets); expose the logical (rows, cols) shape via an explicit
+            // column stride of paddedRows rather than the padded row count.
             auto view = ds.Data();
-            size_t shape[2] = {static_cast<size_t>(view.extent(0)), static_cast<size_t>(view.extent(1))};
-            return nb::ndarray<Operon::Scalar const, nb::numpy, nb::f_contig>(
-                view.data_handle(), 2, shape, nb::handle()
+            size_t shape[2] = {static_cast<size_t>(ds.Rows()), static_cast<size_t>(view.extent(1))};
+            int64_t strides[2] = {1, static_cast<int64_t>(view.extent(0))};
+            return nb::ndarray<Operon::Scalar const, nb::numpy>(
+                view.data_handle(), 2, shape, nb::handle(), strides
             );
         })
         .def_prop_rw("VariableNames", &Operon::Dataset::VariableNames, &Operon::Dataset::SetVariableNames)
