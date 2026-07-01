@@ -143,9 +143,11 @@ NB_MODULE(pyoperon, m)
         });
 
     nb::class_<Operon::InfixParser>(m, "InfixParser")
-        .def_static("Parse", [](std::string const& expr, std::unordered_map<std::string, Operon::Hash> const& variables) {
-            Operon::Map<std::string, Operon::Hash> map(variables.begin(), variables.end());
-            return Operon::InfixParser::Parse(expr, map);
+        .def_static("Parse", [](std::string const& expr) {
+            return Operon::InfixParser::Parse(expr);
+        })
+        .def_static("Parse", [](std::string const& expr, Operon::Dataset const& dataset) {
+            return Operon::InfixParser::Parse(expr, dataset);
         });
 
     // genetic algorithm
@@ -163,6 +165,7 @@ NB_MODULE(pyoperon, m)
         .def_rw("Epsilon", &Operon::GeneticAlgorithmConfig::Epsilon)
         .def_rw("TimeLimit", &Operon::GeneticAlgorithmConfig::TimeLimit)
         .def("__init__", [](Operon::GeneticAlgorithmConfig* config, size_t gen, size_t evals, size_t iter, size_t popsize, size_t poolsize, double pc, double pm, double ps, double plm, double epsilon, size_t seed, size_t timelimit) {
+            new (config) Operon::GeneticAlgorithmConfig{};
             config->Generations = gen;
             config->Evaluations = evals;
             config->Iterations = iter;

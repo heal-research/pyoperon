@@ -3,7 +3,7 @@
 
 #include <operon/operators/evaluator.hpp>
 
-using TDispatch                = Operon::DefaultDispatch;
+using TDispatch                = Operon::ScalarDispatch;
 using TInterpreter             = Operon::Interpreter<Operon::Scalar, TDispatch>;
 using TInterpreterBase         = Operon::InterpreterBase<Operon::Scalar>;
 
@@ -33,15 +33,20 @@ using TOptimizerBase           = Operon::OptimizerBase;
 // optimizer::lm
 using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
 
+// loss functions (callable, for LBFGS/SGD which require OptimizerLoss concept)
+using TGaussianLoss             = Operon::GaussianLoss<Operon::Scalar>;
+using TPoissonLoss              = Operon::PoissonLoss<Operon::Scalar, false>;
+using TPoissonLossLog           = Operon::PoissonLoss<Operon::Scalar, true>;
+
 // optimizer::lbfgs
-using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLikelihood>;
-using TLBFGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihood>;
-using TLBFGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLikelihoodLog>;
+using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLoss>;
+using TLBFGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLoss>;
+using TLBFGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLossLog>;
 
 // optimizer::sgd
-using TSGDOptimizerGauss        = Operon::SGDOptimizer<TDispatch, TGaussianLikelihood>;
-using TSGDOptimizerPoisson      = Operon::SGDOptimizer<TDispatch, TPoissonLikelihood>;
-using TSGDOptimizerPoissonLog   = Operon::SGDOptimizer<TDispatch, TPoissonLikelihoodLog>;
+using TSGDOptimizerGauss        = Operon::SGDOptimizer<TDispatch, TGaussianLoss>;
+using TSGDOptimizerPoisson      = Operon::SGDOptimizer<TDispatch, TPoissonLoss>;
+using TSGDOptimizerPoissonLog   = Operon::SGDOptimizer<TDispatch, TPoissonLossLog>;
 
 // optimizer::sgd::update_rule
 using TUpdateRule               = Operon::UpdateRule::LearningRateUpdateRule;
