@@ -9,48 +9,45 @@
 namespace nb = nanobind;
 
 namespace {
+
+// f-contiguous (column-major) — same layout as Dataset's mdarray storage
 template<typename T>
 auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::ndim<2>, nb::f_contig> const& arr)
 {
-    auto const* data = arr.data();
-    auto rows = arr.shape(0);
-    auto cols = arr.shape(1);
+    auto rows = static_cast<int>(arr.shape(0));
+    auto cols = static_cast<int>(arr.shape(1));
     if constexpr (std::is_same_v<T, Operon::Scalar>) {
-        new (ds) Operon::Dataset(data, rows, cols);
+        new (ds) Operon::Dataset(arr.data(), rows, cols);
     } else {
-#ifdef DEBUG
-        fmt::print("warning: data types do not match, data will be copied\n");
-#endif
-        Eigen::Matrix<Operon::Scalar, -1, -1> values(rows, cols);
-        values = Eigen::Map<Eigen::Matrix<T, -1, -1> const>(data, rows, cols).template cast<Operon::Scalar>();
-        new (ds) Operon::Dataset(values);
+        // cast to Scalar column-by-column
+        std::vector<std::vector<Operon::Scalar>> columns(cols, std::vector<Operon::Scalar>(rows));
+        for (auto j = 0; j < cols; ++j) {
+            for (auto i = 0; i < rows; ++i) {
+                columns[j][i] = static_cast<Operon::Scalar>(arr(i, j));
+            }
+        }
+        new (ds) Operon::Dataset(columns);
     }
 }
 
-// initialization function when the memory-order doesn't match (we do a manual copy)
+// c-contiguous (row-major) — must transpose to column-major for Dataset storage
 template<typename T>
 auto InitDataset(Operon::Dataset* ds, nb::ndarray<T, nb::ndim<2>, nb::c_contig> const& arr)
 {
-    auto rows = arr.shape(0);
-    auto cols = arr.shape(1);
-
-    Eigen::Matrix<Operon::Scalar, -1, -1> values(rows, cols);
-    for (auto i = 0L; i < rows; ++i) {
-        for (auto j = 0L; j < cols; ++j) {
-            values(i, j) = arr(i, j);
+    auto rows = static_cast<int>(arr.shape(0));
+    auto cols = static_cast<int>(arr.shape(1));
+    std::vector<std::vector<Operon::Scalar>> columns(cols, std::vector<Operon::Scalar>(rows));
+    for (auto i = 0; i < rows; ++i) {
+        for (auto j = 0; j < cols; ++j) {
+            columns[j][i] = static_cast<Operon::Scalar>(arr(i, j));
         }
     }
-    new (ds) Operon::Dataset(values);
+    new (ds) Operon::Dataset(columns);
 }
 
-// handles the case of a generic, unspecified ndarray
-// (a copy will potentially be made)
+// handles the case of a generic, unspecified ndarray (a copy may be made)
 auto InitDataset(Operon::Dataset* ds, nb::object arr)
 {
-#ifdef DEBUG
-    fmt::print("received an nb::object parameter, trying to deduce type.\n");
-#endif
-
     nb::ndarray<float,  nb::ndim<2>, nb::c_contig> a1;
     nb::ndarray<double, nb::ndim<2>, nb::c_contig> a2;
     nb::ndarray<float,  nb::ndim<2>, nb::f_contig> a3;
@@ -76,26 +73,23 @@ void InitDataset(nb::module_ &m)
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::ndim<2>, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::ndim<2>, nb::f_contig> array) { InitDataset(ds, array); }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<float, nb::ndim<2>, nb::c_contig> array) {
-#ifdef DEBUG
-            fmt::print("warning: unsupported memory layout, data will be copied\n");
-#endif
             InitDataset(ds, array);
         }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::ndarray<double, nb::ndim<2>, nb::c_contig> array) -> void {
-#ifdef DEBUG
-            fmt::print("warning: unsupported memory layout, data will be copied\n");
-#endif
             InitDataset(ds, array);
         }, nb::arg("data").noconvert())
         .def("__init__", [](Operon::Dataset* ds, nb::object array) -> void {
-#ifdef DEBUG
-            fmt::print("warning: unsupported memory layout, data will be copied\n");
-#endif
             InitDataset(ds, array);
         }, nb::arg("data").noconvert())
         .def_prop_ro("Rows", &Operon::Dataset::Rows<int64_t>)
         .def_prop_ro("Cols", &Operon::Dataset::Cols<int64_t>)
-        .def_prop_ro("Values", &Operon::Dataset::Values)
+        .def_prop_ro("Values", [](Operon::Dataset const& ds) {
+            auto view = ds.Data();
+            size_t shape[2] = {static_cast<size_t>(view.extent(0)), static_cast<size_t>(view.extent(1))};
+            return nb::ndarray<Operon::Scalar const, nb::numpy, nb::f_contig>(
+                view.data_handle(), 2, shape, nb::handle()
+            );
+        })
         .def_prop_rw("VariableNames", &Operon::Dataset::VariableNames, &Operon::Dataset::SetVariableNames)
         .def_prop_ro("VariableHashes", &Operon::Dataset::VariableHashes)
         .def("GetValues", [](Operon::Dataset const& self, std::string const& name) { return MakeView(self.GetValues(name)); })
