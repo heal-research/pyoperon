@@ -1,6 +1,6 @@
 {
     "name": "lexy",
-    "version": "2025.05.0",
+    "version-string": "2025.05.0",
     "description": "A parser combinator library for C++17 and onwards.",
     "homepage": "https://github.com/foonathan/lexy",
     "license": "BSL-1.0",
