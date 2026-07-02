@@ -72,7 +72,7 @@ if __name__ == '__main__':
         ('AriaCsvParser', 'https://github.com/AriaFallah/csv-parser', '4965c9f320d157c15bc1f5a6243de116a4caf101', default_cmake_args),
         ('Eigen3', 'https://gitlab.com/libeigen/eigen', '3.4.0', default_cmake_args),
         ('eve', 'https://github.com/jfalcou/eve', '2cb833a3e0abfe25b78ec6cff51a9b50a9da49a7', default_cmake_args),
-        ('fluky', 'https://github.com/foolnotion/fluky', '19320e7499cf0958268dc11fec28a6e41ac332e4', default_cmake_args),
+        ('fluky', 'https://github.com/foolnotion/fluky', '27b7ea8e4091332770fa74f6ea09f89384c7245b', default_cmake_args),
         ('vstat', 'https://github.com/heal-research/vstat', 'cd753d0467ccc96389fb969551eccceca97f38d1', default_cmake_args),
         ('FastFloat', 'https://github.com/fastfloat/fast_float', '50a80a73ab2ab256ba1c3bf86923ddd8b4202bc7', default_cmake_args + ['-DFASTFLOAT_TEST=OFF']),
         ('unordered_dense', 'https://github.com/martinus/unordered_dense', 'v4.8.1', default_cmake_args),
