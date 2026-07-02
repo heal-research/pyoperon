@@ -37,21 +37,6 @@ def format_time(seconds):
     return f"{seconds / 60:.1f}m"
 
 
-def install_gtl_config(install_prefix):
-    # STOPGAP: gtl never installs a real gtlConfig.cmake (only a *-targets
-    # file), so find_package(gtl REQUIRED) can't locate it. Remove this once
-    # https://github.com/greg7mdp/gtl carries a proper installed config
-    # upstream and dependencies.py is repinned to that revision.
-    cmake_dir = Path(install_prefix) / 'share' / 'cmake' / 'gtl'
-    cmake_dir.mkdir(parents=True, exist_ok=True)
-    (cmake_dir / 'gtlConfig.cmake').write_text(
-        'include("${CMAKE_CURRENT_LIST_DIR}/gtl-targets.cmake")\n'
-        'if(NOT TARGET gtl::gtl)\n'
-        '    add_library(gtl::gtl ALIAS gtl)\n'
-        'endif()\n'
-    )
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Build and install pyoperon C++ dependencies")
     parser.add_argument('-v', '--verbose', action='store_true', help="Show full cmake/build output")
@@ -92,7 +77,7 @@ if __name__ == '__main__':
         ('libassert', 'https://github.com/jeremy-rifkin/libassert', 'v2.2.1', default_cmake_args + ['-DLIBASSERT_USE_EXTERNAL_CPPTRACE=1', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=1', '-DCMAKE_CXX_FLAGS=-fPIC']),
         ('xxHash', 'https://github.com/Cyan4973/xxHash', '7aee8d0a341bb574f7c139c769e1db115b42cc3c', default_cmake_args + ['-S', 'build/cmake']),
         ('asmjit', 'https://github.com/asmjit/asmjit', '0bd5787b54b575ed94bf32ac452153b34385c514', default_cmake_args),
-        ('gtl', 'https://github.com/greg7mdp/gtl', '43979af0d4bb5e085bbda522ea1bde9e6f4c81a6', default_cmake_args + ['-DGTL_BUILD_TESTS=OFF', '-DGTL_BUILD_EXAMPLES=OFF', '-DGTL_BUILD_BENCHMARKS=OFF']),
+        ('gtl', 'https://github.com/greg7mdp/gtl', 'fe33cb643009c5aaf0701a4272b5768b83a0729d', default_cmake_args + ['-DGTL_BUILD_TESTS=OFF', '-DGTL_BUILD_EXAMPLES=OFF', '-DGTL_BUILD_BENCHMARKS=OFF']),
         ('glaze', 'https://github.com/stephenberry/glaze', 'v7.8.3', default_cmake_args + ['-Dglaze_BUILD_EXAMPLES=OFF', '-Dglaze_DEVELOPER_MODE=OFF', '-Dglaze_ENABLE_FUZZING=OFF']),
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
         ('operon', 'https://github.com/heal-research/operon', '923ad282bdd06316ce1a9a7eec8ad678f631a7dc', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
@@ -132,9 +117,6 @@ if __name__ == '__main__':
             run(['cmake', *cmake_args], verbose=args.verbose)
             run(['cmake', '--build', 'build', '-j', str(cpu_count())], verbose=args.verbose)
             run(['cmake', '--install', 'build'], verbose=args.verbose)
-
-            if name == 'gtl':
-                install_gtl_config(install_prefix)
 
             elapsed = time.monotonic() - dep_start
             print(f"done ({format_time(elapsed)})", flush=True)
