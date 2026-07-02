@@ -1,0 +1,19 @@
+{
+    "name": "infix-parser",
+    "version-string": "0.1.0",
+    "description": "A fast infix expression parser producing reverse-prefix ASTs.",
+    "homepage": "https://github.com/foolnotion/infix-parser",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "fast-float",
+        "fmt",
+        "lexy"
+    ]
+}

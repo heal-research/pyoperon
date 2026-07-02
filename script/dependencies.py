@@ -60,10 +60,11 @@ if __name__ == '__main__':
         ('fluky', 'https://github.com/foolnotion/fluky', '19320e7499cf0958268dc11fec28a6e41ac332e4', default_cmake_args),
         ('vstat', 'https://github.com/heal-research/vstat', 'cd753d0467ccc96389fb969551eccceca97f38d1', default_cmake_args),
         ('FastFloat', 'https://github.com/fastfloat/fast_float', '50a80a73ab2ab256ba1c3bf86923ddd8b4202bc7', default_cmake_args + ['-DFASTFLOAT_TEST=OFF']),
-        ('pratt-parser', 'https://github.com/foolnotion/pratt-parser-calculator', '2e0b13615c6ff1fb6381c0ac87796932b326bc89', default_cmake_args),
         ('unordered_dense', 'https://github.com/martinus/unordered_dense', 'v4.8.1', default_cmake_args),
         ('cpp-sort', 'https://github.com/Morwenn/cpp-sort', 'v2.1.0', default_cmake_args + ['-DBUILD_TESTING=0']),
         ('fmt', 'https://github.com/fmtlib/fmt', '12.1.0', default_cmake_args + ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DFMT_TEST=OFF', '-DBUILD_SHARED_LIBS=OFF']),
+        ('lexy', 'https://github.com/foonathan/lexy', 'v2025.05.0', default_cmake_args + ['-DLEXY_BUILD_TESTS=OFF', '-DLEXY_BUILD_EXAMPLES=OFF', '-DLEXY_ENABLE_INSTALL=ON']),
+        ('infix-parser', 'https://github.com/foolnotion/infix-parser', 'b9270d14d03c4fc54816e4eb52352e4c39927ef2', default_cmake_args),
         ('Microsoft.GSL', 'https://github.com/microsoft/GSL', 'v4.2.1', default_cmake_args + ['-DGSL_INSTALL=1', '-DGSL_TEST=0']),
         ('tl-expected', 'https://github.com/TartanLlama/expected', 'v1.3.1', default_cmake_args),
         ('lbfgs', 'https://github.com/foolnotion/lbfgs', 'a9b2a47da72a5544c8766d73bb1ef4e8d5550ca3', default_cmake_args),
@@ -72,7 +73,11 @@ if __name__ == '__main__':
         ('cpptrace', 'https://github.com/jeremy-rifkin/cpptrace', 'v1.0.4', default_cmake_args + ['-DCPPTRACE_USE_EXTERNAL_ZSTD=0', '-DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0']),
         ('libassert', 'https://github.com/jeremy-rifkin/libassert', 'v2.2.1', default_cmake_args + ['-DLIBASSERT_USE_EXTERNAL_CPPTRACE=1', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=1', '-DCMAKE_CXX_FLAGS=-fPIC']),
         ('xxHash', 'https://github.com/Cyan4973/xxHash', '7aee8d0a341bb574f7c139c769e1db115b42cc3c', default_cmake_args + ['-S', 'build/cmake']),
-        ('operon', 'https://github.com/heal-research/operon', '5a1c93769ca89a34c9a4fdc8948eecb413ae1f15', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
+        ('asmjit', 'https://github.com/asmjit/asmjit', '0bd5787b54b575ed94bf32ac452153b34385c514', default_cmake_args),
+        ('gtl', 'https://github.com/greg7mdp/gtl', 'v1.2.0', default_cmake_args),
+        ('glaze', 'https://github.com/stephenberry/glaze', 'v7.8.3', default_cmake_args + ['-Dglaze_BUILD_EXAMPLES=OFF']),
+        ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
+        ('operon', 'https://github.com/heal-research/operon', '484b2cab4e7dc1dc3af12d78916c047171a3b816', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
     ]
 
     total = len(dependencies)
