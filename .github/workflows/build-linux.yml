@@ -38,7 +38,7 @@ jobs:
           pip install nanobind scikit-build-core
           python script/dependencies.py
           SKBUILD_CMAKE_ARGS="--preset=build-linux" pip wheel . -w dist/ --no-build-isolation --no-deps
-          auditwheel repair dist/*.whl
+          LD_LIBRARY_PATH="$(pwd)/venv/lib64:$(pwd)/venv/lib:$LD_LIBRARY_PATH" auditwheel repair dist/*.whl
 
       - name: Upload wheel
         uses: actions/upload-artifact@v5

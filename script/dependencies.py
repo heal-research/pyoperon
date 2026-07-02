@@ -71,7 +71,7 @@ if __name__ == '__main__':
         ('Microsoft.GSL', 'https://github.com/microsoft/GSL', 'v4.2.1', default_cmake_args + ['-DGSL_INSTALL=1', '-DGSL_TEST=0']),
         ('tl-expected', 'https://github.com/TartanLlama/expected', 'v1.3.1', default_cmake_args),
         ('lbfgs', 'https://github.com/foolnotion/lbfgs', 'a9b2a47da72a5544c8766d73bb1ef4e8d5550ca3', default_cmake_args),
-        ('Taskflow', 'https://github.com/taskflow/taskflow', 'v4.0.0', default_cmake_args + ['-DTF_BUILD_EXAMPLES=OFF', '-DTF_BUILD_TESTS=OFF']),
+        ('Taskflow', 'https://github.com/taskflow/taskflow', 'v4.1.0', default_cmake_args + ['-DTF_BUILD_EXAMPLES=OFF', '-DTF_BUILD_TESTS=OFF']),
         ('mdspan', 'https://github.com/kokkos/mdspan', '0e6a69dfe045acbb623003588a4aff844ea4b276', default_cmake_args + ['-DCMAKE_CXX_STANDARD=20', '-DMDSPAN_CXX_STANDARD=20', '-DMDSPAN_ENABLE_TESTS=OFF', '-DMDSPAN_ENABLE_BENCHMARKS=OFF']),
         ('cpptrace', 'https://github.com/jeremy-rifkin/cpptrace', 'v1.0.4', default_cmake_args + ['-DCPPTRACE_USE_EXTERNAL_ZSTD=0', '-DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0']),
         ('libassert', 'https://github.com/jeremy-rifkin/libassert', 'v2.2.1', default_cmake_args + ['-DLIBASSERT_USE_EXTERNAL_CPPTRACE=1', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=1', '-DCMAKE_CXX_FLAGS=-fPIC']),
