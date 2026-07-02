@@ -76,7 +76,7 @@ if __name__ == '__main__':
         ('cpptrace', 'https://github.com/jeremy-rifkin/cpptrace', 'v1.0.4', default_cmake_args + ['-DCPPTRACE_USE_EXTERNAL_ZSTD=0', '-DCPPTRACE_GET_SYMBOLS_WITH_LIBDWARF=0']),
         ('libassert', 'https://github.com/jeremy-rifkin/libassert', 'v2.2.1', default_cmake_args + ['-DLIBASSERT_USE_EXTERNAL_CPPTRACE=1', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=1', '-DCMAKE_CXX_FLAGS=-fPIC']),
         ('xxHash', 'https://github.com/Cyan4973/xxHash', '7aee8d0a341bb574f7c139c769e1db115b42cc3c', default_cmake_args + ['-S', 'build/cmake']),
-        ('asmjit', 'https://github.com/asmjit/asmjit', '0bd5787b54b575ed94bf32ac452153b34385c514', default_cmake_args),
+        ('asmjit', 'https://github.com/asmjit/asmjit', '0bd5787b54b575ed94bf32ac452153b34385c514', default_cmake_args + ['-DASMJIT_STATIC=ON']),
         ('gtl', 'https://github.com/greg7mdp/gtl', 'fe33cb643009c5aaf0701a4272b5768b83a0729d', default_cmake_args + ['-DGTL_BUILD_TESTS=OFF', '-DGTL_BUILD_EXAMPLES=OFF', '-DGTL_BUILD_BENCHMARKS=OFF']),
         ('glaze', 'https://github.com/stephenberry/glaze', 'v7.8.3', default_cmake_args + ['-Dglaze_BUILD_EXAMPLES=OFF', '-Dglaze_DEVELOPER_MODE=OFF', '-Dglaze_ENABLE_FUZZING=OFF']),
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
