@@ -8,10 +8,20 @@ vcpkg_from_github(
 
 set(VCPKG_BUILD_TYPE release)
 
+# infix-parser links lexy/fmt/fast_float PRIVATE and never find_dependency()s
+# them, assuming consumers never need those symbols directly. That only
+# holds if infix-parser itself is a shared library (its private deps get
+# resolved at its own link time); a static build leaks them into the
+# installed link interface and breaks find_package(infix-parser) for any
+# consumer that doesn't also have lexy on CMAKE_PREFIX_PATH. Force shared
+# regardless of the triplet.
+set(VCPKG_LIBRARY_LINKAGE dynamic)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DBUILD_EXAMPLES=OFF
+        -DBUILD_SHARED_LIBS=ON
 )
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(PACKAGE_NAME infix-parser CONFIG_PATH lib/cmake/infix-parser DO_NOT_DELETE_PARENT_CONFIG_PATH)
