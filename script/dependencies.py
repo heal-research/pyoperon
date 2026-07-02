@@ -66,6 +66,9 @@ if __name__ == '__main__':
         '-S', '.', '-B', 'build', '-DCMAKE_BUILD_TYPE=Release',
         f'-DCMAKE_INSTALL_PREFIX={install_prefix}',
         '-DBUILD_EXAMPLES=OFF', '-DBUILD_TESTING=OFF',
+        # every static archive here eventually gets linked into pyoperon's
+        # shared module, so all of them need position-independent code
+        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
     ]
 
     dependencies = [
