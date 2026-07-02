@@ -79,7 +79,7 @@ if __name__ == '__main__':
         ('cpp-sort', 'https://github.com/Morwenn/cpp-sort', 'v2.1.0', default_cmake_args + ['-DBUILD_TESTING=0']),
         ('fmt', 'https://github.com/fmtlib/fmt', '12.1.0', default_cmake_args + ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DFMT_TEST=OFF', '-DBUILD_SHARED_LIBS=OFF']),
         ('lexy', 'https://github.com/foonathan/lexy', 'v2025.05.0', default_cmake_args + ['-DLEXY_BUILD_TESTS=OFF', '-DLEXY_BUILD_EXAMPLES=OFF', '-DLEXY_ENABLE_INSTALL=ON']),
-        ('infix-parser', 'https://github.com/foolnotion/infix-parser', 'b9270d14d03c4fc54816e4eb52352e4c39927ef2', default_cmake_args),
+        ('infix-parser', 'https://github.com/foolnotion/infix-parser', 'b9270d14d03c4fc54816e4eb52352e4c39927ef2', default_cmake_args + ['-DBUILD_SHARED_LIBS=ON']),
         ('Microsoft.GSL', 'https://github.com/microsoft/GSL', 'v4.2.1', default_cmake_args + ['-DGSL_INSTALL=1', '-DGSL_TEST=0']),
         ('tl-expected', 'https://github.com/TartanLlama/expected', 'v1.3.1', default_cmake_args),
         ('lbfgs', 'https://github.com/foolnotion/lbfgs', 'a9b2a47da72a5544c8766d73bb1ef4e8d5550ca3', default_cmake_args),
