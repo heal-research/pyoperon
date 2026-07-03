@@ -1,0 +1,18 @@
+{
+    "name": "pappus",
+    "version": "0.1.0",
+    "description": "Interval and affine arithmetic library",
+    "homepage": "https://github.com/heal-research/pappus",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        },
+        "eve",
+        "small-vector"
+    ]
+}

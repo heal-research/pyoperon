@@ -80,7 +80,9 @@ if __name__ == '__main__':
         ('gtl', 'https://github.com/greg7mdp/gtl', 'fe33cb643009c5aaf0701a4272b5768b83a0729d', default_cmake_args + ['-DGTL_BUILD_TESTS=OFF', '-DGTL_BUILD_EXAMPLES=OFF', '-DGTL_BUILD_BENCHMARKS=OFF']),
         ('glaze', 'https://github.com/stephenberry/glaze', 'v7.8.3', default_cmake_args + ['-Dglaze_BUILD_EXAMPLES=OFF', '-Dglaze_DEVELOPER_MODE=OFF', '-Dglaze_ENABLE_FUZZING=OFF']),
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
-        ('operon', 'https://github.com/heal-research/operon', 'ef706cf0eb011420d1a500565edcdbbbdb686080', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
+        ('small_vector', 'https://github.com/gharveymn/small_vector', 'v0.10.2', default_cmake_args + ['-DGCH_SMALL_VECTOR_ENABLE_TESTS=OFF', '-DGCH_SMALL_VECTOR_ENABLE_BENCHMARKS=OFF']),
+        ('pappus', 'https://github.com/heal-research/pappus', '3fef62ae2c650407fbf4412f8949780f76b6bafd', default_cmake_args),
+        ('operon', 'https://github.com/heal-research/operon', '7f6d71089b7d7243481625f6a1a3a75580f5742d', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
     ]
 
     total = len(dependencies)

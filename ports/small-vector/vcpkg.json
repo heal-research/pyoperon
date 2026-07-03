@@ -1,0 +1,17 @@
+{
+    "name": "small-vector",
+    "version": "0.10.2",
+    "description": "A fully featured single header library implementing a vector container with a small buffer optimization.",
+    "homepage": "https://github.com/gharveymn/small_vector",
+    "license": "MIT",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

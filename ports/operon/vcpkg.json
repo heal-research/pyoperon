@@ -1,6 +1,6 @@
 {
     "name": "operon",
-    "version-string": "0.3.0",
+    "version-string": "0.3.1",
     "description": "Modern, fast, scalable C++ framework for symbolic regression.",
     "dependencies": [
         {
@@ -27,6 +27,7 @@
         "mdspan",
         "ms-gsl",
         "ndsort",
+        "pappus",
         "taskflow",
         "tl-expected",
         "unordered-dense",
