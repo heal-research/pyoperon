@@ -61,7 +61,7 @@ if __name__ == '__main__':
         ('Eigen3', 'https://gitlab.com/libeigen/eigen', '3.4.0', default_cmake_args),
         ('eve', 'https://github.com/jfalcou/eve', '39a07c77527ded5aa00468d7a7daec2c7ca6caad', default_cmake_args),
         ('fluky', 'https://github.com/foolnotion/fluky', '72dd16f38f9e7a76f3a81a2c65cd2bc616b65502', default_cmake_args),
-        ('vstat', 'https://github.com/heal-research/vstat', 'cd753d0467ccc96389fb969551eccceca97f38d1', default_cmake_args),
+        ('vstat', 'https://github.com/heal-research/vstat', 'dd174d0dcc4a9fe7d15e8667a2ccb69b3870ded7', default_cmake_args),
         ('FastFloat', 'https://github.com/fastfloat/fast_float', '50a80a73ab2ab256ba1c3bf86923ddd8b4202bc7', default_cmake_args + ['-DFASTFLOAT_TEST=OFF']),
         ('unordered_dense', 'https://github.com/martinus/unordered_dense', 'v4.8.1', default_cmake_args),
         ('cpp-sort', 'https://github.com/Morwenn/cpp-sort', 'v2.1.0', default_cmake_args + ['-DBUILD_TESTING=0']),
