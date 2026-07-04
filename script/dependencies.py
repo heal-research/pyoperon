@@ -59,8 +59,8 @@ if __name__ == '__main__':
     dependencies = [
         ('AriaCsvParser', 'https://github.com/AriaFallah/csv-parser', '4965c9f320d157c15bc1f5a6243de116a4caf101', default_cmake_args),
         ('Eigen3', 'https://gitlab.com/libeigen/eigen', '3.4.0', default_cmake_args),
-        ('eve', 'https://github.com/jfalcou/eve', '2cb833a3e0abfe25b78ec6cff51a9b50a9da49a7', default_cmake_args),
-        ('fluky', 'https://github.com/foolnotion/fluky', '27b7ea8e4091332770fa74f6ea09f89384c7245b', default_cmake_args),
+        ('eve', 'https://github.com/jfalcou/eve', '39a07c77527ded5aa00468d7a7daec2c7ca6caad', default_cmake_args),
+        ('fluky', 'https://github.com/foolnotion/fluky', '72dd16f38f9e7a76f3a81a2c65cd2bc616b65502', default_cmake_args),
         ('vstat', 'https://github.com/heal-research/vstat', 'cd753d0467ccc96389fb969551eccceca97f38d1', default_cmake_args),
         ('FastFloat', 'https://github.com/fastfloat/fast_float', '50a80a73ab2ab256ba1c3bf86923ddd8b4202bc7', default_cmake_args + ['-DFASTFLOAT_TEST=OFF']),
         ('unordered_dense', 'https://github.com/martinus/unordered_dense', 'v4.8.1', default_cmake_args),
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
         ('small_vector', 'https://github.com/gharveymn/small_vector', 'v0.10.2', default_cmake_args + ['-DGCH_SMALL_VECTOR_ENABLE_TESTS=OFF', '-DGCH_SMALL_VECTOR_ENABLE_BENCHMARKS=OFF']),
         ('pappus', 'https://github.com/heal-research/pappus', '3fef62ae2c650407fbf4412f8949780f76b6bafd', default_cmake_args),
-        ('operon', 'https://github.com/heal-research/operon', '7f6d71089b7d7243481625f6a1a3a75580f5742d', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
+        ('operon', 'https://github.com/heal-research/operon', '0d48da9ae3f11175cdcf9cc33e92e066bb3a60d5', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
     ]
 
     total = len(dependencies)
