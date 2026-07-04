@@ -37,14 +37,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: C:/vcpkg/downloads
-          key: vcpkg-downloads-windows-${{ hashFiles('ports/**', 'triplets/**') }}
+          key: vcpkg-downloads-windows-${{ hashFiles('ports/**', 'triplets/**', 'vcpkg.json', 'vcpkg-configuration.json') }}
           restore-keys: vcpkg-downloads-windows-
 
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
           path: C:/vcpkg/installed
-          key: vcpkg-windows-${{ hashFiles('ports/**', 'triplets/**') }}
+          key: vcpkg-windows-${{ hashFiles('ports/**', 'triplets/**', 'vcpkg.json', 'vcpkg-configuration.json') }}
           restore-keys: vcpkg-windows-
 
       - name: Build wheel
