@@ -37,7 +37,8 @@ void InitGenerator(nb::module_ &m)
     // basic offspring generator
     nb::class_<Operon::BasicOffspringGenerator, Operon::OffspringGeneratorBase>(m, "BasicOffspringGenerator")
         .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
-                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
         .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
@@ -52,7 +53,8 @@ void InitGenerator(nb::module_ &m)
     // offspring selection generator
     nb::class_<Operon::OffspringSelectionGenerator, Operon::OffspringGeneratorBase>(m, "OffspringSelectionGenerator")
         .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
-                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
         .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
@@ -76,7 +78,8 @@ void InitGenerator(nb::module_ &m)
     // brood generator
     nb::class_<Operon::BroodOffspringGenerator, Operon::OffspringGeneratorBase>(m, "BroodOffspringGenerator")
         .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
-                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
         .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
@@ -95,7 +98,8 @@ void InitGenerator(nb::module_ &m)
     // polygenic generator
     nb::class_<Operon::PolygenicOffspringGenerator, Operon::OffspringGeneratorBase>(m, "PolygenicOffspringGenerator")
         .def(nb::init<Operon::EvaluatorBase const*, Operon::CrossoverBase const*, Operon::MutatorBase const*,
-                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>())
+                Operon::SelectorBase const*, Operon::SelectorBase const*, Operon::CoefficientOptimizer const*>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
         .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pc, double pm, double pl, double pk, size_t n) {
             std::vector<Operon::Individual> v;
             v.reserve(n);
