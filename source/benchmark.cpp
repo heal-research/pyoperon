@@ -8,6 +8,7 @@
 #include <taskflow/algorithm/reduce.hpp>
 #endif
 
+#include <gsl/pointers>
 #include <operon/core/dataset.hpp>
 #include <operon/random/random.hpp>
 #include <operon/operators/creator.hpp>
@@ -23,11 +24,11 @@ void InitBenchmark(nb::module_ &m)
     // benchmark functionality
     m.def("Bench", [](int nTrees = 10000, int maxLength = 50, int maxDepth = 100, int nRows = 10000, int nCols = 10, int seed = 0, int nThreads = 0) {
         std::uniform_real_distribution<Operon::Scalar> dist(-1.f, +1.f);
-        Eigen::Matrix<decltype(dist)::result_type, -1, -1> data(nRows, nCols);
+        Eigen::Matrix<Operon::Scalar, -1, -1, Eigen::ColMajor> data(nRows, nCols);
 
         Operon::RandomGenerator rng(seed);
         for (auto& v : data.reshaped()) { v = dist(rng); }
-        Operon::Dataset ds(data);
+        Operon::Dataset ds(gsl::not_null<Operon::Scalar const*>(data.data()), static_cast<int>(nRows), static_cast<int>(nCols));
 
         auto const* targetName = "Y";
         auto inputs = ds.VariableHashes();
@@ -38,7 +39,7 @@ void InitBenchmark(nb::module_ &m)
         pset.SetConfig(Operon::PrimitiveSet::Arithmetic);
 
         std::uniform_int_distribution<size_t> sizeDistribution(1, maxLength);
-        auto creator = Operon::BalancedTreeCreator { &pset, inputs };
+        auto creator = Operon::BalancedTreeCreator { &pset, inputs, 0.0, static_cast<size_t>(maxLength) };
 
         if (nThreads == 0) { nThreads = std::thread::hardware_concurrency(); }
 

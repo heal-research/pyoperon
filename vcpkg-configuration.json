@@ -1,0 +1,25 @@
+{
+    "registries": [
+        {
+            "kind": "git",
+            "repository": "https://github.com/foolnotion/vcpkg-registry",
+            "baseline": "ef66d57bf16d0f407c7e1cc0f86332f704d82426",
+            "packages": [
+                "aria-csv",
+                "asmjit",
+                "eve",
+                "fluky",
+                "gtl",
+                "infix-parser",
+                "lbfgs",
+                "lexy",
+                "mdspan",
+                "ndsort",
+                "pappus",
+                "small-vector",
+                "taskflow",
+                "vstat"
+            ]
+        }
+    ]
+}

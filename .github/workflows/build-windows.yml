@@ -33,18 +33,21 @@ jobs:
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Update vcpkg
+        run: git -C C:/vcpkg fetch origin && git -C C:/vcpkg reset --hard origin/master
+
       - name: Cache vcpkg downloads
         uses: actions/cache@v4
         with:
           path: C:/vcpkg/downloads
-          key: vcpkg-downloads-windows-${{ hashFiles('ports/**', 'triplets/**') }}
+          key: vcpkg-downloads-windows-${{ hashFiles('ports/**', 'triplets/**', 'vcpkg.json', 'vcpkg-configuration.json') }}
           restore-keys: vcpkg-downloads-windows-
 
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
           path: C:/vcpkg/installed
-          key: vcpkg-windows-${{ hashFiles('ports/**', 'triplets/**') }}
+          key: vcpkg-windows-${{ hashFiles('ports/**', 'triplets/**', 'vcpkg.json', 'vcpkg-configuration.json') }}
           restore-keys: vcpkg-windows-
 
       - name: Build wheel
@@ -56,7 +59,11 @@ jobs:
           pip wheel . -w dist/ --no-build-isolation --no-deps
 
       - name: Repair wheel
-        run: delvewheel repair dist/*.whl -w wheelhouse/
+        # infix-parser is force-built as a shared DLL regardless of the vcpkg
+        # triplet (see ports/operon/../infix-parser in the registry), so
+        # delvewheel needs the vcpkg triplet's bin dir on its search path to
+        # find it.
+        run: delvewheel repair dist/*.whl -w wheelhouse/ --add-path C:/vcpkg/installed/x64-windows-static-clang/bin
 
       - name: Upload wheel
         uses: actions/upload-artifact@v5

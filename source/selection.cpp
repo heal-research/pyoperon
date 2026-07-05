@@ -25,23 +25,6 @@ void InitSelector(nb::module_ &m)
         .def("__call__", &Operon::TournamentSelector::operator())
         .def_prop_rw("TournamentSize", &Operon::TournamentSelector::GetTournamentSize, &Operon::TournamentSelector::SetTournamentSize);
 
-    nb::class_<Operon::RankTournamentSelector, Operon::SelectorBase>(m, "RankTournamentSelector")
-        .def("__init__", [](Operon::RankTournamentSelector* op, size_t i){
-            Operon::SingleObjectiveComparison comp(i);
-            new (op) Operon::RankTournamentSelector(comp); }, nb::arg("objective_index"))
-        .def("__init__", [](Operon::RankTournamentSelector* op, Operon::SingleObjectiveComparison const& comp) {
-                Operon::SingleObjectiveComparison temp(comp.GetObjectiveIndex());
-                new (op) Operon::RankTournamentSelector(temp);
-            })
-        .def("__init__", [](Operon::RankTournamentSelector* op, Operon::CrowdedComparison const&) {
-                Operon::CrowdedComparison temp;
-                new (op) Operon::RankTournamentSelector(temp);
-            })
-        .def(nb::init<Operon::ComparisonCallback const&>())
-        .def("__call__", &Operon::RankTournamentSelector::operator())
-        .def("Prepare", &Operon::RankTournamentSelector::Prepare)
-        .def_prop_rw("TournamentSize", &Operon::RankTournamentSelector::GetTournamentSize, &Operon::RankTournamentSelector::SetTournamentSize);
-
     nb::class_<Operon::ProportionalSelector, Operon::SelectorBase>(m, "ProportionalSelector")
         .def("__init__", [](Operon::ProportionalSelector* op, size_t i){
                 Operon::SingleObjectiveComparison comp(i);

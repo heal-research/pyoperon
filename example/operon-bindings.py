@@ -47,7 +47,7 @@ if __name__ == '__main__':
     selector.TournamentSize = 5
 
     # initialize the primitive set (add, sub, mul, div, exp, log, sin, cos), constants and variables are implicitly added
-    problem.ConfigurePrimitiveSet(Operon.NodeType.Constant | Operon.NodeType.Variable | Operon.NodeType.Add | Operon.NodeType.Mul | Operon.NodeType.Div | Operon.NodeType.Exp | Operon.NodeType.Log | Operon.NodeType.Sin | Operon.NodeType.Cos)
+    problem.ConfigurePrimitiveSet(Operon.PrimitiveSetConfig([Operon.NodeType.Constant, Operon.NodeType.Variable, Operon.NodeType.Add, Operon.NodeType.Mul, Operon.NodeType.Div, Operon.NodeType.Exp, Operon.NodeType.Log, Operon.NodeType.Sin, Operon.NodeType.Cos]))
     pset = problem.PrimitiveSet
 
     # define tree length and depth limits

@@ -4,16 +4,16 @@
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     foolnotion.url = "github:foolnotion/nur-pkg";
+    infix-parser.url = "github:foolnotion/infix-parser";
     lbfgs.url = "github:foolnotion/lbfgs";
     nixpkgs.url = "github:nixos/nixpkgs/master";
     operon.url = "github:heal-research/operon";
-    pratt-parser.url = "github:foolnotion/pratt-parser-calculator";
     vstat.url = "github:heal-research/vstat";
 
     foolnotion.inputs.nixpkgs.follows = "nixpkgs";
+    infix-parser.inputs.nixpkgs.follows = "nixpkgs";
     lbfgs.inputs.nixpkgs.follows = "nixpkgs";
     operon.inputs.nixpkgs.follows = "nixpkgs";
-    pratt-parser.inputs.nixpkgs.follows = "nixpkgs";
     vstat.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -23,7 +23,7 @@
       flake-parts,
       nixpkgs,
       foolnotion,
-      pratt-parser,
+      infix-parser,
       lbfgs,
       vstat,
       operon,
@@ -72,6 +72,9 @@
               python_.pkgs.pybind11
             ];
 
+            # operon's public/header-visible deps (eve, vstat, fmt, etc.) are
+            # propagatedBuildInputs on the operon derivation, so they come
+            # along automatically via operon_ below.
             buildInputs =
               with pkgs;
               [
@@ -86,8 +89,7 @@
                 (operon_.overrideAttrs (old: {
                   cmakeFlags = old.cmakeFlags ++ [ "-DUSE_SINGLE_PRECISION=1" ];
                 }))
-              ]
-              ++ operon_.buildInputs;
+              ];
           };
         in
         rec {

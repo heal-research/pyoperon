@@ -488,12 +488,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     # --- Component construction helpers ---
 
     @staticmethod
-    def _init_primitive_config(allowed_symbols: str) -> int:
-        config = 0
-        for s in allowed_symbols.split(','):
-            s = s.strip()
-            config |= int(_KNOWN_SYMBOLS[s])
-        return config
+    def _init_primitive_config(allowed_symbols: str) -> op.PrimitiveSetConfig:
+        node_types = [_KNOWN_SYMBOLS[s.strip()] for s in allowed_symbols.split(',')]
+        return op.PrimitiveSetConfig(node_types)
 
     def _init_creator(self, initialization_method, pset, inputs):
         if initialization_method == 'btc':
