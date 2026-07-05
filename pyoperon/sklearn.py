@@ -813,7 +813,6 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         aik_eval = op.AkaikeInformationCriterionEvaluator(problem, dtable)
 
         # Fitness evaluator(s)
-        # Keep references to extend lifetimes of C++ objects held by pointer
         evaluators = []
         for obj in objectives:
             eval_ = self._init_evaluator(obj, problem, dtable, uncertainty)
@@ -841,12 +840,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         )
 
         mut = op.MultiMutation()
-        # Keep references to extend lifetimes (MultiMutation stores pointers)
-        mut_list = []
         for k, v in mutation.items():
             m = self._init_mutation(k, inputs, pset, creator, coeff_initializer)
             mut.Add(m, v)
-            mut_list.append(m)
 
         coeff_optimizer = op.CoefficientOptimizer(optimizer)
         generator = self._init_generator(
