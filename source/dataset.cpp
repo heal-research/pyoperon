@@ -91,14 +91,14 @@ void InitDataset(nb::module_ &m)
             size_t shape[2] = {static_cast<size_t>(ds.Rows()), static_cast<size_t>(view.extent(1))};
             int64_t strides[2] = {1, static_cast<int64_t>(view.extent(0))};
             return nb::ndarray<Operon::Scalar const, nb::numpy>(
-                view.data_handle(), 2, shape, nb::handle(), strides
+                view.data_handle(), 2, shape, nb::find(ds), strides
             );
         })
         .def_prop_rw("VariableNames", &Operon::Dataset::VariableNames, &Operon::Dataset::SetVariableNames)
         .def_prop_ro("VariableHashes", &Operon::Dataset::VariableHashes)
-        .def("GetValues", [](Operon::Dataset const& self, std::string const& name) { return MakeView(self.GetValues(name)); })
-        .def("GetValues", [](Operon::Dataset const& self, Operon::Hash hash) { return MakeView(self.GetValues(hash)); })
-        .def("GetValues", [](Operon::Dataset const& self, int64_t index) { return MakeView(self.GetValues(index)); })
+        .def("GetValues", [](Operon::Dataset const& self, std::string const& name) { return MakeView(self.GetValues(name), nb::find(self)); })
+        .def("GetValues", [](Operon::Dataset const& self, Operon::Hash hash) { return MakeView(self.GetValues(hash), nb::find(self)); })
+        .def("GetValues", [](Operon::Dataset const& self, int64_t index) { return MakeView(self.GetValues(index), nb::find(self)); })
         .def("GetVariable", nb::overload_cast<const std::string&>(&Operon::Dataset::GetVariable, nb::const_))
         .def("GetVariable", nb::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, nb::const_))
         .def_prop_ro("Variables", &Operon::Dataset::GetVariables)

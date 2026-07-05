@@ -11,7 +11,7 @@ void InitProblem(nb::module_ &m)
     nb::class_<Operon::Problem>(m, "Problem")
         .def("__init__", [](Operon::Problem* problem, Operon::Dataset* dataset) {
             new (problem) Operon::Problem(gsl::not_null<Operon::Dataset*>(dataset));
-        })
+        }, nb::keep_alive<1, 2>())
         .def("ConfigurePrimitiveSet", &Operon::Problem::ConfigurePrimitiveSet)
         .def_prop_rw("TrainingRange", &Operon::Problem::TrainingRange, [](Operon::Problem& self, Operon::Range range) {
             self.SetTrainingRange(range);

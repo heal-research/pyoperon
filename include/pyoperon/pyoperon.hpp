@@ -24,12 +24,12 @@ NB_MAKE_OPAQUE(std::vector<Operon::Variable>);
 NB_MAKE_OPAQUE(std::vector<Operon::Individual>);
 
 template<typename T>
-auto MakeView(Operon::Span<T const> view)
+auto MakeView(Operon::Span<T const> view, nb::handle owner)
 {
     return nb::ndarray<T const, nb::numpy, nb::shape<-1>, nb::f_contig>(
         /* data = */ view.data(),
         /* ndim = */ {view.size()},
-        /* owner = */ nb::handle() // null owner
+        /* owner = */ owner // keeps the owning object (e.g. the Dataset) alive as long as the view is
     );
 }
 
