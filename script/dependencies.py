@@ -82,7 +82,7 @@ if __name__ == '__main__':
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'd94c58a1eb3e08e1cd026c565ab63276ea6bc62a', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
         ('small_vector', 'https://github.com/gharveymn/small_vector', 'v0.10.2', default_cmake_args + ['-DGCH_SMALL_VECTOR_ENABLE_TESTS=OFF', '-DGCH_SMALL_VECTOR_ENABLE_BENCHMARKS=OFF']),
         ('pappus', 'https://github.com/heal-research/pappus', '3fef62ae2c650407fbf4412f8949780f76b6bafd', default_cmake_args),
-        ('operon', 'https://github.com/heal-research/operon', '5b2eb2c5579162761d19de95cd931a31d4016966', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
+        ('operon', 'https://github.com/heal-research/operon', '9df4935ae23408256286dc821f202927c0173d7a', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
     ]
 
     total = len(dependencies)
