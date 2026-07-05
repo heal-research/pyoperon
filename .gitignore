@@ -2,6 +2,8 @@
 .vs/
 .vscode/
 .cache/
+.direnv/
+.envrc
 build/
 cmake/open-cpp-coverage.cmake
 cmake-build-*/
