@@ -65,6 +65,10 @@
             "name": "build-windows",
             "hidden": false,
             "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "toolset": {
+                "value": "ClangCL",
+                "strategy": "set"
+            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang-cl",
                 "CMAKE_CXX_COMPILER": "clang-cl",
