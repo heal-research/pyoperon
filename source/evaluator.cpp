@@ -205,10 +205,12 @@ void InitEval(nb::module_ &m)
         .def_prop_ro("JacobianEvaluations", [](TEvaluatorBase& self) { return self.JacobianEvaluations.load(); });
 
     nb::class_<TEvaluator, TEvaluatorBase>(m, "Evaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*, Operon::ErrorMetric, bool>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*, Operon::ErrorMetric, bool>(),
+            nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>());
 
     nb::class_<Operon::UserDefinedEvaluator, TEvaluatorBase>(m, "UserDefinedEvaluator")
-        .def(nb::init<Operon::Problem const*, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual const&)> const&>())
+        .def(nb::init<Operon::Problem const*, std::function<typename TEvaluatorBase::ReturnType(Operon::RandomGenerator*, Operon::Individual const&)> const&>(),
+            nb::keep_alive<1, 2>())
         .def("__call__", [](TEvaluatorBase const& self, Operon::RandomGenerator& rng, Operon::Individual& ind) {
             nb::gil_scoped_release release;
             auto result = self(rng, ind, {});
@@ -216,17 +218,17 @@ void InitEval(nb::module_ &m)
         });
 
     nb::class_<Operon::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
-        .def(nb::init<Operon::Problem const*>());
+        .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
 
     nb::class_<Operon::ShapeEvaluator, TEvaluatorBase>(m, "ShapeEvaluator")
-        .def(nb::init<Operon::Problem const*>());
+        .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
 
     nb::class_<Operon::DiversityEvaluator, TEvaluatorBase>(m, "DiversityEvaluator")
-        .def(nb::init<Operon::Problem const*>());
+        .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
 
     nb::class_<Operon::MultiEvaluator, TEvaluatorBase>(m, "MultiEvaluator")
-        .def(nb::init<Operon::Problem const*>())
-        .def("Add", &Operon::MultiEvaluator::Add);
+        .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>())
+        .def("Add", &Operon::MultiEvaluator::Add, nb::keep_alive<1, 2>());
 
     nb::enum_<Operon::AggregateEvaluator::AggregateType>(m, "AggregateType")
         .value("Min", Operon::AggregateEvaluator::AggregateType::Min)
@@ -237,28 +239,29 @@ void InitEval(nb::module_ &m)
         .value("Sum", Operon::AggregateEvaluator::AggregateType::Sum);
 
     nb::class_<Operon::AggregateEvaluator, TEvaluatorBase>(m, "AggregateEvaluator")
-        .def(nb::init<TEvaluatorBase const*>())
+        .def(nb::init<TEvaluatorBase const*>(), nb::keep_alive<1, 2>())
         .def_prop_rw("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
     nb::class_<detail::MDLEvaluator>(m, "MinimumDescriptionLengthEvaluator")
-        .def(nb::init<Operon::Problem const&, TDispatch const&, std::string const&>())
+        .def(nb::init<Operon::Problem const&, TDispatch const&, std::string const&>(),
+            nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def("__call__", [](detail::MDLEvaluator const& self, Operon::RandomGenerator& rng, Operon::Individual const& ind) {
             return (*self.Get())(rng, ind);
         })
         .def_prop_rw("Sigma", nullptr /*get*/ , &detail::MDLEvaluator::SetSigma /*set*/);
 
     nb::class_<TBICEvaluator, TEvaluator>(m, "BayesianInformationCriterionEvaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>());
 
     nb::class_<TAIKEvaluator, TEvaluator>(m, "AkaikeInformationCriterionEvaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*>());
+        .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>());
 
     nb::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*>())
+        .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def_prop_rw("Sigma", &TGaussEvaluator::Sigma , &TGaussEvaluator::SetSigma /*set*/);;
 
     nb::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
-        .def(nb::init<Operon::Problem const*, TDispatch const*>())
+        .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def_prop_rw("Sigma", [](TPoissonEvaluator const& self) {
             auto sigma = self.Sigma();
             return std::vector<Operon::Scalar>(sigma.begin(), sigma.end());
