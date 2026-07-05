@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileConb::rightText: Conb::right 2019-2021 Heal Research
+// SPDX-FileCopyrightText: Copyright 2019-2021 Heal Research
 
 #include "pyoperon/pyoperon.hpp"
 #include <operon/algorithms/gp.hpp>
