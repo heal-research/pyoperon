@@ -78,7 +78,7 @@ void InitOptimizer(nb::module_ &m)
     nb::class_<Operon::CoefficientOptimizer>(m, "CoefficientOptimizer")
         .def("__init__", [](Operon::CoefficientOptimizer* op, detail::Optimizer const& opt) {
             new (op) Operon::CoefficientOptimizer(opt.Get());
-        })
+        }, nb::keep_alive<1, 2>())
         .def("__call__", &Operon::CoefficientOptimizer::operator());
 
     nb::class_<Operon::OptimizerSummary>(m, "OptimizerSummary")
@@ -100,6 +100,8 @@ void InitOptimizer(nb::module_ &m)
             , nb::arg("problem")
             , nb::arg("max_iter") = 10
             , nb::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+            , nb::keep_alive<1, 2>()
+            , nb::keep_alive<1, 3>()
         );
 
     nb::class_<detail::LBFGSOptimizer, detail::Optimizer>(m, "LBFGSOptimizer")
@@ -109,6 +111,8 @@ void InitOptimizer(nb::module_ &m)
             , nb::arg("likelihood") = "gaussian"
             , nb::arg("max_iter") = 10
             , nb::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+            , nb::keep_alive<1, 2>()
+            , nb::keep_alive<1, 3>()
         );
 
     nb::class_<detail::SGDOptimizer, detail::Optimizer>(m, "SGDOptimizer")
@@ -119,6 +123,8 @@ void InitOptimizer(nb::module_ &m)
             , nb::arg("likelihood") = "gaussian"
             , nb::arg("max_iter") = 10
             , nb::arg("batch_size") = TDispatch::BatchSize<Operon::Scalar>
+            , nb::keep_alive<1, 2>()
+            , nb::keep_alive<1, 3>()
         );
 
     // SGD update rules class definitions

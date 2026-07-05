@@ -77,10 +77,10 @@ void InitMutation(nb::module_ &m)
     nb::class_<Operon::MultiMutation, Operon::MutatorBase>(m, "MultiMutation")
         .def(nb::init<>())
         .def("__call__", &Operon::MultiMutation::operator())
-        .def("Add", &Operon::MultiMutation::Add)
+        .def("Add", &Operon::MultiMutation::Add, nb::keep_alive<1, 2>())
         .def("Add", [](Operon::MultiMutation& self, Operon::MutatorBase const& mut, double prob) {
             self.Add(&mut, prob);
-        })
+        }, nb::keep_alive<1, 2>())
         .def_prop_ro("Count", &Operon::MultiMutation::Count);
 
 }
