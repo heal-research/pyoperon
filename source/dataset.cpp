@@ -4,6 +4,8 @@
 #include <operon/core/dataset.hpp>
 #include <utility>
 
+#include <nanobind/stl/string.h>
+
 #include "pyoperon/pyoperon.hpp"
 
 namespace nb = nanobind;
