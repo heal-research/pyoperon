@@ -22,7 +22,8 @@ void InitAlgorithm(nb::module_ &m)
         ;
 
     nb::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
-        .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*>())
+        .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*>(),
+                nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
         .def("Run", nb::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t, bool>(&Operon::GeneticProgrammingAlgorithm::Run),
                 nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset, nb::call_guard<nb::gil_scoped_release>())
@@ -37,7 +38,8 @@ void InitAlgorithm(nb::module_ &m)
         .def_prop_ro("Config", &Operon::GeneticProgrammingAlgorithm::GetConfig, nb::call_guard<nb::gil_scoped_release>());
 
     nb::class_<Operon::NSGA2, Operon::GeneticAlgorithmBase>(m, "NSGA2Algorithm")
-        .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*, Operon::NondominatedSorterBase const*>())
+        .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*, Operon::NondominatedSorterBase const*>(),
+                nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>(), nb::keep_alive<1, 8>())
         .def("Run", nb::overload_cast<Operon::RandomGenerator&, std::function<void()>, size_t, bool>(&Operon::NSGA2::Run),
                 nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), "callback"_a = nb::none(), "threads"_a = 0, nb::arg("warm_start"_a) = false)	
         .def("Reset", &Operon::NSGA2::Reset)

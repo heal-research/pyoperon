@@ -63,7 +63,8 @@ void InitMutation(nb::module_ &m)
         .def("__call__", &Operon::ChangeFunctionMutation::operator());
 
     nb::class_<Operon::ReplaceSubtreeMutation, Operon::MutatorBase>(m, "ReplaceSubtreeMutation")
-        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>())
+        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def("__call__", &Operon::ReplaceSubtreeMutation::operator());
 
     nb::class_<Operon::RemoveSubtreeMutation, Operon::MutatorBase>(m, "RemoveSubtreeMutation")
@@ -71,7 +72,8 @@ void InitMutation(nb::module_ &m)
         .def("__call__", &Operon::RemoveSubtreeMutation::operator());
 
     nb::class_<Operon::InsertSubtreeMutation, Operon::MutatorBase>(m, "InsertSubtreeMutation")
-        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>())
+        .def(nb::init<Operon::CreatorBase const*, Operon::CoefficientInitializerBase const*, size_t, size_t>(),
+                nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def("__call__", &Operon::InsertSubtreeMutation::operator());
 
     nb::class_<Operon::MultiMutation, Operon::MutatorBase>(m, "MultiMutation")
