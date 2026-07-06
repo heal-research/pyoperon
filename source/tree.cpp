@@ -34,15 +34,15 @@ void InitTree(nb::module_ &m)
         .def("Indices", [](Operon::Tree const& tree, std::size_t i) {
             const auto iterator = tree.Indices(i);
             return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node const>>(), "IndexIterator", iterator.begin(), iterator.end());
-        })
+        }, nb::keep_alive<0, 1>())
         .def("Children", [](Operon::Tree & tree, std::size_t i) {
             const auto iterator = tree.Children(i);
             return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node>>(), "NodeIterator", iterator.begin(), iterator.end());
-        })
+        }, nb::keep_alive<0, 1>())
         .def("Children", [](Operon::Tree const& tree, std::size_t i) {
             const auto iterator = tree.Children(i);
             return nb::make_iterator(nb::type<Operon::Subtree<Operon::Node const>>(), "NodeIterator", iterator.begin(), iterator.end());
-        })
+        }, nb::keep_alive<0, 1>())
         .def_prop_ro("Length", &Operon::Tree::Length)
         .def_prop_ro("AdjustedLength", &Operon::Tree::AdjustedLength)
         .def_prop_ro("VisitationLength", &Operon::Tree::VisitationLength)
