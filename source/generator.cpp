@@ -13,7 +13,7 @@ void InitGenerator(nb::module_ &m)
         .def("Prepare", [](Operon::OffspringGeneratorBase& self, std::vector<Operon::Individual> const& individuals) {
             Operon::Span<const Operon::Individual> s(individuals.data(), individuals.size());
             self.Prepare(s);
-        })
+        }, nb::arg("individuals").noconvert(), nb::keep_alive<1, 2>())
         .def("__call__", [](Operon::OffspringGeneratorBase& self, Operon::RandomGenerator& rng, double pCross, double pMut, double pLocal, double pLamarck, Operon::Span<Operon::Scalar> buf = {}) {
                 return self(rng, pCross, pMut, pLocal, pLamarck, buf);
                 },

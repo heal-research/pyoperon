@@ -39,12 +39,16 @@ void InitSelector(nb::module_ &m)
             })
         .def(nb::init<Operon::ComparisonCallback const&>())
         .def("__call__", &Operon::ProportionalSelector::operator())
-        .def("Prepare", nb::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::ProportionalSelector::Prepare, nb::const_))
+        .def("Prepare", [](Operon::ProportionalSelector const& self, std::vector<Operon::Individual> const& individuals) {
+            self.Prepare(Operon::Span<const Operon::Individual>(individuals.data(), individuals.size()));
+        }, nb::arg("individuals").noconvert(), nb::keep_alive<1, 2>())
         .def("SetObjIndex", &Operon::ProportionalSelector::SetObjIndex);
 
     nb::class_<Operon::RandomSelector, Operon::SelectorBase>(m, "RandomSelector")
         .def(nb::init<>())
         .def("__call__", &Operon::RandomSelector::operator())
-        .def("Prepare", nb::overload_cast<const Operon::Span<const Operon::Individual>>(&Operon::RandomSelector::Prepare, nb::const_));
+        .def("Prepare", [](Operon::RandomSelector const& self, std::vector<Operon::Individual> const& individuals) {
+            self.Prepare(Operon::Span<const Operon::Individual>(individuals.data(), individuals.size()));
+        }, nb::arg("individuals").noconvert(), nb::keep_alive<1, 2>());
 
 }

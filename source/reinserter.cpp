@@ -24,7 +24,9 @@ void InitReinserter(nb::module_ &m)
                 new (op) Operon::ReplaceWorstReinserter(temp);
             })
         .def(nb::init<Operon::ComparisonCallback const&>())
-        .def("__call__", &Operon::ReplaceWorstReinserter::operator());
+        .def("__call__", [](Operon::ReplaceWorstReinserter const& self, Operon::RandomGenerator& rng, std::vector<Operon::Individual>& pop, std::vector<Operon::Individual>& pool) {
+            self(rng, Operon::Span<Operon::Individual>(pop.data(), pop.size()), Operon::Span<Operon::Individual>(pool.data(), pool.size()));
+        }, nb::arg("rng"), nb::arg("pop").noconvert(), nb::arg("pool").noconvert());
 
     nb::class_<Operon::KeepBestReinserter, Operon::ReinserterBase>(m, "KeepBestReinserter")
         .def("__init__", [](Operon::KeepBestReinserter* op, size_t i) {
@@ -41,5 +43,7 @@ void InitReinserter(nb::module_ &m)
                 new (op) Operon::KeepBestReinserter(temp);
             })
         .def(nb::init<Operon::ComparisonCallback const&>())
-        .def("__call__", &Operon::KeepBestReinserter::operator());
+        .def("__call__", [](Operon::KeepBestReinserter const& self, Operon::RandomGenerator& rng, std::vector<Operon::Individual>& pop, std::vector<Operon::Individual>& pool) {
+            self(rng, Operon::Span<Operon::Individual>(pop.data(), pop.size()), Operon::Span<Operon::Individual>(pool.data(), pool.size()));
+        }, nb::arg("rng"), nb::arg("pop").noconvert(), nb::arg("pool").noconvert());
 }

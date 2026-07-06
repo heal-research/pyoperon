@@ -258,7 +258,10 @@ void InitEval(nb::module_ &m)
 
     nb::class_<TGaussEvaluator, TEvaluator>(m, "GaussianLikelihoodEvaluator")
         .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
-        .def_prop_rw("Sigma", &TGaussEvaluator::Sigma , &TGaussEvaluator::SetSigma /*set*/);;
+        .def_prop_rw("Sigma", [](TGaussEvaluator const& self) {
+            auto sigma = self.Sigma();
+            return std::vector<Operon::Scalar>(sigma.begin(), sigma.end());
+        }, &TGaussEvaluator::SetSigma /*set*/);
 
     nb::class_<TPoissonEvaluator, TEvaluator>(m, "PoissonLikelihoodEvaluator")
         .def(nb::init<Operon::Problem const*, TDispatch const*>(), nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
