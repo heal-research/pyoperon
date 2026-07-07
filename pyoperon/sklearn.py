@@ -12,9 +12,7 @@ import numpy as np
 import pyoperon as op
 
 from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.utils.validation import (
-    check_X_y, check_array, check_is_fitted, _check_sample_weight,
-)
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.metrics import mean_squared_error
 
 
@@ -822,9 +820,24 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=False)
         self.n_features_in_ = X.shape[1]
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float32, ensure_non_negative=True,
+            # Public-API equivalent of sklearn's private _check_sample_weight:
+            # avoid depending on underscore-prefixed internals given
+            # pyproject's loose `scikit-learn>=1.6.1` pin. Preserves the
+            # caller's float precision (dtype=None) rather than forcing a
+            # specific one - Operon::Scalar may be built as float or double
+            # depending on the build path, and the nanobind bindings convert
+            # to whichever it is regardless of what we pass here.
+            sample_weight = check_array(
+                sample_weight, ensure_2d=False, dtype=None,
+                input_name='sample_weight',
             )
+            if sample_weight.ndim != 1 or sample_weight.shape[0] != X.shape[0]:
+                raise ValueError(
+                    f'sample_weight has shape {sample_weight.shape}, '
+                    f'expected ({X.shape[0]},)'
+                )
+            if np.any(sample_weight < 0):
+                raise ValueError('sample_weight must be non-negative')
 
         # Build dataset and problem
         D                     = np.asfortranarray(np.column_stack((X, y)))
