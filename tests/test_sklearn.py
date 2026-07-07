@@ -156,18 +156,14 @@ class TestParameterResolution:
         resolved['mutation']['onepoint'] = 999.0
         assert reg.mutation['onepoint'] == 1.0
 
-    def test_resolved_callbacks_materialized_once(self):
-        """callbacks may be a one-shot iterator; _resolve_params must
-        materialize it exactly once so a later re-read (e.g. _validate_params
-        and fit() sharing the same `resolved` dict) doesn't see it already
-        exhausted."""
-        cb = op.EarlyStopping()
-        reg = SymbolicRegressor(callbacks=iter([cb]))
-        resolved = reg._resolve_params()
-        assert resolved['callbacks'] == [cb]
-        # Reusing the already-materialized list, not re-normalizing
-        # self.callbacks (the exhausted iterator), must still see it.
-        assert reg._validate_params(resolved) is None
+    def test_callbacks_generator_rejected(self):
+        """self.callbacks is re-read on every fit() call, so a one-shot
+        iterator/generator would be silently exhausted after the first
+        fit(). Reject anything that isn't a list/tuple/Callback/None
+        outright instead of accepting it and breaking on the second fit()."""
+        reg = SymbolicRegressor(callbacks=iter([op.EarlyStopping()]))
+        with pytest.raises(ValueError, match='callbacks must be'):
+            reg._resolve_params()
 
 
 @needs_extension

@@ -86,7 +86,9 @@ class EarlyStopping(Callback):
     For multi-objective (NSGA2) runs, `model.BestModel` is the current
     Pareto front's member with minimal objective-0 fitness (not an
     arbitrary front member); `objective_index` selects which of that
-    individual's objective values to monitor here.
+    individual's objective values to monitor here - setting
+    `objective_index=1` still tracks objective 1 *of the objective-0
+    leader*, not the front's objective-1 leader.
     """
 
     def __init__(

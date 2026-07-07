@@ -518,17 +518,20 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
     @staticmethod
     def _normalize_callbacks(callbacks) -> list[op.Callback]:
+        # self.callbacks is re-read (and re-normalized) on every fit() call,
+        # so it must be safely re-iterable; a one-shot iterator/generator
+        # would get silently exhausted after the first fit(). Restrict to
+        # list/tuple rather than any iterable, matching the documented type.
         if callbacks is None:
             return []
         if isinstance(callbacks, op.Callback):
             return [callbacks]
-        try:
+        if isinstance(callbacks, (list, tuple)):
             return list(callbacks)
-        except TypeError:
-            raise ValueError(
-                f'callbacks must be a Callback, a list of Callback, or '
-                f'None, got {callbacks!r}'
-            ) from None
+        raise ValueError(
+            f'callbacks must be a Callback, a list/tuple of Callback, or '
+            f'None, got {callbacks!r}'
+        )
 
     # --- Component construction helpers ---
 
