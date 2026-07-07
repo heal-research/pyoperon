@@ -104,6 +104,9 @@ if __name__ == '__main__':
     t0 = time.time()
 
     def report():
+        # Returning a bool is required since operon#102: True requests
+        # early termination of the run, so this progress-only callback
+        # must explicitly return False.
         global gen
         best = gp.BestModel
         bestfit = best.GetFitness(0)
@@ -115,6 +118,7 @@ if __name__ == '__main__':
         sys.stdout.write(f'{100 * evaluator.TotalEvaluations/config.Evaluations:.1f}%, generation {gen}/{config.Generations}, train quality: {-bestfit:.6f}, elapsed: {time.time()-t0:.2f}s')
         sys.stdout.flush()
         gen += 1
+        return False
 
 
     # run the algorithm

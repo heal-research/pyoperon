@@ -260,6 +260,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         If True, reuse individuals from a previous fit as the initial
         population.
 
+    callbacks : Callback, list of Callback, or None, default=None
+        One or more `pyoperon.Callback` instances invoked during `fit()`
+        for monitoring or early stopping - e.g.
+        `pyoperon.EarlyStopping(patience=20)`. See `pyoperon.callback` for
+        the hooks available (`on_fit_begin`, `on_generation_end`,
+        `on_fit_end`).
+
     Attributes
     ----------
     model_ : operon.Tree
@@ -290,6 +297,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     >>> reg = SymbolicRegressor(population_size=100, generations=10)
     >>> reg.fit(X, y)
     SymbolicRegressor(generations=10, population_size=100)
+
+    Stop early once the best fitness plateaus, using a built-in callback:
+
+    >>> from pyoperon import EarlyStopping
+    >>> reg = SymbolicRegressor(
+    ...     population_size=100, generations=1000,
+    ...     callbacks=[EarlyStopping(patience=20)],
+    ... )
+    >>> reg.fit(X, y)  # doctest: +SKIP
     """
 
     def __init__(
@@ -340,6 +356,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         max_time: int | None = None,
         random_state: int | np.random.Generator | None = None,
         warm_start: bool = False,
+        callbacks: op.Callback | list[op.Callback] | None = None,
     ):
         self.allowed_symbols = allowed_symbols
         self.symbolic_mode = symbolic_mode
@@ -387,6 +404,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.max_time = max_time
         self.random_state = random_state
         self.warm_start = warm_start
+        self.callbacks = callbacks
 
     # --- Parameter resolution and validation (never mutates self) ---
 
@@ -484,6 +502,20 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         if len(resolved['objectives']) == 0:
             raise ValueError('objectives must not be empty')
+
+        for cb in self._normalize_callbacks(self.callbacks):
+            if not isinstance(cb, op.Callback):
+                raise ValueError(
+                    f'callbacks must be Callback instances, got {cb!r}'
+                )
+
+    @staticmethod
+    def _normalize_callbacks(callbacks) -> list[op.Callback]:
+        if callbacks is None:
+            return []
+        if isinstance(callbacks, op.Callback):
+            return [callbacks]
+        return list(callbacks)
 
     # --- Component construction helpers ---
 
@@ -897,7 +929,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             gp.IsFitted = True
 
         rng = op.RandomGenerator(np.uint64(config.Seed))
-        gp.Run(rng, None, self.n_threads, self.warm_start)
+
+        cb_list = op.CallbackList(self._normalize_callbacks(self.callbacks))
+        cb_list.on_fit_begin(gp)
+        report = (lambda: bool(cb_list.on_generation_end(gp))) if cb_list.callbacks else None
+        try:
+            gp.Run(rng, report, self.n_threads, self.warm_start)
+        finally:
+            cb_list.on_fit_end(gp)
 
         # --- Extract results ---
 
