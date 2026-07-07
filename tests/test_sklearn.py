@@ -156,6 +156,19 @@ class TestParameterResolution:
         resolved['mutation']['onepoint'] = 999.0
         assert reg.mutation['onepoint'] == 1.0
 
+    def test_resolved_callbacks_materialized_once(self):
+        """callbacks may be a one-shot iterator; _resolve_params must
+        materialize it exactly once so a later re-read (e.g. _validate_params
+        and fit() sharing the same `resolved` dict) doesn't see it already
+        exhausted."""
+        cb = op.EarlyStopping()
+        reg = SymbolicRegressor(callbacks=iter([cb]))
+        resolved = reg._resolve_params()
+        assert resolved['callbacks'] == [cb]
+        # Reusing the already-materialized list, not re-normalizing
+        # self.callbacks (the exhausted iterator), must still see it.
+        assert reg._validate_params(resolved) is None
+
 
 @needs_extension
 class TestParameterValidation:
@@ -500,7 +513,7 @@ class TestCallbackLogic:
 
     def test_early_stopping_stops_after_patience(self):
         es = op.EarlyStopping(patience=3)
-        es.on_fit_begin(None)
+        es.on_fit_begin(self._FakeModel(1.0))
         # Constant fitness never improves, so the wait counter climbs every
         # generation until it reaches patience.
         results = [es.on_generation_end(self._FakeModel(1.0)) for _ in range(5)]
@@ -508,7 +521,7 @@ class TestCallbackLogic:
 
     def test_early_stopping_resets_between_fits(self):
         es = op.EarlyStopping(patience=2)
-        es.on_fit_begin(None)
+        es.on_fit_begin(self._FakeModel(1.0))
         for _ in range(3):
             es.on_generation_end(self._FakeModel(1.0))
         assert es._wait >= 2
@@ -517,9 +530,14 @@ class TestCallbackLogic:
         # same regressor (e.g. warm_start) reuses this exact instance - a
         # fresh on_fit_begin must reset accumulated state rather than
         # carrying it over.
-        es.on_fit_begin(None)
+        es.on_fit_begin(self._FakeModel(1.0))
         assert es._wait == 0
         assert es._best is None
+
+    def test_normalize_callbacks_accepts_single_callback(self):
+        cb = op.EarlyStopping()
+        reg = SymbolicRegressor(callbacks=cb)
+        assert reg._normalize_callbacks(reg.callbacks) == [cb]
 
 
 # ---------------------------------------------------------------------------
@@ -563,16 +581,20 @@ class TestCallbacksIntegration:
     def test_early_stopping_stops_run_early(self, small_regression_data):
         X, y = small_regression_data
         # An enormous min_delta means no generation ever counts as an
-        # improvement, so with patience=1 the run should stop almost
-        # immediately instead of running the full 1000 generations.
+        # improvement, so with patience=1 the run should stop after just a
+        # couple of generations. max_evaluations is set far above what 1000
+        # generations at this population size could ever consume, so it
+        # can't be the reason the run stops early - only early-stopping can
+        # (a tight bound here, rather than "< 1000", is what actually
+        # catches a regression where the stop flag stops propagating).
         es = op.EarlyStopping(patience=1, min_delta=1e6)
         reg = SymbolicRegressor(
             population_size=50, generations=1000,
-            max_evaluations=200_000, random_state=42,
+            max_evaluations=10_000_000, random_state=42,
             callbacks=[es],
         )
         reg.fit(X, y)
-        assert reg.stats_['generations'] < 1000
+        assert reg.stats_['generations'] < 10
 
     def test_callback_survives_cross_val_score(self, small_regression_data):
         X, y = small_regression_data

@@ -27,6 +27,14 @@ class Callback:
     ``GeneticProgrammingAlgorithm``/``NSGA2Algorithm`` instance, exposing
     e.g. ``Generation``, ``BestModel``, ``Individuals``, ``Config`` for
     introspection - the same role Keras callbacks' ``model`` argument plays.
+
+    ``on_generation_end`` runs on a GP worker thread, not the thread that
+    called ``fit()`` (operon's taskflow graph runs the report hook after
+    that generation's evaluate/reinsert tasks have joined, so ``model``
+    reflects a fully-completed generation - there's no torn read - but it
+    is still a background thread, so avoid anything thread-affine, e.g.
+    GUI calls). Treat ``model`` as read-only: mutating it from a callback
+    is not supported.
     """
 
     def on_fit_begin(self, model: Any) -> None:
@@ -74,6 +82,11 @@ class EarlyStopping(Callback):
     `SymbolicRegressor`/the low-level bindings use to pick `BestModel` via
     `min`), so "improved" means the monitored value decreased by more than
     `min_delta`.
+
+    For multi-objective (NSGA2) runs, `model.BestModel` is the current
+    Pareto front's member with minimal objective-0 fitness (not an
+    arbitrary front member); `objective_index` selects which of that
+    individual's objective values to monitor here.
     """
 
     def __init__(

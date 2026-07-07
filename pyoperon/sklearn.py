@@ -421,6 +421,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         uncertainty = list(self.uncertainty) if self.uncertainty is not None else [1]
         pool_size = self.pool_size if self.pool_size is not None else self.population_size
         max_time = self.max_time if self.max_time is not None else sys.maxsize
+        # Materialized exactly once per fit(): self.callbacks may be a
+        # one-shot iterator/generator, and calling _normalize_callbacks on
+        # it more than once would silently see an empty sequence the
+        # second time around.
+        callbacks = self._normalize_callbacks(self.callbacks)
 
         random_state = self.random_state
         if random_state is None:
@@ -454,6 +459,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'optimizer_iterations': optimizer_iterations,
             'add_model_scale_term': add_model_scale_term,
             'add_model_intercept_term': add_model_intercept_term,
+            'callbacks': callbacks,
         }
 
     def _validate_params(self, resolved: dict[str, Any]) -> None:
@@ -504,7 +510,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         if len(resolved['objectives']) == 0:
             raise ValueError('objectives must not be empty')
 
-        for cb in self._normalize_callbacks(self.callbacks):
+        for cb in resolved['callbacks']:
             if not isinstance(cb, op.Callback):
                 raise ValueError(
                     f'callbacks must subclass pyoperon.Callback, got {cb!r}'
@@ -516,7 +522,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             return []
         if isinstance(callbacks, op.Callback):
             return [callbacks]
-        return list(callbacks)
+        try:
+            return list(callbacks)
+        except TypeError:
+            raise ValueError(
+                f'callbacks must be a Callback, a list of Callback, or '
+                f'None, got {callbacks!r}'
+            ) from None
 
     # --- Component construction helpers ---
 
@@ -931,19 +943,21 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         rng = op.RandomGenerator(np.uint64(config.Seed))
 
-        cb_list = op.CallbackList(self._normalize_callbacks(self.callbacks))
-        cb_list.on_fit_begin(gp)
+        callbacks = resolved['callbacks']
+        cb_list = op.CallbackList(callbacks) if callbacks else None
+        report_callback = None
+        if cb_list is not None:
+            cb_list.on_fit_begin(gp)
 
-        def report() -> bool:
-            return bool(cb_list.on_generation_end(gp))
+            def report() -> bool:
+                return bool(cb_list.on_generation_end(gp))
 
-        # Passing None when there are no callbacks avoids a Python round-trip
-        # into `report()` every generation for the common no-callback case.
-        report_callback = report if cb_list.callbacks else None
+            report_callback = report
         try:
             gp.Run(rng, report_callback, self.n_threads, self.warm_start)
         finally:
-            cb_list.on_fit_end(gp)
+            if cb_list is not None:
+                cb_list.on_fit_end(gp)
 
         # --- Extract results ---
 
