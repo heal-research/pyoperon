@@ -790,17 +790,20 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Target values.
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights applied to the fitness/selection loss during
-            evolution (and to the post-hoc scale/intercept refit and the
-            reported `mean_squared_error` stat). `None` weights every
-            sample equally. Must be a proper 1D array of length
-            `n_samples` - unlike some scikit-learn estimators, a scalar or
-            an (n_samples, 1) column vector is not broadcast.
+            evolution, to coefficient optimization when `optimizer_iterations
+            > 0` and `optimizer_likelihood='gaussian'` (the default), and to
+            the post-hoc scale/intercept refit and the reported
+            `mean_squared_error` stat. `None` weights every sample equally.
+            Must be a proper 1D array of length `n_samples` - unlike some
+            scikit-learn estimators, a scalar or an (n_samples, 1) column
+            vector is not broadcast.
 
-            Does **not** currently affect coefficient optimization: when
-            `optimizer_iterations > 0`, the local search (LM/LBFGS/SGD)
-            still minimizes unweighted squared error, so coefficients can
-            end up tuned against a different objective than the one used
-            for selection. A warning is raised in that case.
+            Poisson likelihoods (`optimizer_likelihood='poisson'` or
+            `'poisson_log'`) do not yet support sample_weight in coefficient
+            optimization: `w` there is already used for the exposure/offset
+            term, a different semantic from a precision weight, and
+            reconciling the two is unresolved. A warning is raised in that
+            case when `optimizer_iterations > 0`.
 
         Returns
         -------
@@ -850,13 +853,14 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError('sample_weight must be non-negative')
             if not np.any(sample_weight > 0):
                 raise ValueError('sample_weight must not be all zero')
-            if optimizer_iterations > 0:
+            if optimizer_iterations > 0 and self.optimizer_likelihood in ('poisson', 'poisson_log'):
                 warnings.warn(
-                    'sample_weight is set but optimizer_iterations > 0: '
-                    'coefficient optimization (LM/LBFGS/SGD) currently '
-                    'minimizes unweighted squared error regardless of '
-                    'sample_weight, so coefficients may be tuned against a '
-                    'different objective than the one used for selection.',
+                    'sample_weight is set but optimizer_iterations > 0 with '
+                    f'optimizer_likelihood={self.optimizer_likelihood!r}: '
+                    'coefficient optimization does not yet support '
+                    'sample_weight for Poisson likelihoods, so coefficients '
+                    'may be tuned against a different objective than the '
+                    'one used for selection.',
                     stacklevel=2,
                 )
 

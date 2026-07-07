@@ -721,10 +721,14 @@ class TestSampleWeight:
         with pytest.raises(ValueError):
             reg.fit(X, y, sample_weight=np.zeros(len(y)))
 
-    def test_optimizer_iterations_warns_with_sample_weight(self, small_regression_data):
+    def test_optimizer_iterations_warns_with_sample_weight_poisson(self, small_regression_data):
+        """Poisson likelihoods don't yet support sample_weight in coefficient
+        optimization (w there is already the exposure/offset term), so this
+        combination should still warn."""
         X, y = small_regression_data
         reg = SymbolicRegressor(
             population_size=50, generations=3, random_state=42,
+            optimizer='lbfgs', optimizer_likelihood='poisson',
             optimizer_iterations=5,
         )
         with pytest.warns(UserWarning, match='optimizer_iterations'):
@@ -737,6 +741,18 @@ class TestSampleWeight:
         any stray warning (this one or otherwise) into a test failure."""
         X, y = small_regression_data
         reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    @pytest.mark.filterwarnings('error')
+    def test_no_warning_with_gaussian_optimizer_iterations(self, small_regression_data):
+        """The default optimizer_likelihood='gaussian' now respects
+        sample_weight during coefficient optimization (LM), so this
+        combination should no longer warn."""
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=3, random_state=42,
+            optimizer_iterations=5,
+        )
         reg.fit(X, y, sample_weight=np.ones(len(y)))
 
     def test_uniform_weights_match_unweighted_metric(self):
