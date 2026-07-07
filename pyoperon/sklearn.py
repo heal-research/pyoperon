@@ -789,10 +789,18 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         y : array-like of shape (n_samples,)
             Target values.
         sample_weight : array-like of shape (n_samples,), default=None
-            Per-sample weights applied to the loss during training (and to
-            the post-hoc scale/intercept refit and the reported
-            `mean_squared_error` stat). `None` weights every sample
-            equally.
+            Per-sample weights applied to the fitness/selection loss during
+            evolution (and to the post-hoc scale/intercept refit and the
+            reported `mean_squared_error` stat). `None` weights every
+            sample equally. Must be a proper 1D array of length
+            `n_samples` - unlike some scikit-learn estimators, a scalar or
+            an (n_samples, 1) column vector is not broadcast.
+
+            Does **not** currently affect coefficient optimization: when
+            `optimizer_iterations > 0`, the local search (LM/LBFGS/SGD)
+            still minimizes unweighted squared error, so coefficients can
+            end up tuned against a different objective than the one used
+            for selection. A warning is raised in that case.
 
         Returns
         -------
@@ -822,11 +830,13 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         if sample_weight is not None:
             # Public-API equivalent of sklearn's private _check_sample_weight:
             # avoid depending on underscore-prefixed internals given
-            # pyproject's loose `scikit-learn>=1.6.1` pin. Preserves the
-            # caller's float precision (dtype=None) rather than forcing a
-            # specific one - Operon::Scalar may be built as float or double
-            # depending on the build path, and the nanobind bindings convert
-            # to whichever it is regardless of what we pass here.
+            # pyproject's loose `scikit-learn>=1.6.1` pin. dtype=None just
+            # avoids needlessly forcing float32 - the nanobind SetWeights/
+            # FitLeastSquares bindings convert to whatever Operon::Scalar
+            # actually is regardless of the precision passed in here.
+            # Unlike _check_sample_weight, this does not broadcast a scalar
+            # or accept an (n_samples, 1) column vector - a real 1D array
+            # matching X's length is required, by choice, not omission.
             sample_weight = check_array(
                 sample_weight, ensure_2d=False, dtype=None,
                 input_name='sample_weight',
@@ -838,6 +848,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 )
             if np.any(sample_weight < 0):
                 raise ValueError('sample_weight must be non-negative')
+            if not np.any(sample_weight > 0):
+                raise ValueError('sample_weight must not be all zero')
+            if optimizer_iterations > 0:
+                warnings.warn(
+                    'sample_weight is set but optimizer_iterations > 0: '
+                    'coefficient optimization (LM/LBFGS/SGD) currently '
+                    'minimizes unweighted squared error regardless of '
+                    'sample_weight, so coefficients may be tuned against a '
+                    'different objective than the one used for selection.'
+                )
 
         # Build dataset and problem
         D                     = np.asfortranarray(np.column_stack((X, y)))

@@ -27,7 +27,6 @@ Subclass `pyoperon.Callback` (`on_fit_begin`/`on_generation_end`/`on_fit_end`) f
 
 `fit()` also accepts `sample_weight=`, matching the scikit-learn convention, for training on non-uniformly sampled data (e.g. stratified/reweighted survey data, or down-weighting outliers) without distorting the fitted model:
 ```python
-reg = SymbolicRegressor(population_size=1000, generations=1000)
 reg.fit(X, y, sample_weight=sample_weight)
 ```
 

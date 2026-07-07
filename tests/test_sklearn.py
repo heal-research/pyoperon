@@ -711,21 +711,37 @@ class TestSampleWeight:
         with pytest.raises(ValueError):
             reg.fit(X, y, sample_weight=sample_weight)
 
-    def test_uniform_weights_match_unweighted(self, small_regression_data, quick_regressor):
-        """Uniform sample_weight must be equivalent to no weighting at all -
-        this is the correctness baseline every weighted metric formula
-        should satisfy."""
+    def test_all_zero_weight_raises(self, small_regression_data):
         X, y = small_regression_data
-        reg_u = clone(quick_regressor)
-        reg_u.fit(X, y)
-        reg_w = clone(quick_regressor)
-        reg_w.fit(X, y, sample_weight=np.ones(len(y)))
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=np.zeros(len(y)))
 
-        # Same seed + uniform weights -> identical GP run and identical
-        # reported stats (not just "close").
-        assert reg_u.pareto_front_[0]['mean_squared_error'] == pytest.approx(
-            reg_w.pareto_front_[0]['mean_squared_error'],
+    def test_optimizer_iterations_warns_with_sample_weight(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=3, random_state=42,
+            optimizer_iterations=5,
         )
+        with pytest.warns(UserWarning, match='optimizer_iterations'):
+            reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    def test_uniform_weights_match_unweighted_metric(self):
+        """Uniform sample_weight must reduce to the unweighted formula.
+        Checked directly on fixed predictions/targets rather than through
+        a full (stochastic) GP run: even a 1-ULP difference in reduction
+        order between the weighted and unweighted vstat paths could flip
+        tournament selections and diverge two GP populations over many
+        generations, so comparing full-run stats would be fragile."""
+        rng = np.random.default_rng(0)
+        y_true = rng.standard_normal(50).astype(np.float32)
+        y_pred = (y_true + rng.normal(0, 0.1, 50)).astype(np.float32)
+        w = np.ones(50, dtype=np.float32)
+
+        scale_u, offset_u = op.FitLeastSquares(y_pred, y_true)
+        scale_w, offset_w = op.FitLeastSquares(y_pred, y_true, w)
+        assert scale_w == pytest.approx(scale_u)
+        assert offset_w == pytest.approx(offset_u)
 
     def test_downweighting_outliers_improves_fit_on_clean_data(self):
         """A real, visibly-biased scenario (not just a formula check):
@@ -759,4 +775,7 @@ class TestSampleWeight:
         err_unweighted = np.mean((reg_unweighted.predict(X_clean) - y_clean) ** 2)
         err_weighted = np.mean((reg_weighted.predict(X_clean) - y_clean) ** 2)
 
-        assert err_weighted < err_unweighted
+        # Outliers are down-weighted 1000x, so the weighted fit's error on
+        # the clean majority should be dramatically lower, not barely so -
+        # a tight margin makes this robust across operon versions/builds.
+        assert err_weighted < 0.5 * err_unweighted

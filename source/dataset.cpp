@@ -105,6 +105,10 @@ void InitDataset(nb::module_ &m)
         .def("GetVariable", nb::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, nb::const_))
         .def_prop_ro("Variables", &Operon::Dataset::GetVariables)
         .def("SetWeights", [](Operon::Dataset& self, std::vector<Operon::Scalar> const& w) { self.SetWeights(w); })
+        // Like GetValues/Values above, this is a view into weights_; a
+        // subsequent SetWeights() reallocates the backing vector, so
+        // re-fetch Weights after calling SetWeights rather than holding
+        // onto a stale view.
         .def_prop_ro("Weights", [](Operon::Dataset const& self) -> nb::object {
             auto w = self.Weights();
             return w ? nb::cast(MakeView(*w, nb::find(self))) : nb::none();
