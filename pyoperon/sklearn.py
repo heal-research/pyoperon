@@ -12,7 +12,9 @@ import numpy as np
 import pyoperon as op
 
 from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.utils.validation import (
+    check_X_y, check_array, check_is_fitted, _check_sample_weight,
+)
 from sklearn.metrics import mean_squared_error
 
 
@@ -779,7 +781,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         names_map = {k: names[i] for i, k in enumerate(self.variables_)}
         return op.InfixFormatter.Format(model, names_map, precision)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the symbolic regression model.
 
         Parameters
@@ -788,6 +790,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Training input samples.
         y : array-like of shape (n_samples,)
             Target values.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights applied to the loss during training (and to
+            the post-hoc scale/intercept refit and the reported
+            `mean_squared_error` stat). `None` weights every sample
+            equally.
 
         Returns
         -------
@@ -814,10 +821,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         X, y = check_X_y(X, y, accept_sparse=False)
         self.n_features_in_ = X.shape[1]
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=np.float32, ensure_non_negative=True,
+            )
 
         # Build dataset and problem
         D                     = np.asfortranarray(np.column_stack((X, y)))
         ds                    = op.Dataset(D)
+        if sample_weight is not None:
+            ds.SetWeights(sample_weight)
         target                = max(ds.Variables, key=lambda x: x.Index)
         self.variables_       = {
             v.Hash: v.Name
@@ -970,7 +983,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         def get_solution_stats(solution):
             y_pred = op.Evaluate(dtable, solution.Genotype, ds, training_range)
-            scale, offset = op.FitLeastSquares(y_pred, y)
+            if sample_weight is None:
+                scale, offset = op.FitLeastSquares(y_pred, y)
+            else:
+                scale, offset = op.FitLeastSquares(y_pred, y, sample_weight)
             nodes = solution.Genotype.Nodes
 
             if not add_scale:
@@ -996,7 +1012,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'tree': solution.Genotype,
                 'objective_values': evaluator(rng, solution),
                 'mean_squared_error': mean_squared_error(
-                    y, scale * y_pred + offset,
+                    y, scale * y_pred + offset, sample_weight=sample_weight,
                 ),
                 'minimum_description_length': mdl_eval(rng, solution)[0],
                 'bayesian_information_criterion': bic_eval(rng, solution)[0],

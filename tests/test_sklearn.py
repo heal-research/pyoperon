@@ -670,3 +670,93 @@ class TestCallbacksIntegration:
 
         reg.fit(X, y)
         assert rec.begin_calls == 2
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: Dataset.SetWeights/Weights (no fit required)
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestDatasetWeights:
+
+    def test_weights_none_by_default(self):
+        ds = op.Dataset(np.asfortranarray(np.zeros((5, 2), dtype=np.float32)))
+        assert ds.Weights is None
+
+    def test_set_weights_roundtrips(self):
+        ds = op.Dataset(np.asfortranarray(np.zeros((5, 2), dtype=np.float32)))
+        w = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32)
+        ds.SetWeights(w)
+        np.testing.assert_array_equal(np.asarray(ds.Weights), w)
+
+
+# ---------------------------------------------------------------------------
+# Integration tests: sample_weight through SymbolicRegressor.fit()
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestSampleWeight:
+
+    def test_mismatched_length_raises(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=np.ones(len(y) - 1))
+
+    def test_negative_weight_raises(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        sample_weight = np.ones(len(y))
+        sample_weight[0] = -1.0
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=sample_weight)
+
+    def test_uniform_weights_match_unweighted(self, small_regression_data, quick_regressor):
+        """Uniform sample_weight must be equivalent to no weighting at all -
+        this is the correctness baseline every weighted metric formula
+        should satisfy."""
+        X, y = small_regression_data
+        reg_u = clone(quick_regressor)
+        reg_u.fit(X, y)
+        reg_w = clone(quick_regressor)
+        reg_w.fit(X, y, sample_weight=np.ones(len(y)))
+
+        # Same seed + uniform weights -> identical GP run and identical
+        # reported stats (not just "close").
+        assert reg_u.pareto_front_[0]['mean_squared_error'] == pytest.approx(
+            reg_w.pareto_front_[0]['mean_squared_error'],
+        )
+
+    def test_downweighting_outliers_improves_fit_on_clean_data(self):
+        """A real, visibly-biased scenario (not just a formula check):
+        mostly-clean linear data contaminated with a handful of outliers
+        whose y values are unrelated to X. Without sample_weight, the GP
+        loss is dragged around by the outliers; heavily down-weighting
+        them should recover a much better fit to the clean majority.
+        """
+        rng = np.random.default_rng(0)
+        n_clean, n_outliers = 90, 10
+        X_clean = rng.uniform(0, 10, n_clean).reshape(-1, 1)
+        y_clean = 2 * X_clean[:, 0] + 1 + rng.normal(0, 0.1, n_clean)
+        X_outliers = rng.uniform(0, 10, n_outliers).reshape(-1, 1)
+        y_outliers = rng.uniform(-40, 40, n_outliers)
+
+        X = np.vstack([X_clean, X_outliers])
+        y = np.concatenate([y_clean, y_outliers])
+
+        sample_weight = np.ones(n_clean + n_outliers)
+        sample_weight[n_clean:] = 0.001
+
+        common_kwargs = dict(
+            population_size=100, generations=20, max_evaluations=50_000,
+            random_state=0, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=sample_weight)
+
+        err_unweighted = np.mean((reg_unweighted.predict(X_clean) - y_clean) ** 2)
+        err_weighted = np.mean((reg_weighted.predict(X_clean) - y_clean) ** 2)
+
+        assert err_weighted < err_unweighted

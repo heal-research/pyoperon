@@ -104,6 +104,11 @@ void InitDataset(nb::module_ &m)
         .def("GetVariable", nb::overload_cast<const std::string&>(&Operon::Dataset::GetVariable, nb::const_))
         .def("GetVariable", nb::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, nb::const_))
         .def_prop_ro("Variables", &Operon::Dataset::GetVariables)
+        .def("SetWeights", [](Operon::Dataset& self, std::vector<Operon::Scalar> const& w) { self.SetWeights(w); })
+        .def_prop_ro("Weights", [](Operon::Dataset const& self) -> nb::object {
+            auto w = self.Weights();
+            return w ? nb::cast(MakeView(*w, nb::find(self))) : nb::none();
+        })
         .def("Shuffle", &Operon::Dataset::Shuffle)
         .def("Normalize", &Operon::Dataset::Normalize)
         .def("Standardize", &Operon::Dataset::Standardize)
