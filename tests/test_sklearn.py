@@ -726,6 +726,15 @@ class TestSampleWeight:
         with pytest.warns(UserWarning, match='optimizer_iterations'):
             reg.fit(X, y, sample_weight=np.ones(len(y)))
 
+    @pytest.mark.filterwarnings('error')
+    def test_no_warning_with_default_optimizer_iterations(self, small_regression_data):
+        """optimizer_iterations defaults to 0, so the default sample_weight
+        path must stay silent - pytest.mark.filterwarnings('error') turns
+        any stray warning (this one or otherwise) into a test failure."""
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        reg.fit(X, y, sample_weight=np.ones(len(y)))
+
     def test_uniform_weights_match_unweighted_metric(self):
         """Uniform sample_weight must reduce to the unweighted formula.
         Checked directly on fixed predictions/targets rather than through
@@ -742,6 +751,40 @@ class TestSampleWeight:
         scale_w, offset_w = op.FitLeastSquares(y_pred, y_true, w)
         assert scale_w == pytest.approx(scale_u)
         assert offset_w == pytest.approx(offset_u)
+
+    def test_evaluator_uniform_weight_matches_unweighted(self):
+        """Same equivalence property as above, but exercised directly
+        through operon's weighted Evaluator path (error_(buf, target,
+        weights) in evaluator.cpp) rather than just FitLeastSquares - on a
+        manually-built tree/individual, again avoiding a full GP run."""
+        rng_np = np.random.default_rng(0)
+        X = rng_np.standard_normal((30, 1)).astype(np.float32)
+        y = (2 * X[:, 0]).astype(np.float32)
+        D = np.asfortranarray(np.column_stack((X, y)))
+        ds = op.Dataset(D)
+        target = max(ds.Variables, key=lambda v: v.Index)
+        inputs = [v.Hash for v in ds.Variables if v.Hash != target.Hash]
+
+        problem = op.Problem(ds)
+        problem.TrainingRange = op.Range(0, ds.Rows)
+        problem.Target = target
+        problem.InputHashes = inputs
+
+        var_node = op.Node.Variable(1.0)
+        var_node.HashValue = inputs[0]
+        tree = op.Tree([var_node]).UpdateNodes()
+        ind = op.Individual()
+        ind.Genotype = tree
+
+        dtable = op.DispatchTable()
+        evaluator = op.Evaluator(problem, dtable, op.MSE(), False)
+        rng = op.RandomGenerator(np.uint64(0))
+
+        fitness_unweighted = evaluator(rng, ind)[0]
+        ds.SetWeights(np.ones(ds.Rows, dtype=np.float32))
+        fitness_weighted = evaluator(rng, ind)[0]
+
+        assert fitness_weighted == pytest.approx(fitness_unweighted)
 
     def test_downweighting_outliers_improves_fit_on_clean_data(self):
         """A real, visibly-biased scenario (not just a formula check):

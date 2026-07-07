@@ -856,7 +856,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                     'coefficient optimization (LM/LBFGS/SGD) currently '
                     'minimizes unweighted squared error regardless of '
                     'sample_weight, so coefficients may be tuned against a '
-                    'different objective than the one used for selection.'
+                    'different objective than the one used for selection.',
+                    stacklevel=2,
                 )
 
         # Build dataset and problem
