@@ -535,6 +535,19 @@ class TestCallbackLogic:
         reg = SymbolicRegressor(callbacks=cb)
         assert reg._normalize_callbacks(reg.callbacks) == [cb]
 
+    def test_normalize_callbacks_accepts_tuple(self):
+        cb = op.EarlyStopping()
+        reg = SymbolicRegressor(callbacks=(cb,))
+        assert reg._normalize_callbacks(reg.callbacks) == [cb]
+
+    def test_early_stopping_rejects_negative_patience(self):
+        with pytest.raises(ValueError, match='patience'):
+            op.EarlyStopping(patience=-1)
+
+    def test_early_stopping_rejects_negative_objective_index(self):
+        with pytest.raises(ValueError, match='objective_index'):
+            op.EarlyStopping(objective_index=-1)
+
 
 # ---------------------------------------------------------------------------
 # Integration tests: callbacks wired through SymbolicRegressor.fit()
@@ -542,6 +555,29 @@ class TestCallbackLogic:
 
 @needs_extension
 class TestCallbacksIntegration:
+
+    def test_on_fit_end_skipped_if_on_fit_begin_raises(self, small_regression_data):
+        X, y = small_regression_data
+
+        class Bad(op.Callback):
+            def __init__(self):
+                self.end_calls = 0
+
+            def on_fit_begin(self, model):
+                raise RuntimeError('boom')
+
+            def on_fit_end(self, model):
+                self.end_calls += 1
+
+        cb = Bad()
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[cb],
+        )
+        with pytest.raises(RuntimeError, match='boom'):
+            reg.fit(X, y)
+        assert cb.end_calls == 0
 
     def test_custom_callback_hooks_invoked(self, small_regression_data):
         X, y = small_regression_data

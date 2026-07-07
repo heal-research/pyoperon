@@ -97,6 +97,12 @@ class EarlyStopping(Callback):
         patience: int = 10,
         objective_index: int = 0,
     ):
+        if patience < 0:
+            raise ValueError(f'patience must be >= 0, got {patience}')
+        if objective_index < 0:
+            raise ValueError(
+                f'objective_index must be >= 0, got {objective_index}'
+            )
         self.min_delta = min_delta
         self.patience = patience
         self.objective_index = objective_index

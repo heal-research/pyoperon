@@ -260,13 +260,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         If True, reuse individuals from a previous fit as the initial
         population.
 
-    callbacks : Callback, list of Callback, or None, default=None
+    callbacks : Callback, list or tuple of Callback, or None, default=None
         One or more instances *subclassing* `pyoperon.Callback` (duck-typed
         objects are rejected - validation checks `isinstance`), invoked
         during `fit()` for monitoring or early stopping - e.g.
         `pyoperon.EarlyStopping(patience=20)`. See `pyoperon.callback` for
         the hooks available (`on_fit_begin`, `on_generation_end`,
-        `on_fit_end`).
+        `on_fit_end`). Must be a list/tuple, not a generic iterator: it is
+        re-read on every `fit()` call, so a one-shot iterator/generator
+        would silently lose its callbacks after the first `fit()`.
 
     Attributes
     ----------
@@ -357,7 +359,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         max_time: int | None = None,
         random_state: int | np.random.Generator | None = None,
         warm_start: bool = False,
-        callbacks: op.Callback | list[op.Callback] | None = None,
+        callbacks: op.Callback | list[op.Callback] | tuple[op.Callback, ...] | None = None,
     ):
         self.allowed_symbols = allowed_symbols
         self.symbolic_mode = symbolic_mode
@@ -948,18 +950,20 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         callbacks = resolved['callbacks']
         cb_list = op.CallbackList(callbacks) if callbacks else None
-        report_callback = None
-        if cb_list is not None:
-            cb_list.on_fit_begin(gp)
-
-            def report() -> bool:
-                return bool(cb_list.on_generation_end(gp))
-
-            report_callback = report
+        began = False
         try:
+            report_callback = None
+            if cb_list is not None:
+                cb_list.on_fit_begin(gp)
+                began = True
+
+                def report() -> bool:
+                    return bool(cb_list.on_generation_end(gp))
+
+                report_callback = report
             gp.Run(rng, report_callback, self.n_threads, self.warm_start)
         finally:
-            if cb_list is not None:
+            if began:
                 cb_list.on_fit_end(gp)
 
         # --- Extract results ---
