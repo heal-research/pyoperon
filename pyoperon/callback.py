@@ -89,10 +89,13 @@ class EarlyStopping(Callback):
         self._wait = 0
 
     def on_fit_begin(self, model: Any) -> None:
-        # Reset here rather than in __init__: sklearn's clone()/
-        # cross_val_score reuse the same callback instance across folds
-        # without deep-copying it, so per-fit state must reset per fit(),
-        # not per construction.
+        # Reset here rather than in __init__: fit() doesn't clone self.callbacks,
+        # so calling fit() more than once on the same SymbolicRegressor instance
+        # (e.g. warm_start, or just fitting the same regressor twice) reuses
+        # this exact callback object - per-fit state must reset per fit() call,
+        # not per construction. (sklearn's clone()/cross_val_score do deep-copy
+        # callbacks - via copy.deepcopy, since Callback isn't a BaseEstimator -
+        # so this isn't protecting against that case; it's for direct re-fits.)
         self._best = None
         self._wait = 0
 

@@ -261,8 +261,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         population.
 
     callbacks : Callback, list of Callback, or None, default=None
-        One or more `pyoperon.Callback` instances invoked during `fit()`
-        for monitoring or early stopping - e.g.
+        One or more instances *subclassing* `pyoperon.Callback` (duck-typed
+        objects are rejected - validation checks `isinstance`), invoked
+        during `fit()` for monitoring or early stopping - e.g.
         `pyoperon.EarlyStopping(patience=20)`. See `pyoperon.callback` for
         the hooks available (`on_fit_begin`, `on_generation_end`,
         `on_fit_end`).
@@ -506,7 +507,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         for cb in self._normalize_callbacks(self.callbacks):
             if not isinstance(cb, op.Callback):
                 raise ValueError(
-                    f'callbacks must be Callback instances, got {cb!r}'
+                    f'callbacks must subclass pyoperon.Callback, got {cb!r}'
                 )
 
     @staticmethod
@@ -932,9 +933,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         cb_list = op.CallbackList(self._normalize_callbacks(self.callbacks))
         cb_list.on_fit_begin(gp)
-        report = (lambda: bool(cb_list.on_generation_end(gp))) if cb_list.callbacks else None
+
+        def report() -> bool:
+            return bool(cb_list.on_generation_end(gp))
+
+        # Passing None when there are no callbacks avoids a Python round-trip
+        # into `report()` every generation for the common no-callback case.
+        report_callback = report if cb_list.callbacks else None
         try:
-            gp.Run(rng, report, self.n_threads, self.warm_start)
+            gp.Run(rng, report_callback, self.n_threads, self.warm_start)
         finally:
             cb_list.on_fit_end(gp)
 

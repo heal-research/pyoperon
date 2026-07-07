@@ -513,9 +513,10 @@ class TestCallbackLogic:
             es.on_generation_end(self._FakeModel(1.0))
         assert es._wait >= 2
 
-        # sklearn's clone()/cross_val_score reuse the same callback instance
-        # across folds without deep-copying it, so a fresh on_fit_begin must
-        # reset accumulated state rather than carrying it over.
+        # fit() doesn't clone self.callbacks, so calling fit() twice on the
+        # same regressor (e.g. warm_start) reuses this exact instance - a
+        # fresh on_fit_begin must reset accumulated state rather than
+        # carrying it over.
         es.on_fit_begin(None)
         assert es._wait == 0
         assert es._best is None
@@ -573,18 +574,45 @@ class TestCallbacksIntegration:
         reg.fit(X, y)
         assert reg.stats_['generations'] < 1000
 
-    def test_callback_state_does_not_leak_across_cross_val_folds(
-        self, small_regression_data,
-    ):
+    def test_callback_survives_cross_val_score(self, small_regression_data):
         X, y = small_regression_data
+        # cross_val_score clones reg per fold via sklearn's clone(), which
+        # deep-copies self.callbacks (EarlyStopping isn't a BaseEstimator,
+        # so it doesn't get cloned "deep=False" like nested estimators do) -
+        # this just confirms that round-trips cleanly and doesn't crash.
         es = op.EarlyStopping(patience=2)
         reg = SymbolicRegressor(
             population_size=50, generations=5,
             max_evaluations=5000, random_state=42,
             callbacks=[es],
         )
-        # cross_val_score's clone() shares this exact EarlyStopping instance
-        # across folds; if on_fit_begin didn't reset it, this would still
-        # run without error, but _wait/_best would carry over incorrectly.
         scores = cross_val_score(reg, X, y, cv=2, scoring='r2')
         assert len(scores) == 2
+
+    def test_on_fit_begin_invoked_on_every_fit_call(self, small_regression_data):
+        X, y = small_regression_data
+
+        class Recorder(op.Callback):
+            def __init__(self):
+                self.begin_calls = 0
+
+            def on_fit_begin(self, model):
+                self.begin_calls += 1
+
+        rec = Recorder()
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[rec],
+        )
+        # Unlike clone(), fit() does *not* copy self.callbacks - calling
+        # fit() twice on the same regressor (e.g. warm_start) reuses this
+        # exact instance, so on_fit_begin must fire every time for
+        # per-fit state (e.g. EarlyStopping's _wait/_best, see
+        # TestCallbackLogic.test_early_stopping_resets_between_fits) to
+        # actually reset instead of carrying over.
+        reg.fit(X, y)
+        assert rec.begin_calls == 1
+
+        reg.fit(X, y)
+        assert rec.begin_calls == 2
