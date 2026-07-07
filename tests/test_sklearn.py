@@ -156,6 +156,15 @@ class TestParameterResolution:
         resolved['mutation']['onepoint'] = 999.0
         assert reg.mutation['onepoint'] == 1.0
 
+    def test_callbacks_generator_rejected(self):
+        """self.callbacks is re-read on every fit() call, so a one-shot
+        iterator/generator would be silently exhausted after the first
+        fit(). Reject anything that isn't a list/tuple/Callback/None
+        outright instead of accepting it and breaking on the second fit()."""
+        reg = SymbolicRegressor(callbacks=iter([op.EarlyStopping()]))
+        with pytest.raises(ValueError, match='callbacks must be'):
+            reg._resolve_params()
+
 
 @needs_extension
 class TestParameterValidation:
@@ -449,3 +458,215 @@ class TestFitPredict:
             )
             reg.fit(X, y)
             assert reg.is_fitted_
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: Callback / CallbackList / EarlyStopping logic (no fit required)
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestCallbackLogic:
+    """Test callback dispatch/early-stop logic against a fake model, without
+    running an actual GP fit."""
+
+    class _FakeBestModel:
+        def __init__(self, fitness):
+            self._fitness = fitness
+
+        def GetFitness(self, idx):
+            return self._fitness
+
+    class _FakeModel:
+        def __init__(self, fitness):
+            self.BestModel = TestCallbackLogic._FakeBestModel(fitness)
+
+    def test_callback_list_ors_stop_requests(self):
+        class AlwaysStop(op.Callback):
+            def on_generation_end(self, model):
+                return True
+
+        class NeverStop(op.Callback):
+            def on_generation_end(self, model):
+                return False
+
+        cb_list = op.CallbackList([NeverStop(), AlwaysStop()])
+        assert cb_list.on_generation_end(self._FakeModel(1.0)) is True
+
+    def test_callback_list_does_not_short_circuit(self):
+        calls = []
+
+        class Recorder(op.Callback):
+            def __init__(self, name):
+                self.name = name
+
+            def on_generation_end(self, model):
+                calls.append(self.name)
+                return True
+
+        cb_list = op.CallbackList([Recorder('a'), Recorder('b')])
+        cb_list.on_generation_end(self._FakeModel(1.0))
+        assert calls == ['a', 'b']
+
+    def test_early_stopping_stops_after_patience(self):
+        es = op.EarlyStopping(patience=3)
+        es.on_fit_begin(self._FakeModel(1.0))
+        # Constant fitness never improves, so the wait counter climbs every
+        # generation until it reaches patience.
+        results = [es.on_generation_end(self._FakeModel(1.0)) for _ in range(5)]
+        assert results == [False, False, False, True, True]
+
+    def test_early_stopping_resets_between_fits(self):
+        es = op.EarlyStopping(patience=2)
+        es.on_fit_begin(self._FakeModel(1.0))
+        for _ in range(3):
+            es.on_generation_end(self._FakeModel(1.0))
+        assert es._wait >= 2
+
+        # fit() doesn't clone self.callbacks, so calling fit() twice on the
+        # same regressor (e.g. warm_start) reuses this exact instance - a
+        # fresh on_fit_begin must reset accumulated state rather than
+        # carrying it over.
+        es.on_fit_begin(self._FakeModel(1.0))
+        assert es._wait == 0
+        assert es._best is None
+
+    def test_normalize_callbacks_accepts_single_callback(self):
+        cb = op.EarlyStopping()
+        reg = SymbolicRegressor(callbacks=cb)
+        assert reg._normalize_callbacks(reg.callbacks) == [cb]
+
+    def test_normalize_callbacks_accepts_tuple(self):
+        cb = op.EarlyStopping()
+        reg = SymbolicRegressor(callbacks=(cb,))
+        assert reg._normalize_callbacks(reg.callbacks) == [cb]
+
+    def test_early_stopping_rejects_negative_patience(self):
+        with pytest.raises(ValueError, match='patience'):
+            op.EarlyStopping(patience=-1)
+
+    def test_early_stopping_rejects_negative_objective_index(self):
+        with pytest.raises(ValueError, match='objective_index'):
+            op.EarlyStopping(objective_index=-1)
+
+
+# ---------------------------------------------------------------------------
+# Integration tests: callbacks wired through SymbolicRegressor.fit()
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestCallbacksIntegration:
+
+    def test_on_fit_end_skipped_if_on_fit_begin_raises(self, small_regression_data):
+        X, y = small_regression_data
+
+        class Bad(op.Callback):
+            def __init__(self):
+                self.end_calls = 0
+
+            def on_fit_begin(self, model):
+                raise RuntimeError('boom')
+
+            def on_fit_end(self, model):
+                self.end_calls += 1
+
+        cb = Bad()
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[cb],
+        )
+        with pytest.raises(RuntimeError, match='boom'):
+            reg.fit(X, y)
+        assert cb.end_calls == 0
+
+    def test_custom_callback_hooks_invoked(self, small_regression_data):
+        X, y = small_regression_data
+
+        class Recorder(op.Callback):
+            def __init__(self):
+                self.begin_calls = 0
+                self.end_calls = 0
+                self.generations_seen = []
+
+            def on_fit_begin(self, model):
+                self.begin_calls += 1
+
+            def on_generation_end(self, model):
+                self.generations_seen.append(model.Generation)
+                return False
+
+            def on_fit_end(self, model):
+                self.end_calls += 1
+
+        rec = Recorder()
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[rec],
+        )
+        reg.fit(X, y)
+
+        assert rec.begin_calls == 1
+        assert rec.end_calls == 1
+        assert len(rec.generations_seen) > 0
+
+    def test_early_stopping_stops_run_early(self, small_regression_data):
+        X, y = small_regression_data
+        # An enormous min_delta means no generation ever counts as an
+        # improvement, so with patience=1 the run should stop after just a
+        # couple of generations. max_evaluations is set far above what 1000
+        # generations at this population size could ever consume, so it
+        # can't be the reason the run stops early - only early-stopping can
+        # (a tight bound here, rather than "< 1000", is what actually
+        # catches a regression where the stop flag stops propagating).
+        es = op.EarlyStopping(patience=1, min_delta=1e6)
+        reg = SymbolicRegressor(
+            population_size=50, generations=1000,
+            max_evaluations=10_000_000, random_state=42,
+            callbacks=[es],
+        )
+        reg.fit(X, y)
+        assert reg.stats_['generations'] < 10
+
+    def test_callback_survives_cross_val_score(self, small_regression_data):
+        X, y = small_regression_data
+        # cross_val_score clones reg per fold via sklearn's clone(), which
+        # deep-copies self.callbacks (EarlyStopping isn't a BaseEstimator,
+        # so it doesn't get cloned "deep=False" like nested estimators do) -
+        # this just confirms that round-trips cleanly and doesn't crash.
+        es = op.EarlyStopping(patience=2)
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[es],
+        )
+        scores = cross_val_score(reg, X, y, cv=2, scoring='r2')
+        assert len(scores) == 2
+
+    def test_on_fit_begin_invoked_on_every_fit_call(self, small_regression_data):
+        X, y = small_regression_data
+
+        class Recorder(op.Callback):
+            def __init__(self):
+                self.begin_calls = 0
+
+            def on_fit_begin(self, model):
+                self.begin_calls += 1
+
+        rec = Recorder()
+        reg = SymbolicRegressor(
+            population_size=50, generations=5,
+            max_evaluations=5000, random_state=42,
+            callbacks=[rec],
+        )
+        # Unlike clone(), fit() does *not* copy self.callbacks - calling
+        # fit() twice on the same regressor (e.g. warm_start) reuses this
+        # exact instance, so on_fit_begin must fire every time for
+        # per-fit state (e.g. EarlyStopping's _wait/_best, see
+        # TestCallbackLogic.test_early_stopping_resets_between_fits) to
+        # actually reset instead of carrying over.
+        reg.fit(X, y)
+        assert rec.begin_calls == 1
+
+        reg.fit(X, y)
+        assert rec.begin_calls == 2

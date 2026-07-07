@@ -260,6 +260,16 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         If True, reuse individuals from a previous fit as the initial
         population.
 
+    callbacks : Callback, list or tuple of Callback, or None, default=None
+        One or more instances *subclassing* `pyoperon.Callback` (duck-typed
+        objects are rejected - validation checks `isinstance`), invoked
+        during `fit()` for monitoring or early stopping - e.g.
+        `pyoperon.EarlyStopping(patience=20)`. See `pyoperon.callback` for
+        the hooks available (`on_fit_begin`, `on_generation_end`,
+        `on_fit_end`). Must be a list/tuple, not a generic iterator: it is
+        re-read on every `fit()` call, so a one-shot iterator/generator
+        would silently lose its callbacks after the first `fit()`.
+
     Attributes
     ----------
     model_ : operon.Tree
@@ -290,6 +300,15 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     >>> reg = SymbolicRegressor(population_size=100, generations=10)
     >>> reg.fit(X, y)
     SymbolicRegressor(generations=10, population_size=100)
+
+    Stop early once the best fitness plateaus, using a built-in callback:
+
+    >>> from pyoperon import EarlyStopping
+    >>> reg = SymbolicRegressor(
+    ...     population_size=100, generations=1000,
+    ...     callbacks=[EarlyStopping(patience=20)],
+    ... )
+    >>> reg.fit(X, y)  # doctest: +SKIP
     """
 
     def __init__(
@@ -340,6 +359,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         max_time: int | None = None,
         random_state: int | np.random.Generator | None = None,
         warm_start: bool = False,
+        callbacks: op.Callback | list[op.Callback] | tuple[op.Callback, ...] | None = None,
     ):
         self.allowed_symbols = allowed_symbols
         self.symbolic_mode = symbolic_mode
@@ -387,6 +407,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         self.max_time = max_time
         self.random_state = random_state
         self.warm_start = warm_start
+        self.callbacks = callbacks
 
     # --- Parameter resolution and validation (never mutates self) ---
 
@@ -402,6 +423,11 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         uncertainty = list(self.uncertainty) if self.uncertainty is not None else [1]
         pool_size = self.pool_size if self.pool_size is not None else self.population_size
         max_time = self.max_time if self.max_time is not None else sys.maxsize
+        # Materialized exactly once per fit(): self.callbacks may be a
+        # one-shot iterator/generator, and calling _normalize_callbacks on
+        # it more than once would silently see an empty sequence the
+        # second time around.
+        callbacks = self._normalize_callbacks(self.callbacks)
 
         random_state = self.random_state
         if random_state is None:
@@ -435,6 +461,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             'optimizer_iterations': optimizer_iterations,
             'add_model_scale_term': add_model_scale_term,
             'add_model_intercept_term': add_model_intercept_term,
+            'callbacks': callbacks,
         }
 
     def _validate_params(self, resolved: dict[str, Any]) -> None:
@@ -484,6 +511,29 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         if len(resolved['objectives']) == 0:
             raise ValueError('objectives must not be empty')
+
+        for cb in resolved['callbacks']:
+            if not isinstance(cb, op.Callback):
+                raise ValueError(
+                    f'callbacks must subclass pyoperon.Callback, got {cb!r}'
+                )
+
+    @staticmethod
+    def _normalize_callbacks(callbacks) -> list[op.Callback]:
+        # self.callbacks is re-read (and re-normalized) on every fit() call,
+        # so it must be safely re-iterable; a one-shot iterator/generator
+        # would get silently exhausted after the first fit(). Restrict to
+        # list/tuple rather than any iterable, matching the documented type.
+        if callbacks is None:
+            return []
+        if isinstance(callbacks, op.Callback):
+            return [callbacks]
+        if isinstance(callbacks, (list, tuple)):
+            return list(callbacks)
+        raise ValueError(
+            f'callbacks must be a Callback, a list/tuple of Callback, or '
+            f'None, got {callbacks!r}'
+        )
 
     # --- Component construction helpers ---
 
@@ -897,7 +947,24 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             gp.IsFitted = True
 
         rng = op.RandomGenerator(np.uint64(config.Seed))
-        gp.Run(rng, None, self.n_threads, self.warm_start)
+
+        callbacks = resolved['callbacks']
+        cb_list = op.CallbackList(callbacks) if callbacks else None
+        began = False
+        try:
+            report_callback = None
+            if cb_list is not None:
+                cb_list.on_fit_begin(gp)
+                began = True
+
+                def report() -> bool:
+                    return bool(cb_list.on_generation_end(gp))
+
+                report_callback = report
+            gp.Run(rng, report_callback, self.n_threads, self.warm_start)
+        finally:
+            if began:
+                cb_list.on_fit_end(gp)
 
         # --- Extract results ---
 

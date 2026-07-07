@@ -12,6 +12,19 @@ A scikit-learn regressor is also available:
 from pyoperon.sklearn import SymbolicRegressor
 ```
 
+`SymbolicRegressor` accepts a `callbacks=` argument for monitoring or early stopping during `fit()`, in the style of Keras/Lightning callbacks:
+```python
+from pyoperon.sklearn import SymbolicRegressor
+from pyoperon import EarlyStopping
+
+reg = SymbolicRegressor(
+    population_size=1000, generations=1000,
+    callbacks=[EarlyStopping(patience=20)],
+)
+reg.fit(X, y)
+```
+Subclass `pyoperon.Callback` (`on_fit_begin`/`on_generation_end`/`on_fit_end`) for custom monitoring; return `True` from `on_generation_end` to request early termination. See `pyoperon/callback.py` for the full API.
+
 The [example](https://github.com/heal-research/pyoperon/tree/main/example) folder contains sample code for using either the Python bindings directly or the **pyoperon.sklearn** module.
 
 # Installation

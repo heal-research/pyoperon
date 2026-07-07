@@ -74,10 +74,15 @@
 
             # operon's public/header-visible deps (eve, vstat, fmt, etc.) are
             # propagatedBuildInputs on the operon derivation, so they come
-            # along automatically via operon_ below.
+            # along automatically via operon_ below. infix-parser's FastFloat
+            # dependency is a private (non-propagated) buildInput on its own
+            # derivation, but its installed CMake config still `find_dependency`s
+            # FastFloat, so downstream consumers need it in scope explicitly.
             buildInputs =
               with pkgs;
               [
+                fast-float
+                foonathan-lexy
                 (python_.withPackages (
                   ps: with ps; [
                     setuptools
