@@ -11,12 +11,16 @@ Tests are organized into:
 from __future__ import annotations
 
 import pickle
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sklearn.base import clone
 from sklearn.model_selection import cross_val_score
+
+DATA_DIR = Path(__file__).parent / 'data'
 
 # Try importing the extension; skip integration tests if unavailable
 try:
@@ -822,3 +826,78 @@ class TestSampleWeight:
         # the clean majority should be dramatically lower, not barely so -
         # a tight margin makes this robust across operon versions/builds.
         assert err_weighted < 0.5 * err_unweighted
+
+    @staticmethod
+    def _weighted_mse(pred, y, w):
+        return np.sum(w * (pred - y) ** 2) / np.sum(w)
+
+    def test_star98_weighted_fit_wins_on_weighted_metric(self):
+        """Real dataset, not synthetic: 1998 California STAR testing results
+        for 303 school districts (see tests/data/star98.json) - a classic
+        textbook example of weighted least squares. MATHTOT (students
+        tested per district) is the natural precision weight: a district's
+        pass-rate estimate is more reliable the more students it tested.
+        Verified independently with plain WLS (see star98.json) that this
+        dataset shows a genuine, non-trivial weighting effect before
+        writing this GP-based test.
+
+        Only asserts the direction that held across every random_state we
+        tried (see PR discussion): the model trained with sample_weight
+        achieves a lower *weighted* MSE than the model trained without it.
+        The converse (unweighted-trained model wins unweighted MSE) also
+        held for this fixed seed/budget but was seed-sensitive in general,
+        so it's not asserted here to avoid cross-platform GP-determinism
+        flakiness.
+        """
+        df = pd.read_csv(DATA_DIR / 'star98.csv')
+        y = (df['PR50M'] / df['MATHTOT'] * 100).to_numpy()
+        w = df['MATHTOT'].to_numpy(dtype=float)
+        cols = [
+            'LOWINC', 'PERASIAN', 'PERBLACK', 'PERHISP', 'PERMINTE',
+            'AVYRSEXP', 'AVSALK', 'PERSPENK', 'PTRATIO', 'PCTAF',
+            'PCTCHRT', 'PCTYRRND',
+        ]
+        X = df[cols].to_numpy()
+
+        common_kwargs = dict(
+            population_size=500, generations=100, max_evaluations=500_000,
+            random_state=0, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=w)
+
+        mse_w_unweighted_fit = self._weighted_mse(reg_unweighted.predict(X), y, w)
+        mse_w_weighted_fit = self._weighted_mse(reg_weighted.predict(X), y, w)
+        assert mse_w_weighted_fit < mse_w_unweighted_fit
+
+    def test_acs_pums_weighted_fit_wins_on_weighted_metric(self):
+        """Real dataset, not synthetic: a random subsample of the 2022 ACS
+        1-Year PUMS person file for Wyoming (see tests/data/acs_pums_wy2022.json),
+        public domain US Census data. PWGTP is a genuine survey sampling
+        weight (how many people in the population each record represents) -
+        the canonical real-world use case sample_weight was requested for
+        (pyoperon issue #17), unlike star98's derived precision weight.
+
+        Same asymmetric-assertion rationale as the star98 test above: only
+        the direction robust across every random_state tried is asserted.
+        """
+        df = pd.read_csv(DATA_DIR / 'acs_pums_wy2022.csv')
+        y = np.log(df['PINCP'].to_numpy())
+        w = df['PWGTP'].to_numpy(dtype=float)
+        cols = ['AGEP', 'SCHL', 'WKHP', 'SEX', 'MAR']
+        X = df[cols].to_numpy()
+
+        common_kwargs = dict(
+            population_size=100, generations=20, max_evaluations=100_000,
+            random_state=1, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=w)
+
+        mse_w_unweighted_fit = self._weighted_mse(reg_unweighted.predict(X), y, w)
+        mse_w_weighted_fit = self._weighted_mse(reg_weighted.predict(X), y, w)
+        assert mse_w_weighted_fit < mse_w_unweighted_fit
