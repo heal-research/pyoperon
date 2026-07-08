@@ -11,12 +11,16 @@ Tests are organized into:
 from __future__ import annotations
 
 import pickle
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sklearn.base import clone
 from sklearn.model_selection import cross_val_score
+
+DATA_DIR = Path(__file__).parent / 'data'
 
 # Try importing the extension; skip integration tests if unavailable
 try:
@@ -670,3 +674,246 @@ class TestCallbacksIntegration:
 
         reg.fit(X, y)
         assert rec.begin_calls == 2
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: Dataset.SetWeights/Weights (no fit required)
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestDatasetWeights:
+
+    def test_weights_none_by_default(self):
+        ds = op.Dataset(np.asfortranarray(np.zeros((5, 2), dtype=np.float32)))
+        assert ds.Weights is None
+
+    def test_set_weights_roundtrips(self):
+        ds = op.Dataset(np.asfortranarray(np.zeros((5, 2), dtype=np.float32)))
+        w = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32)
+        ds.SetWeights(w)
+        np.testing.assert_array_equal(np.asarray(ds.Weights), w)
+
+
+# ---------------------------------------------------------------------------
+# Integration tests: sample_weight through SymbolicRegressor.fit()
+# ---------------------------------------------------------------------------
+
+@needs_extension
+class TestSampleWeight:
+
+    def test_mismatched_length_raises(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=np.ones(len(y) - 1))
+
+    def test_negative_weight_raises(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        sample_weight = np.ones(len(y))
+        sample_weight[0] = -1.0
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=sample_weight)
+
+    def test_all_zero_weight_raises(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        with pytest.raises(ValueError):
+            reg.fit(X, y, sample_weight=np.zeros(len(y)))
+
+    def test_optimizer_iterations_warns_with_sample_weight_poisson(self, small_regression_data):
+        """Poisson likelihoods don't yet support sample_weight in coefficient
+        optimization (w there is already the exposure/offset term), so this
+        combination should still warn."""
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=3, random_state=42,
+            optimizer='lbfgs', optimizer_likelihood='poisson',
+            optimizer_iterations=5,
+        )
+        with pytest.warns(UserWarning, match='optimizer_iterations'):
+            reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    @pytest.mark.filterwarnings('error')
+    def test_no_warning_with_default_optimizer_iterations(self, small_regression_data):
+        """optimizer_iterations defaults to 0, so the default sample_weight
+        path must stay silent - pytest.mark.filterwarnings('error') turns
+        any stray warning (this one or otherwise) into a test failure."""
+        X, y = small_regression_data
+        reg = SymbolicRegressor(population_size=50, generations=3, random_state=42)
+        reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    @pytest.mark.filterwarnings('error')
+    def test_no_warning_with_gaussian_optimizer_iterations(self, small_regression_data):
+        """The default optimizer_likelihood='gaussian' now respects
+        sample_weight during coefficient optimization (LM), so this
+        combination should no longer warn."""
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=3, random_state=42,
+            optimizer_iterations=5,
+        )
+        reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    def test_uniform_weights_match_unweighted_metric(self):
+        """Uniform sample_weight must reduce to the unweighted formula.
+        Checked directly on fixed predictions/targets rather than through
+        a full (stochastic) GP run: even a 1-ULP difference in reduction
+        order between the weighted and unweighted vstat paths could flip
+        tournament selections and diverge two GP populations over many
+        generations, so comparing full-run stats would be fragile."""
+        rng = np.random.default_rng(0)
+        y_true = rng.standard_normal(50).astype(np.float32)
+        y_pred = (y_true + rng.normal(0, 0.1, 50)).astype(np.float32)
+        w = np.ones(50, dtype=np.float32)
+
+        scale_u, offset_u = op.FitLeastSquares(y_pred, y_true)
+        scale_w, offset_w = op.FitLeastSquares(y_pred, y_true, w)
+        assert scale_w == pytest.approx(scale_u)
+        assert offset_w == pytest.approx(offset_u)
+
+    def test_evaluator_uniform_weight_matches_unweighted(self):
+        """Same equivalence property as above, but exercised directly
+        through operon's weighted Evaluator path (error_(buf, target,
+        weights) in evaluator.cpp) rather than just FitLeastSquares - on a
+        manually-built tree/individual, again avoiding a full GP run."""
+        rng_np = np.random.default_rng(0)
+        X = rng_np.standard_normal((30, 1)).astype(np.float32)
+        y = (2 * X[:, 0]).astype(np.float32)
+        D = np.asfortranarray(np.column_stack((X, y)))
+        ds = op.Dataset(D)
+        target = max(ds.Variables, key=lambda v: v.Index)
+        inputs = [v.Hash for v in ds.Variables if v.Hash != target.Hash]
+
+        problem = op.Problem(ds)
+        problem.TrainingRange = op.Range(0, ds.Rows)
+        problem.Target = target
+        problem.InputHashes = inputs
+
+        var_node = op.Node.Variable(1.0)
+        var_node.HashValue = inputs[0]
+        tree = op.Tree([var_node]).UpdateNodes()
+        ind = op.Individual()
+        ind.Genotype = tree
+
+        dtable = op.DispatchTable()
+        evaluator = op.Evaluator(problem, dtable, op.MSE(), False)
+        rng = op.RandomGenerator(np.uint64(0))
+
+        fitness_unweighted = evaluator(rng, ind)[0]
+        ds.SetWeights(np.ones(ds.Rows, dtype=np.float32))
+        fitness_weighted = evaluator(rng, ind)[0]
+
+        assert fitness_weighted == pytest.approx(fitness_unweighted)
+
+    def test_downweighting_outliers_improves_fit_on_clean_data(self):
+        """A real, visibly-biased scenario (not just a formula check):
+        mostly-clean linear data contaminated with a handful of outliers
+        whose y values are unrelated to X. Without sample_weight, the GP
+        loss is dragged around by the outliers; heavily down-weighting
+        them should recover a much better fit to the clean majority.
+        """
+        rng = np.random.default_rng(0)
+        n_clean, n_outliers = 90, 10
+        X_clean = rng.uniform(0, 10, n_clean).reshape(-1, 1)
+        y_clean = 2 * X_clean[:, 0] + 1 + rng.normal(0, 0.1, n_clean)
+        X_outliers = rng.uniform(0, 10, n_outliers).reshape(-1, 1)
+        y_outliers = rng.uniform(-40, 40, n_outliers)
+
+        X = np.vstack([X_clean, X_outliers])
+        y = np.concatenate([y_clean, y_outliers])
+
+        sample_weight = np.ones(n_clean + n_outliers)
+        sample_weight[n_clean:] = 0.001
+
+        common_kwargs = dict(
+            population_size=100, generations=20, max_evaluations=50_000,
+            random_state=0, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=sample_weight)
+
+        err_unweighted = np.mean((reg_unweighted.predict(X_clean) - y_clean) ** 2)
+        err_weighted = np.mean((reg_weighted.predict(X_clean) - y_clean) ** 2)
+
+        # Outliers are down-weighted 1000x, so the weighted fit's error on
+        # the clean majority should be dramatically lower, not barely so -
+        # a tight margin makes this robust across operon versions/builds.
+        assert err_weighted < 0.5 * err_unweighted
+
+    @staticmethod
+    def _weighted_mse(pred, y, w):
+        return np.sum(w * (pred - y) ** 2) / np.sum(w)
+
+    def test_star98_weighted_fit_wins_on_weighted_metric(self):
+        """Real dataset, not synthetic: 1998 California STAR testing results
+        for 303 school districts (see tests/data/star98.json) - a classic
+        textbook example of weighted least squares. MATHTOT (students
+        tested per district) is the natural precision weight: a district's
+        pass-rate estimate is more reliable the more students it tested.
+        Verified independently with plain WLS (see star98.json) that this
+        dataset shows a genuine, non-trivial weighting effect before
+        writing this GP-based test.
+
+        Only asserts the direction that held across every random_state we
+        tried (see PR discussion): the model trained with sample_weight
+        achieves a lower *weighted* MSE than the model trained without it.
+        The converse (unweighted-trained model wins unweighted MSE) also
+        held for this fixed seed/budget but was seed-sensitive in general,
+        so it's not asserted here to avoid cross-platform GP-determinism
+        flakiness.
+        """
+        df = pd.read_csv(DATA_DIR / 'star98.csv')
+        y = (df['PR50M'] / df['MATHTOT'] * 100).to_numpy()
+        w = df['MATHTOT'].to_numpy(dtype=float)
+        cols = [
+            'LOWINC', 'PERASIAN', 'PERBLACK', 'PERHISP', 'PERMINTE',
+            'AVYRSEXP', 'AVSALK', 'PERSPENK', 'PTRATIO', 'PCTAF',
+            'PCTCHRT', 'PCTYRRND',
+        ]
+        X = df[cols].to_numpy()
+
+        common_kwargs = dict(
+            population_size=500, generations=100, max_evaluations=500_000,
+            random_state=0, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=w)
+
+        mse_w_unweighted_fit = self._weighted_mse(reg_unweighted.predict(X), y, w)
+        mse_w_weighted_fit = self._weighted_mse(reg_weighted.predict(X), y, w)
+        assert mse_w_weighted_fit < mse_w_unweighted_fit
+
+    def test_acs_pums_weighted_fit_wins_on_weighted_metric(self):
+        """Real dataset, not synthetic: a random subsample of the 2022 ACS
+        1-Year PUMS person file for Wyoming (see tests/data/acs_pums_wy2022.json),
+        public domain US Census data. PWGTP is a genuine survey sampling
+        weight (how many people in the population each record represents) -
+        the canonical real-world use case sample_weight was requested for
+        (pyoperon issue #17), unlike star98's derived precision weight.
+
+        Same asymmetric-assertion rationale as the star98 test above: only
+        the direction robust across every random_state tried is asserted.
+        """
+        df = pd.read_csv(DATA_DIR / 'acs_pums_wy2022.csv')
+        y = np.log(df['PINCP'].to_numpy())
+        w = df['PWGTP'].to_numpy(dtype=float)
+        cols = ['AGEP', 'SCHL', 'WKHP', 'SEX', 'MAR']
+        X = df[cols].to_numpy()
+
+        common_kwargs = dict(
+            population_size=100, generations=20, max_evaluations=100_000,
+            random_state=1, allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg_unweighted = SymbolicRegressor(**common_kwargs)
+        reg_unweighted.fit(X, y)
+        reg_weighted = SymbolicRegressor(**common_kwargs)
+        reg_weighted.fit(X, y, sample_weight=w)
+
+        mse_w_unweighted_fit = self._weighted_mse(reg_unweighted.predict(X), y, w)
+        mse_w_weighted_fit = self._weighted_mse(reg_weighted.predict(X), y, w)
+        assert mse_w_weighted_fit < mse_w_unweighted_fit

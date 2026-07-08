@@ -1,0 +1,25 @@
+{
+  "name": "star98",
+  "description": "1998 California STAR testing results: 9th-grade math scores for 303 school districts, used as a classic textbook example of weighted least squares regression.",
+  "source": "Jeff Gill, \"Generalized Linear Models: A Unified Approach\" (Sage, 2000); bundled and redistributed via statsmodels.datasets.star98",
+  "source_url": "https://www.statsmodels.org/stable/datasets/generated/star98.html",
+  "copyright_note": "statsmodels bundles this dataset \"with express permission from the original author, who retains all rights\" - that permission was granted to statsmodels specifically, not explicitly to further redistribution. Accepted here as low practical risk given the dataset's ~15 years of unchallenged redistribution via statsmodels (BSD-licensed, widely installed), but flagging the ambiguity rather than treating it as clearly resolved.",
+  "n_samples": 303,
+  "target": {
+    "name": "pass_rate_pct",
+    "description": "Percentage of 9th graders scoring above the national median on the math section.",
+    "formula": "100 * PR50M / MATHTOT"
+  },
+  "weight": {
+    "column": "MATHTOT",
+    "description": "Total number of 9th graders tested per school district. Larger MATHTOT means a statistically more reliable pass-rate estimate (variance of a proportion scales as ~1/n), so it is the natural precision weight - the classic textbook rationale for weighted least squares on this exact dataset."
+  },
+  "features": [
+    "LOWINC", "PERASIAN", "PERBLACK", "PERHISP", "PERMINTE",
+    "AVYRSEXP", "AVSALK", "PERSPENK", "PTRATIO", "PCTAF", "PCTCHRT", "PCTYRRND"
+  ],
+  "validated": {
+    "method": "Compared plain OLS vs WLS (numpy weighted least squares) and pyoperon SymbolicRegressor unweighted vs sample_weight=MATHTOT fits.",
+    "result": "Each fit wins on its own objective: the unweighted-trained model has lower unweighted MSE, the weighted-trained model has lower weighted MSE - confirming sample_weight has the expected real-world effect on genuine data, not just a synthetic scenario."
+  }
+}

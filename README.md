@@ -25,6 +25,11 @@ reg.fit(X, y)
 ```
 Subclass `pyoperon.Callback` (`on_fit_begin`/`on_generation_end`/`on_fit_end`) for custom monitoring; return `True` from `on_generation_end` to request early termination. See `pyoperon/callback.py` for the full API.
 
+`fit()` also accepts `sample_weight=`, matching the scikit-learn convention, for training on non-uniformly sampled data (e.g. stratified/reweighted survey data, or down-weighting outliers) without distorting the fitted model:
+```python
+reg.fit(X, y, sample_weight=sample_weight)
+```
+
 The [example](https://github.com/heal-research/pyoperon/tree/main/example) folder contains sample code for using either the Python bindings directly or the **pyoperon.sklearn** module.
 
 # Installation

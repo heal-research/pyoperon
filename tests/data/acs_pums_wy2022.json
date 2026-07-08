@@ -1,0 +1,30 @@
+{
+  "name": "acs_pums_wy2022",
+  "description": "Random 400-row subsample of the 2022 American Community Survey (ACS) 1-Year Public Use Microdata Sample (PUMS) person-level file for Wyoming, filtered to employed adults (age >= 18, positive hours worked and income).",
+  "source": "U.S. Census Bureau, American Community Survey (ACS) 2022 1-Year PUMS",
+  "source_url": "https://www2.census.gov/programs-surveys/acs/data/pums/2022/1-Year/csv_pwy.zip",
+  "license": "Public domain (U.S. federal government work, 17 U.S.C. § 105) - no redistribution ambiguity, unlike star98.",
+  "n_samples": 400,
+  "sampling": "Randomly subsampled (numpy default_rng seed 42) from 3139 rows matching the filter, out of 5962 total Wyoming person records in the original 2022 ACS 1-Year PUMS file.",
+  "target": {
+    "name": "log_pincp",
+    "description": "Natural log of total person's income (PINCP) in the past 12 months, in nominal dollars (ADJINC inflation adjustment not applied - this is a single-year extract used only to demonstrate sample_weight, not for real income analysis).",
+    "formula": "log(PINCP)"
+  },
+  "weight": {
+    "column": "PWGTP",
+    "description": "Census person weight: the number of people in the population this sample record represents (ranges roughly 3 to 600+ in this subsample). This is a genuine survey sampling weight, not a derived precision weight like MATHTOT in star98 - the canonical real-world use case sample_weight was requested for (see pyoperon issue #17)."
+  },
+  "features": ["AGEP", "SCHL", "WKHP", "SEX", "MAR"],
+  "feature_codes": {
+    "AGEP": "Age in years",
+    "SCHL": "Educational attainment (ACS code; higher value = more schooling)",
+    "WKHP": "Usual hours worked per week in the past 12 months",
+    "SEX": "1 = Male, 2 = Female",
+    "MAR": "Marital status: 1=Married, 2=Widowed, 3=Divorced, 4=Separated, 5=Never married"
+  },
+  "validated": {
+    "method": "Compared plain OLS vs WLS (numpy) on log(PINCP) ~ AGEP+SCHL+WKHP+SEX+MAR weighted by PWGTP.",
+    "result": "Each fit wins on its own objective (unweighted MSE 0.6352 vs 0.6433 for OLS vs WLS; weighted MSE 0.7252 vs 0.7173), confirming the weighting has a genuine, expected real-world effect."
+  }
+}

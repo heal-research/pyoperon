@@ -779,7 +779,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         names_map = {k: names[i] for i, k in enumerate(self.variables_)}
         return op.InfixFormatter.Format(model, names_map, precision)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the symbolic regression model.
 
         Parameters
@@ -788,6 +788,22 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             Training input samples.
         y : array-like of shape (n_samples,)
             Target values.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights applied to the fitness/selection loss during
+            evolution, to coefficient optimization when `optimizer_iterations
+            > 0` and `optimizer_likelihood='gaussian'` (the default), and to
+            the post-hoc scale/intercept refit and the reported
+            `mean_squared_error` stat. `None` weights every sample equally.
+            Must be a proper 1D array of length `n_samples` - unlike some
+            scikit-learn estimators, a scalar or an (n_samples, 1) column
+            vector is not broadcast.
+
+            Poisson likelihoods (`optimizer_likelihood='poisson'` or
+            `'poisson_log'`) do not yet support sample_weight in coefficient
+            optimization: `w` there is already used for the exposure/offset
+            term, a different semantic from a precision weight, and
+            reconciling the two is unresolved. A warning is raised in that
+            case when `optimizer_iterations > 0`.
 
         Returns
         -------
@@ -814,10 +830,45 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         X, y = check_X_y(X, y, accept_sparse=False)
         self.n_features_in_ = X.shape[1]
+        if sample_weight is not None:
+            # Public-API equivalent of sklearn's private _check_sample_weight:
+            # avoid depending on underscore-prefixed internals given
+            # pyproject's loose `scikit-learn>=1.6.1` pin. dtype=None just
+            # avoids needlessly forcing float32 - the nanobind SetWeights/
+            # FitLeastSquares bindings convert to whatever Operon::Scalar
+            # actually is regardless of the precision passed in here.
+            # Unlike _check_sample_weight, this does not broadcast a scalar
+            # or accept an (n_samples, 1) column vector - a real 1D array
+            # matching X's length is required, by choice, not omission.
+            sample_weight = check_array(
+                sample_weight, ensure_2d=False, dtype=None,
+                input_name='sample_weight',
+            )
+            if sample_weight.ndim != 1 or sample_weight.shape[0] != X.shape[0]:
+                raise ValueError(
+                    f'sample_weight has shape {sample_weight.shape}, '
+                    f'expected ({X.shape[0]},)'
+                )
+            if np.any(sample_weight < 0):
+                raise ValueError('sample_weight must be non-negative')
+            if not np.any(sample_weight > 0):
+                raise ValueError('sample_weight must not be all zero')
+            if optimizer_iterations > 0 and self.optimizer_likelihood in ('poisson', 'poisson_log'):
+                warnings.warn(
+                    'sample_weight is set but optimizer_iterations > 0 with '
+                    f'optimizer_likelihood={self.optimizer_likelihood!r}: '
+                    'coefficient optimization does not yet support '
+                    'sample_weight for Poisson likelihoods, so coefficients '
+                    'may be tuned against a different objective than the '
+                    'one used for selection.',
+                    stacklevel=2,
+                )
 
         # Build dataset and problem
         D                     = np.asfortranarray(np.column_stack((X, y)))
         ds                    = op.Dataset(D)
+        if sample_weight is not None:
+            ds.SetWeights(sample_weight)
         target                = max(ds.Variables, key=lambda x: x.Index)
         self.variables_       = {
             v.Hash: v.Name
@@ -970,7 +1021,10 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
 
         def get_solution_stats(solution):
             y_pred = op.Evaluate(dtable, solution.Genotype, ds, training_range)
-            scale, offset = op.FitLeastSquares(y_pred, y)
+            if sample_weight is None:
+                scale, offset = op.FitLeastSquares(y_pred, y)
+            else:
+                scale, offset = op.FitLeastSquares(y_pred, y, sample_weight)
             nodes = solution.Genotype.Nodes
 
             if not add_scale:
@@ -996,7 +1050,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 'tree': solution.Genotype,
                 'objective_values': evaluator(rng, solution),
                 'mean_squared_error': mean_squared_error(
-                    y, scale * y_pred + offset,
+                    y, scale * y_pred + offset, sample_weight=sample_weight,
                 ),
                 'minimum_description_length': mdl_eval(rng, solution)[0],
                 'bayesian_information_criterion': bic_eval(rng, solution)[0],

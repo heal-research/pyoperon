@@ -24,6 +24,15 @@ auto FitLeastSquares(nb::ndarray<T> lhs, nb::ndarray<T> rhs) -> std::pair<double
 }
 
 template<typename T>
+auto FitLeastSquares(nb::ndarray<T> lhs, nb::ndarray<T> rhs, nb::ndarray<T> weights) -> std::pair<double, double>
+{
+    auto s1 = MakeSpan(lhs);
+    auto s2 = MakeSpan(rhs);
+    auto s3 = MakeSpan(weights);
+    return Operon::FitLeastSquares(s1, s2, s3);
+}
+
+template<typename T>
 auto PoissonLikelihood(nb::ndarray<T> x, nb::ndarray<T> y) {
     return TPoissonLikelihood::ComputeLikelihood(MakeSpan(x), MakeSpan(y), {});
 }
@@ -167,6 +176,14 @@ void InitEval(nb::module_ &m)
 
     m.def("FitLeastSquares", [](nb::ndarray<double> lhs, nb::ndarray<double> rhs) -> std::pair<double, double> {
         return detail::FitLeastSquares<double>(lhs, rhs);
+    });
+
+    m.def("FitLeastSquares", [](nb::ndarray<float> lhs, nb::ndarray<float> rhs, nb::ndarray<float> weights) -> std::pair<double, double> {
+        return detail::FitLeastSquares<float>(lhs, rhs, weights);
+    });
+
+    m.def("FitLeastSquares", [](nb::ndarray<double> lhs, nb::ndarray<double> rhs, nb::ndarray<double> weights) -> std::pair<double, double> {
+        return detail::FitLeastSquares<double>(lhs, rhs, weights);
     });
 
     // dispatch table
