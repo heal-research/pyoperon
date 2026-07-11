@@ -14,11 +14,17 @@ using namespace nb::literals;
 
 void InitAlgorithm(nb::module_ &m)
 {
+    // Bound via plain lambdas (not static_cast<...>(&Class::Method) /
+    // nb::overload_cast<>) so these keep working regardless of whether the
+    // underlying getter is a const/non-const overload pair or a single
+    // C++23 deducing-this member - a lambda just calls the member on a
+    // concrete object and lets overload resolution (or deducing-this) do
+    // the rest, rather than needing a specific overloaded symbol's address.
     nb::class_<Operon::GeneticAlgorithmBase>(m, "GeneticAlgorithmBase")
-        .def_prop_ro("Generation", static_cast<size_t (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Generation), nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Individuals", static_cast<std::vector<Operon::Individual> const& (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Individuals), nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Parents", static_cast<std::span<Operon::Individual const> (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Parents), nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Offspring", static_cast<std::span<Operon::Individual const> (Operon::GeneticAlgorithmBase::*)() const>(&Operon::GeneticAlgorithmBase::Offspring), nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Generation", [](Operon::GeneticAlgorithmBase const& self) { return self.Generation(); }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Individuals", [](Operon::GeneticAlgorithmBase const& self) -> std::vector<Operon::Individual> const& { return self.Individuals(); }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Parents", [](Operon::GeneticAlgorithmBase const& self) { return self.Parents(); }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Offspring", [](Operon::GeneticAlgorithmBase const& self) { return self.Offspring(); }, nb::call_guard<nb::gil_scoped_release>())
         ;
 
     nb::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
@@ -28,9 +34,10 @@ void InitAlgorithm(nb::module_ &m)
                 nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset, nb::call_guard<nb::gil_scoped_release>())
         .def("RestoreIndividuals", &Operon::GeneticProgrammingAlgorithm::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_rw("IsFitted",nb::overload_cast<>(&Operon::GeneticProgrammingAlgorithm::IsFitted, nb::const_),[](Operon::GeneticProgrammingAlgorithm& self, bool value) {
-                self.IsFitted() = value;
-        }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_rw("IsFitted",
+                [](Operon::GeneticProgrammingAlgorithm const& self) { return self.IsFitted(); },
+                [](Operon::GeneticProgrammingAlgorithm& self, bool value) { self.IsFitted() = value; },
+                nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("BestModel", [](Operon::GeneticProgrammingAlgorithm const& self) {
                 auto minElem = std::min_element(self.Parents().begin(), self.Parents().end(), [&](auto const& a, auto const& b) { return a[0] < b[0]; });
                 return *minElem;
@@ -44,9 +51,10 @@ void InitAlgorithm(nb::module_ &m)
                 nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), "callback"_a = nb::none(), "threads"_a = 0, "warm_start"_a = false)
         .def("Reset", &Operon::NSGA2::Reset)
         .def("RestoreIndividuals", &Operon::NSGA2::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_rw("IsFitted",nb::overload_cast<>(&Operon::NSGA2::IsFitted, nb::const_),[](Operon::NSGA2& self, bool value) {
-                self.IsFitted() = value;
-            }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_rw("IsFitted",
+                [](Operon::NSGA2 const& self) { return self.IsFitted(); },
+                [](Operon::NSGA2& self, bool value) { self.IsFitted() = value; },
+                nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("BestModel", [](Operon::NSGA2 const& self) {
                 auto minElem = std::min_element(self.Best().begin(), self.Best().end(), [&](auto const& a, auto const& b) { return a[0] < b[0];});
                 return *minElem;
