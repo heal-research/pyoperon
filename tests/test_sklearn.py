@@ -614,6 +614,48 @@ class TestCallbacksIntegration:
         assert rec.end_calls == 1
         assert len(rec.generations_seen) > 0
 
+    def test_algorithm_getters_reflect_population_state(self, small_regression_data):
+        """Direct coverage for GeneticAlgorithmBase.Individuals/Parents/Offspring/
+        IsFitted, exposed to Python via lambda-rebound properties (see the
+        binding rewrite in source/algorithm.cpp) rather than through Generation
+        alone, which the callback tests above already cover indirectly."""
+        X, y = small_regression_data
+        population_size = 50
+        pool_size = 10
+
+        class Recorder(op.Callback):
+            def __init__(self):
+                self.individuals_len = []
+                self.parents_len = []
+                self.offspring_len = []
+                self.is_fitted_during_fit = []
+
+            def on_generation_end(self, model):
+                self.individuals_len.append(len(model.Individuals))
+                self.parents_len.append(len(model.Parents))
+                self.offspring_len.append(len(model.Offspring))
+                self.is_fitted_during_fit.append(model.IsFitted)
+                return False
+
+        rec = Recorder()
+        reg = SymbolicRegressor(
+            population_size=population_size, pool_size=pool_size,
+            generations=3, max_evaluations=5000, random_state=42,
+            callbacks=[rec],
+        )
+        reg.fit(X, y)
+
+        assert len(rec.individuals_len) > 0
+        # Individuals is the full population + pool storage; Parents and
+        # Offspring are non-overlapping spans into it.
+        for n_ind, n_par, n_off in zip(rec.individuals_len, rec.parents_len, rec.offspring_len):
+            assert n_ind == population_size + pool_size
+            assert n_par == population_size
+            assert n_off == pool_size
+        # IsFitted is only set true once Run() completes, so it must read
+        # false throughout every generation while still inside Run().
+        assert all(fitted is False for fitted in rec.is_fitted_during_fit)
+
     def test_early_stopping_stops_run_early(self, small_regression_data):
         X, y = small_regression_data
         # An enormous min_delta means no generation ever counts as an
