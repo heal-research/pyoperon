@@ -104,11 +104,11 @@ void InitDataset(nb::module_ &m)
         .def("GetValues", [](Operon::Dataset const& self, int64_t index) { return MakeView(self.GetValues(index), nb::find(self)); })
         .def("GetVariable", [](Operon::Dataset const& self, std::string const& name) -> std::optional<Operon::Variable> {
             auto res = self.GetVariable(name);
-            return res.has_value() ? std::optional{*res} : std::nullopt;
+            return res.has_value() ? std::optional{std::move(*res)} : std::nullopt;
         })
         .def("GetVariable", [](Operon::Dataset const& self, Operon::Hash hash) -> std::optional<Operon::Variable> {
             auto res = self.GetVariable(hash);
-            return res.has_value() ? std::optional{*res} : std::nullopt;
+            return res.has_value() ? std::optional{std::move(*res)} : std::nullopt;
         })
         .def_prop_ro("Variables", &Operon::Dataset::GetVariables)
         .def("SetWeights", [](Operon::Dataset& self, std::vector<Operon::Scalar> const& w) { self.SetWeights(w); })
