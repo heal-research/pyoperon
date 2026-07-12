@@ -23,7 +23,12 @@ void InitAlgorithm(nb::module_ &m)
     // overload the compiler picks for a `const&`.
     nb::class_<Operon::GeneticAlgorithmBase>(m, "GeneticAlgorithmBase")
         .def_prop_ro("Generation", [](Operon::GeneticAlgorithmBase const& self) { return self.Generation(); }, nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Individuals", [](Operon::GeneticAlgorithmBase const& self) -> auto const& { return self.Individuals(); }, nb::call_guard<nb::gil_scoped_release>())
+        // Explicit return type, not auto const&: if a future operon revision
+        // ever changed Individuals() to return by value, `auto const&` would
+        // silently bind a reference to a temporary (a dangling-reference
+        // compiler warning at best); spelling the type out here turns that
+        // into a hard compile error instead.
+        .def_prop_ro("Individuals", [](Operon::GeneticAlgorithmBase const& self) -> std::vector<Operon::Individual> const& { return self.Individuals(); }, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("Parents", [](Operon::GeneticAlgorithmBase const& self) { return self.Parents(); }, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("Offspring", [](Operon::GeneticAlgorithmBase const& self) { return self.Offspring(); }, nb::call_guard<nb::gil_scoped_release>())
         ;
