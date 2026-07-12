@@ -4,6 +4,7 @@
 #include <operon/core/dataset.hpp>
 #include <utility>
 
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 
 #include "pyoperon/pyoperon.hpp"
@@ -101,8 +102,14 @@ void InitDataset(nb::module_ &m)
         .def("GetValues", [](Operon::Dataset const& self, std::string const& name) { return MakeView(self.GetValues(name), nb::find(self)); })
         .def("GetValues", [](Operon::Dataset const& self, Operon::Hash hash) { return MakeView(self.GetValues(hash), nb::find(self)); })
         .def("GetValues", [](Operon::Dataset const& self, int64_t index) { return MakeView(self.GetValues(index), nb::find(self)); })
-        .def("GetVariable", nb::overload_cast<const std::string&>(&Operon::Dataset::GetVariable, nb::const_))
-        .def("GetVariable", nb::overload_cast<Operon::Hash>(&Operon::Dataset::GetVariable, nb::const_))
+        .def("GetVariable", [](Operon::Dataset const& self, std::string const& name) -> std::optional<Operon::Variable> {
+            auto res = self.GetVariable(name);
+            return res.has_value() ? std::optional{*res} : std::nullopt;
+        })
+        .def("GetVariable", [](Operon::Dataset const& self, Operon::Hash hash) -> std::optional<Operon::Variable> {
+            auto res = self.GetVariable(hash);
+            return res.has_value() ? std::optional{*res} : std::nullopt;
+        })
         .def_prop_ro("Variables", &Operon::Dataset::GetVariables)
         .def("SetWeights", [](Operon::Dataset& self, std::vector<Operon::Scalar> const& w) { self.SetWeights(w); })
         // Like GetValues/Values above, this is a view into weights_; a
