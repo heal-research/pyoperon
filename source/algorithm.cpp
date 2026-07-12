@@ -30,8 +30,14 @@ void InitAlgorithm(nb::module_ &m)
     nb::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
         .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*>(),
                 nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>())
-        .def("Run", nb::overload_cast<Operon::RandomGenerator&, Operon::ReportCallback, size_t, bool>(&Operon::GeneticProgrammingAlgorithm::Run),
-                nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
+        // Operon::ReportCallback is std::move_only_function, which nanobind
+        // has no built-in caster for (only nanobind/stl/function.h, i.e.
+        // std::function). This lambda takes the std::function nanobind can
+        // bind from a Python callable and converts it to ReportCallback at
+        // the call site instead.
+        .def("Run", [](Operon::GeneticProgrammingAlgorithm& self, Operon::RandomGenerator& rng, std::function<bool()> callback, size_t threads, bool warmStart) {
+                self.Run(rng, Operon::ReportCallback(std::move(callback)), threads, warmStart);
+            }, nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset, nb::call_guard<nb::gil_scoped_release>())
         .def("RestoreIndividuals", &Operon::GeneticProgrammingAlgorithm::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_rw("IsFitted",
@@ -47,8 +53,11 @@ void InitAlgorithm(nb::module_ &m)
     nb::class_<Operon::NSGA2, Operon::GeneticAlgorithmBase>(m, "NSGA2Algorithm")
         .def(nb::init<Operon::GeneticAlgorithmConfig, Operon::Problem const*, Operon::TreeInitializerBase const*, Operon::CoefficientInitializerBase const*, Operon::OffspringGeneratorBase const*, Operon::ReinserterBase const*, Operon::NondominatedSorterBase const*>(),
                 nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>(), nb::keep_alive<1, 5>(), nb::keep_alive<1, 6>(), nb::keep_alive<1, 7>(), nb::keep_alive<1, 8>())
-        .def("Run", nb::overload_cast<Operon::RandomGenerator&, Operon::ReportCallback, size_t, bool>(&Operon::NSGA2::Run),
-                nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), "callback"_a = nb::none(), "threads"_a = 0, "warm_start"_a = false)
+        // See GeneticProgrammingAlgorithm's Run binding above for why this is
+        // a std::function-taking lambda rather than nb::overload_cast directly.
+        .def("Run", [](Operon::NSGA2& self, Operon::RandomGenerator& rng, std::function<bool()> callback, size_t threads, bool warmStart) {
+                self.Run(rng, Operon::ReportCallback(std::move(callback)), threads, warmStart);
+            }, nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), "callback"_a = nb::none(), "threads"_a = 0, "warm_start"_a = false)
         .def("Reset", &Operon::NSGA2::Reset)
         .def("RestoreIndividuals", &Operon::NSGA2::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_rw("IsFitted",
