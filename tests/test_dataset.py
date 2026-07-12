@@ -32,7 +32,7 @@ def test_variablenames_roundtrip_on_ndarray_dataset():
 
 
 @pytest.fixture
-def _named_dataset():
+def named_dataset():
     return op.Dataset(['X', 'Y', 'F'], [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
 
 
@@ -43,17 +43,20 @@ class TestGetVariable:
     Python-facing None-on-miss contract.
     """
 
-    def test_known_name_returns_variable(self, _named_dataset):
-        var = _named_dataset.GetVariable('F')
+    def test_known_name_returns_variable(self, named_dataset):
+        var = named_dataset.GetVariable('F')
         assert var is not None
         assert var.Name == 'F'
 
-    def test_unknown_name_returns_none(self, _named_dataset):
-        assert _named_dataset.GetVariable('NOPE') is None
+    def test_unknown_name_returns_none(self, named_dataset):
+        assert named_dataset.GetVariable('NOPE') is None
 
-    def test_known_hash_returns_variable(self, _named_dataset):
-        target = _named_dataset.GetVariable('F')
-        assert _named_dataset.GetVariable(target.Hash).Name == 'F'
+    def test_known_hash_returns_variable(self, named_dataset):
+        target = named_dataset.GetVariable('F')
+        assert named_dataset.GetVariable(target.Hash).Name == 'F'
 
-    def test_unknown_hash_returns_none(self, _named_dataset):
-        assert _named_dataset.GetVariable(0) is None
+    def test_unknown_hash_returns_none(self, named_dataset):
+        # derive a hash guaranteed absent from the dataset, rather than
+        # relying on the hasher never mapping a real variable name to 0
+        unknown_hash = max(named_dataset.VariableHashes) + 1
+        assert named_dataset.GetVariable(unknown_hash) is None
