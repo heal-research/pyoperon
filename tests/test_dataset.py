@@ -29,3 +29,34 @@ def test_variablenames_roundtrip_on_ndarray_dataset():
     assert ds.VariableNames == ['X1', 'X2', 'X3']
     ds.VariableNames = ['a', 'b', 'c']
     assert ds.VariableNames == ['a', 'b', 'c']
+
+
+@pytest.fixture
+def named_dataset():
+    return op.Dataset(['X', 'Y', 'F'], [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+
+
+@needs_extension
+class TestGetVariable:
+    """GetVariable's C++ implementation returns tl::expected<Variable, DatasetError>,
+    shimmed back to std::optional at the binding boundary; these lock down the
+    Python-facing None-on-miss contract.
+    """
+
+    def test_known_name_returns_variable(self, named_dataset):
+        var = named_dataset.GetVariable('F')
+        assert var is not None
+        assert var.Name == 'F'
+
+    def test_unknown_name_returns_none(self, named_dataset):
+        assert named_dataset.GetVariable('NOPE') is None
+
+    def test_known_hash_returns_variable(self, named_dataset):
+        target = named_dataset.GetVariable('F')
+        assert named_dataset.GetVariable(target.Hash).Name == 'F'
+
+    def test_unknown_hash_returns_none(self, named_dataset):
+        # derive a hash guaranteed absent from the dataset, rather than
+        # relying on the hasher never mapping a real variable name to 0
+        unknown_hash = max(named_dataset.VariableHashes) + 1
+        assert named_dataset.GetVariable(unknown_hash) is None
