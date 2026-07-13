@@ -15,13 +15,13 @@ diff --git a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp b/inclu
 index 80e83b4d..b1d9e4b6 100644
 --- a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
 +++ b/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
-@@ -7,6 +7,7 @@
- 
+@@ -8,6 +8,7 @@
+ #include <algorithm>
  #include <array>
  #include <functional>
-+#include <random>
  #include <limits>
- 
++#include <random>
+
  #include "operon/core/concepts.hpp"
 diff --git a/include/operon/optimizer/likelihood/poisson_likelihood.hpp b/include/operon/optimizer/likelihood/poisson_likelihood.hpp
 index 163e6c1d..1bb9c486 100644
