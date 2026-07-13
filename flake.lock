@@ -785,11 +785,11 @@
         "vstat": "vstat"
       },
       "locked": {
-        "lastModified": 1783511287,
-        "narHash": "sha256-BsBRvz/5JPh63FrReh/613r1oRtKHfukoYi9rqpk7Pk=",
+        "lastModified": 1783945085,
+        "narHash": "sha256-tCbkFouHtzDlIn1QSFLsUC1L6JcFVkdLaARmu5kVZ8A=",
         "owner": "heal-research",
         "repo": "operon",
-        "rev": "01117e77933d406a3efe9bd57dc6a66307ffc376",
+        "rev": "79566dd7ba95f6795e26c63557f8c4236a6c8ba7",
         "type": "github"
       },
       "original": {

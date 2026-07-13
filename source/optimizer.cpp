@@ -14,6 +14,39 @@
 
 namespace detail {
 
+// operon's CoefficientOptimizer/OptimizerBase::Optimize now return a
+// tl::expected<FitResult, FitFailure> outcome (nanobind has no built-in
+// caster for tl::expected). This flattens that outcome back into the same
+// field-level shape pyoperon has always exposed as "OptimizerSummary",
+// keeping the Python-facing API unchanged - callers that read `.Success`
+// still get a bool, `.FinalCost` etc. still populated regardless of outcome
+// (both FitResult and FitFailure carry full diagnostics; see
+// Operon::Diagnostics() in optimizer.hpp).
+struct PySummary {
+    std::vector<Operon::Scalar> InitialParameters;
+    std::vector<Operon::Scalar> FinalParameters;
+    Operon::Scalar InitialCost{};
+    Operon::Scalar FinalCost{};
+    int Iterations{};
+    int FunctionEvaluations{};
+    int JacobianEvaluations{};
+    bool Success{};
+};
+
+inline auto ToPySummary(Operon::FitOutcome const& outcome) -> PySummary {
+    auto const& diag = Operon::Diagnostics(outcome);
+    return PySummary{
+        diag.InitialParameters,
+        diag.FinalParameters,
+        diag.InitialCost,
+        diag.FinalCost,
+        diag.Iterations,
+        diag.FunctionEvaluations,
+        diag.JacobianEvaluations,
+        outcome.has_value()
+    };
+}
+
 class LMOptimizer : public Optimizer {
     public:
     LMOptimizer(TDispatch const& dispatch, Operon::Problem const& problem, std::size_t maxIter, std::size_t batchSize)
@@ -79,17 +112,20 @@ void InitOptimizer(nb::module_ &m)
         .def("__init__", [](Operon::CoefficientOptimizer* op, detail::Optimizer const& opt) {
             new (op) Operon::CoefficientOptimizer(opt.Get());
         }, nb::keep_alive<1, 2>())
-        .def("__call__", &Operon::CoefficientOptimizer::operator());
+        .def("__call__", [](Operon::CoefficientOptimizer const& self, Operon::RandomGenerator& rng, Operon::Tree tree) {
+            auto [t, outcome] = self(rng, std::move(tree));
+            return std::tuple{std::move(t), detail::ToPySummary(outcome)};
+        });
 
-    nb::class_<Operon::OptimizerSummary>(m, "OptimizerSummary")
-        .def_rw("InitialCost", &Operon::OptimizerSummary::InitialCost)
-        .def_rw("FinalCost", &Operon::OptimizerSummary::FinalCost)
-        .def_rw("Iterations", &Operon::OptimizerSummary::Iterations)
-        .def_rw("FunctionEvaluations", &Operon::OptimizerSummary::FunctionEvaluations)
-        .def_rw("JacobianEvaluations", &Operon::OptimizerSummary::JacobianEvaluations)
-        .def_rw("Success", &Operon::OptimizerSummary::Success)
-        .def_rw("InitialParameters", &Operon::OptimizerSummary::InitialParameters)
-        .def_rw("FinalParameters", &Operon::OptimizerSummary::FinalParameters);
+    nb::class_<detail::PySummary>(m, "OptimizerSummary")
+        .def_rw("InitialCost", &detail::PySummary::InitialCost)
+        .def_rw("FinalCost", &detail::PySummary::FinalCost)
+        .def_rw("Iterations", &detail::PySummary::Iterations)
+        .def_rw("FunctionEvaluations", &detail::PySummary::FunctionEvaluations)
+        .def_rw("JacobianEvaluations", &detail::PySummary::JacobianEvaluations)
+        .def_rw("Success", &detail::PySummary::Success)
+        .def_rw("InitialParameters", &detail::PySummary::InitialParameters)
+        .def_rw("FinalParameters", &detail::PySummary::FinalParameters);
 
 
     nb::class_<detail::Optimizer>(m, "Optimizer");
