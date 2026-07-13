@@ -54,6 +54,14 @@ jobs:
         env:
           VCPKG_ROOT: C:/vcpkg
           SKBUILD_CMAKE_ARGS: --preset=build-windows
+          # MSVC's parallel build daemon (mspdbsrv.exe) can keep a handle open
+          # on the CMake build tree after the build finishes. When that tree
+          # lives inside scikit-build-core's auto-cleaned staging tempdir, the
+          # wheel-build's own TemporaryDirectory cleanup then intermittently
+          # fails with WinError 32/5 (used-by-another-process / access denied)
+          # trying to rmtree it. Pointing build-dir at a stable, non-temp path
+          # takes that directory out of the auto-cleanup path entirely.
+          SKBUILD_BUILD_DIR: build
         run: |
           pip install nanobind scikit-build-core delvewheel
           pip wheel . -w dist/ --no-build-isolation --no-deps
