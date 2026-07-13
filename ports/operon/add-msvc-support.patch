@@ -4,34 +4,10 @@ index 887d7ef5..a8288c34 100644
 +++ b/CMakeLists.txt
 @@ -254,7 +254,7 @@ target_link_libraries(operon_operon PRIVATE
  target_compile_features(operon_operon PUBLIC cxx_std_23)
- 
+
  if(MSVC)
 -    target_compile_options(operon_operon PRIVATE "/std:c++latest")
 +    target_compile_options(operon_operon PRIVATE "/bigobj")
  else()
      if (UNIX AND NOT APPLE)
          target_link_options(operon_operon PRIVATE "-Wl,--no-undefined")
-diff --git a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp b/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
-index 80e83b4d..b1d9e4b6 100644
---- a/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
-+++ b/include/operon/optimizer/likelihood/gaussian_likelihood.hpp
-@@ -8,6 +8,7 @@
- #include <algorithm>
- #include <array>
- #include <functional>
- #include <limits>
-+#include <random>
-
- #include "operon/core/concepts.hpp"
-diff --git a/include/operon/optimizer/likelihood/poisson_likelihood.hpp b/include/operon/optimizer/likelihood/poisson_likelihood.hpp
-index 163e6c1d..1bb9c486 100644
---- a/include/operon/optimizer/likelihood/poisson_likelihood.hpp
-+++ b/include/operon/optimizer/likelihood/poisson_likelihood.hpp
-@@ -11,6 +11,7 @@
- #include "likelihood_base.hpp"
- 
- #include <functional>
-+#include <random>
- #include <type_traits>
- #include <vstat/univariate.hpp>
- #include <vstat/vstat.hpp>
