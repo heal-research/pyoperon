@@ -82,5 +82,6 @@ class TestCoefficientOptimizer:
         # this is exactly the case the FitOutcome shim has to get right
         assert summary.FinalParameters == []
         assert summary.InitialCost == 0.0
+        assert summary.Iterations == 0
         # never applied since the fit never ran
         assert optimized_tree.GetCoefficients() == pytest.approx([1.0])
