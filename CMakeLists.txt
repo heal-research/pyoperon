@@ -10,7 +10,7 @@ project(
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 docs_early_return()
@@ -93,7 +93,7 @@ target_include_directories(
     "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>"
 )
 
-target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_20)
+target_compile_features(pyoperon_pyoperon PUBLIC cxx_std_23)
 
 # this will link in operon's public dependencies: fmt, ceres, etc.
 target_link_libraries(pyoperon_pyoperon PRIVATE operon::operon)

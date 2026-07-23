@@ -7,54 +7,64 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <operon/core/node.hpp>
+#include <operon/core/standard_library.hpp>
 #include <utility>
 
 namespace nb = nanobind;
 
+namespace {
+    auto MaxArity(Operon::BuiltinOp op) -> uint16_t
+    {
+        return Operon::StandardLibrary::ArityLimits(op).second;
+    }
+
+    auto MakeBuiltin(Operon::BuiltinOp op) -> Operon::Node
+    {
+        return Operon::Node::Function(static_cast<Operon::Hash>(op), MaxArity(op));
+    }
+} // namespace
+
 void InitNode(nb::module_ &m)
 {
-    // node type
+    // node type: terminal categories (built-in math ops live in BuiltinOp)
     nb::enum_<Operon::NodeType>(m, "NodeType", nb::is_arithmetic())
-        .value("Add", Operon::NodeType::Add)
-        .value("Mul", Operon::NodeType::Mul)
-        .value("Sub", Operon::NodeType::Sub)
-        .value("Div", Operon::NodeType::Div)
-        .value("Fmin", Operon::NodeType::Fmin)
-        .value("Fmax", Operon::NodeType::Fmax)
-        .value("Aq", Operon::NodeType::Aq)
-        .value("Pow", Operon::NodeType::Pow)
-        .value("Powabs", Operon::NodeType::Powabs)
-        .value("Abs", Operon::NodeType::Abs)
-        .value("Acos", Operon::NodeType::Acos)
-        .value("Asin", Operon::NodeType::Asin)
-        .value("Atan", Operon::NodeType::Atan)
-        .value("Cbrt", Operon::NodeType::Cbrt)
-        .value("Ceil", Operon::NodeType::Ceil)
-        .value("Cos", Operon::NodeType::Cos)
-        .value("Cosh", Operon::NodeType::Cosh)
-        .value("Exp", Operon::NodeType::Exp)
-        .value("Floor", Operon::NodeType::Floor)
-        .value("Log", Operon::NodeType::Log)
-        .value("Logabs", Operon::NodeType::Logabs)
-        .value("Log1p", Operon::NodeType::Log1p)
-        .value("Sin", Operon::NodeType::Sin)
-        .value("Sinh", Operon::NodeType::Sinh)
-        .value("Sqrt", Operon::NodeType::Sqrt)
-        .value("Sqrtabs", Operon::NodeType::Sqrtabs)
-        .value("Tan", Operon::NodeType::Tan)
-        .value("Tanh", Operon::NodeType::Tanh)
-        .value("Square", Operon::NodeType::Square)
-        .value("Dyn", Operon::NodeType::Dynamic)
         .value("Constant", Operon::NodeType::Constant)
-        .value("Variable", Operon::NodeType::Variable);
-        // expose overloaded operators
-        // .def(nb::self & nb::self)
-        // .def(nb::self &= nb::self)
-        // .def(nb::self | nb::self)
-        // .def(nb::self |= nb::self)
-        // .def(nb::self ^ nb::self)
-        // .def(nb::self ^= nb::self)
-        // .def(~nb::self);
+        .value("Variable", Operon::NodeType::Variable)
+        .value("Ref", Operon::NodeType::Ref)
+        .value("Function", Operon::NodeType::Function);
+
+    // built-in math ops
+    nb::enum_<Operon::BuiltinOp>(m, "BuiltinOp", nb::is_arithmetic())
+        .value("Add", Operon::BuiltinOp::Add)
+        .value("Mul", Operon::BuiltinOp::Mul)
+        .value("Sub", Operon::BuiltinOp::Sub)
+        .value("Div", Operon::BuiltinOp::Div)
+        .value("Fmin", Operon::BuiltinOp::Fmin)
+        .value("Fmax", Operon::BuiltinOp::Fmax)
+        .value("Aq", Operon::BuiltinOp::Aq)
+        .value("Pow", Operon::BuiltinOp::Pow)
+        .value("Powabs", Operon::BuiltinOp::Powabs)
+        .value("Abs", Operon::BuiltinOp::Abs)
+        .value("Acos", Operon::BuiltinOp::Acos)
+        .value("Asin", Operon::BuiltinOp::Asin)
+        .value("Atan", Operon::BuiltinOp::Atan)
+        .value("Cbrt", Operon::BuiltinOp::Cbrt)
+        .value("Ceil", Operon::BuiltinOp::Ceil)
+        .value("Cos", Operon::BuiltinOp::Cos)
+        .value("Cosh", Operon::BuiltinOp::Cosh)
+        .value("Exp", Operon::BuiltinOp::Exp)
+        .value("Floor", Operon::BuiltinOp::Floor)
+        .value("Log", Operon::BuiltinOp::Log)
+        .value("Logabs", Operon::BuiltinOp::Logabs)
+        .value("Log1p", Operon::BuiltinOp::Log1p)
+        .value("Sin", Operon::BuiltinOp::Sin)
+        .value("Sinh", Operon::BuiltinOp::Sinh)
+        .value("Sqrt", Operon::BuiltinOp::Sqrt)
+        .value("Sqrtabs", Operon::BuiltinOp::Sqrtabs)
+        .value("Tan", Operon::BuiltinOp::Tan)
+        .value("Tanh", Operon::BuiltinOp::Tanh)
+        .value("Square", Operon::BuiltinOp::Square);
+
     // node
     nb::class_<Operon::Node>(m, "Node")
         .def(nb::init<Operon::NodeType>())
@@ -75,6 +85,7 @@ void InitNode(nb::module_ &m)
         .def_rw("Type", &Operon::Node::Type)
         .def_rw("IsEnabled", &Operon::Node::IsEnabled)
         .def_rw("Optimize", &Operon::Node::Optimize)
+        .def_rw("RefTo", &Operon::Node::RefTo)
         .def(nb::self == nb::self)
         .def(nb::self != nb::self)
         .def(nb::self < nb::self)
@@ -82,23 +93,23 @@ void InitNode(nb::module_ &m)
         .def(nb::self > nb::self)
         .def(nb::self >= nb::self)
         // node factory for convenience
-        .def("Add", []() { return Operon::Node(Operon::NodeType::Add); })
-        .def("Sub", []() { return Operon::Node(Operon::NodeType::Sub); })
-        .def("Mul", []() { return Operon::Node(Operon::NodeType::Mul); })
-        .def("Div", []() { return Operon::Node(Operon::NodeType::Div); })
-        .def("Aq", []() { return Operon::Node(Operon::NodeType::Aq); })
-        .def("Pow", []() { return Operon::Node(Operon::NodeType::Pow); })
-        .def("Powabs", []() { return Operon::Node(Operon::NodeType::Powabs); })
-        .def("Exp", []() { return Operon::Node(Operon::NodeType::Exp); })
-        .def("Log", []() { return Operon::Node(Operon::NodeType::Log); })
-        .def("Sin", []() { return Operon::Node(Operon::NodeType::Sin); })
-        .def("Cos", []() { return Operon::Node(Operon::NodeType::Cos); })
-        .def("Tan", []() { return Operon::Node(Operon::NodeType::Tan); })
-        .def("Tanh", []() { return Operon::Node(Operon::NodeType::Tanh); })
-        .def("Sqrt", []() { return Operon::Node(Operon::NodeType::Sqrt); })
-        .def("Cbrt", []() { return Operon::Node(Operon::NodeType::Cbrt); })
-        .def("Square", []() { return Operon::Node(Operon::NodeType::Square); })
-        .def("Dyn", []() { return Operon::Node(Operon::NodeType::Dynamic); })
+        .def("Add", []() { return MakeBuiltin(Operon::BuiltinOp::Add); })
+        .def("Sub", []() { return MakeBuiltin(Operon::BuiltinOp::Sub); })
+        .def("Mul", []() { return MakeBuiltin(Operon::BuiltinOp::Mul); })
+        .def("Div", []() { return MakeBuiltin(Operon::BuiltinOp::Div); })
+        .def("Aq", []() { return MakeBuiltin(Operon::BuiltinOp::Aq); })
+        .def("Pow", []() { return MakeBuiltin(Operon::BuiltinOp::Pow); })
+        .def("Powabs", []() { return MakeBuiltin(Operon::BuiltinOp::Powabs); })
+        .def("Exp", []() { return MakeBuiltin(Operon::BuiltinOp::Exp); })
+        .def("Log", []() { return MakeBuiltin(Operon::BuiltinOp::Log); })
+        .def("Sin", []() { return MakeBuiltin(Operon::BuiltinOp::Sin); })
+        .def("Cos", []() { return MakeBuiltin(Operon::BuiltinOp::Cos); })
+        .def("Tan", []() { return MakeBuiltin(Operon::BuiltinOp::Tan); })
+        .def("Tanh", []() { return MakeBuiltin(Operon::BuiltinOp::Tanh); })
+        .def("Sqrt", []() { return MakeBuiltin(Operon::BuiltinOp::Sqrt); })
+        .def("Cbrt", []() { return MakeBuiltin(Operon::BuiltinOp::Cbrt); })
+        .def("Square", []() { return MakeBuiltin(Operon::BuiltinOp::Square); })
+        .def("Function", [](Operon::Hash hash, uint16_t arity) { return Operon::Node::Function(hash, arity); })
         .def("Constant", [](double v) {
                 Operon::Node constant(Operon::NodeType::Constant);
                 constant.Value = static_cast<Operon::Scalar>(v);
@@ -109,6 +120,7 @@ void InitNode(nb::module_ &m)
                 variable.Value = static_cast<Operon::Scalar>(w);
                 return variable;
                 })
+        .def("Ref", [](uint16_t target) { return Operon::Node::Ref(target); })
         // pickle support
         .def("__getstate__",
             [](Operon::Node const& n) { // __getstate__
@@ -124,12 +136,13 @@ void InitNode(nb::module_ &m)
                     n.Parent,
                     n.Type,
                     n.IsEnabled,
-                    n.Optimize
+                    n.Optimize,
+                    n.RefTo
                 );
             })
         .def("__setstate__",
-            [](Operon::Node& n, std::tuple<Operon::Hash, Operon::Hash, Operon::Scalar, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, Operon::NodeType, bool, bool> const& t) {
-                auto constexpr tupleSize{ 11 };
+            [](Operon::Node& n, std::tuple<Operon::Hash, Operon::Hash, Operon::Scalar, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, Operon::NodeType, bool, bool, uint16_t> const& t) {
+                auto constexpr tupleSize{ 12 };
                 if (std::tuple_size_v<std::remove_cvref_t<decltype(t)>> != tupleSize) {
                     throw std::runtime_error("Invalid state!");
                 }
@@ -146,6 +159,7 @@ void InitNode(nb::module_ &m)
                 n.Type                = std::get<8>(t);
                 n.IsEnabled           = std::get<9>(t);
                 n.Optimize            = std::get<10>(t);
+                n.RefTo               = std::get<11>(t);
 
                 return n;
             })

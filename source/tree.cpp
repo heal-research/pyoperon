@@ -49,8 +49,7 @@ void InitTree(nb::module_ &m)
         .def_prop_ro("Depth", static_cast<size_t (Operon::Tree::*)() const>(&Operon::Tree::Depth))
         .def_prop_ro("Empty", &Operon::Tree::Empty)
         .def_prop_ro("HashValue", &Operon::Tree::HashValue)
-        .def("__getitem__", nb::overload_cast<size_t>(&Operon::Tree::operator[]))
-        .def("__getitem__", nb::overload_cast<size_t>(&Operon::Tree::operator[], nb::const_))
+        .def("__getitem__", [](Operon::Tree& tree, size_t i) -> Operon::Node& { return tree[i]; }, nb::rv_policy::reference_internal)
         .def("__getstate__",
             [](Operon::Tree const& tree) {
                 return std::make_tuple(tree.Nodes());
