@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/optional.h>
 
 #include <operon/optimizer/optimizer.hpp>
 #include <operon/optimizer/solvers/sgd.hpp>
@@ -243,21 +244,18 @@ void InitEval(nb::module_ &m)
     nb::class_<Operon::DiversityEvaluator, TEvaluatorBase>(m, "DiversityEvaluator")
         .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
 
+    nb::enum_<Operon::MultiEvaluator::AggregateType>(m, "AggregateType")
+        .value("Min", Operon::MultiEvaluator::AggregateType::Min)
+        .value("Max", Operon::MultiEvaluator::AggregateType::Max)
+        .value("Median", Operon::MultiEvaluator::AggregateType::Median)
+        .value("Mean", Operon::MultiEvaluator::AggregateType::Mean)
+        .value("HarmonicMean", Operon::MultiEvaluator::AggregateType::HarmonicMean)
+        .value("Sum", Operon::MultiEvaluator::AggregateType::Sum);
+
     nb::class_<Operon::MultiEvaluator, TEvaluatorBase>(m, "MultiEvaluator")
         .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>())
-        .def("Add", &Operon::MultiEvaluator::Add, nb::keep_alive<1, 2>());
-
-    nb::enum_<Operon::AggregateEvaluator::AggregateType>(m, "AggregateType")
-        .value("Min", Operon::AggregateEvaluator::AggregateType::Min)
-        .value("Max", Operon::AggregateEvaluator::AggregateType::Max)
-        .value("Median", Operon::AggregateEvaluator::AggregateType::Median)
-        .value("Mean", Operon::AggregateEvaluator::AggregateType::Mean)
-        .value("HarmonicMean", Operon::AggregateEvaluator::AggregateType::HarmonicMean)
-        .value("Sum", Operon::AggregateEvaluator::AggregateType::Sum);
-
-    nb::class_<Operon::AggregateEvaluator, TEvaluatorBase>(m, "AggregateEvaluator")
-        .def(nb::init<TEvaluatorBase const*>(), nb::keep_alive<1, 2>())
-        .def_prop_rw("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
+        .def("Add", &Operon::MultiEvaluator::Add, nb::keep_alive<1, 2>())
+        .def_prop_rw("AggregateType", &Operon::MultiEvaluator::GetAggregateType, &Operon::MultiEvaluator::SetAggregateType);
 
     nb::class_<detail::MDLEvaluator>(m, "MinimumDescriptionLengthEvaluator")
         .def(nb::init<Operon::Problem const&, TDispatch const&, std::string const&>(),
