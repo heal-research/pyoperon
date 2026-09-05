@@ -13,6 +13,12 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/unordered_map.h>
+namespace {
+struct TreeFormatterBinding {};
+struct InfixFormatterBinding {};
+struct DotFormatterBinding {};
+} // namespace
+
 
 NB_MODULE(pyoperon, m)
 {
@@ -113,32 +119,33 @@ NB_MODULE(pyoperon, m)
 	.def(nb::init<uint64_t>())
     	.def("__call__", &Operon::RandomGenerator::operator());
 
-    // tree format
-    nb::class_<Operon::TreeFormatter>(m, "TreeFormatter")
-        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return Operon::TreeFormatter::Format(tree, dataset, decimalPrecision);
+    // tree format: retain the established Python formatter classes while
+    // dispatching through Operon's fmt formatter API.
+    nb::class_<TreeFormatterBinding>(m, "TreeFormatter")
+        .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return fmt::format("{:tree}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
         })
-        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
-            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
-            return Operon::TreeFormatter::Format(tree, map, decimalPrecision);
+        .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
+            return fmt::format("{:tree}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
         });
 
-    nb::class_<Operon::InfixFormatter>(m, "InfixFormatter")
-        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return Operon::InfixFormatter::Format(tree, dataset, decimalPrecision);
+    nb::class_<InfixFormatterBinding>(m, "InfixFormatter")
+        .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return fmt::format("{:infix}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
         })
-        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
-            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
-            return Operon::InfixFormatter::Format(tree, map, decimalPrecision);
+        .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
+            return fmt::format("{:infix}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
         });
 
-    nb::class_<Operon::DotFormatter>(m, "DotFormatter")
-        .def("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return Operon::DotFormatter::Format(tree, dataset, decimalPrecision);
+    nb::class_<DotFormatterBinding>(m, "DotFormatter")
+        .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
+            return fmt::format("{:dot}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
         })
-        .def("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
-            Operon::Map<Operon::Hash, std::string> map(variables.begin(), variables.end());
-            return Operon::DotFormatter::Format(tree, map, decimalPrecision);
+        .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
+            Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
+            return fmt::format("{:dot}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
         });
 
     nb::class_<Operon::InfixParser>(m, "InfixParser")

@@ -59,3 +59,13 @@ class TestGetVariable:
         # relying on the hasher never mapping a real variable name to 0
         unknown_hash = max(named_dataset.VariableHashes) + 1
         assert named_dataset.GetVariable(unknown_hash) is None
+
+
+@needs_extension
+def test_infix_formatter_preserves_dataset_variable_names(named_dataset):
+    variable = named_dataset.GetVariable('F')
+    node = op.Node.Variable(1.0)
+    node.HashValue = variable.Hash
+    tree = op.Tree([node]).UpdateNodes()
+
+    assert 'F' in op.InfixFormatter.Format(tree, named_dataset, 6)

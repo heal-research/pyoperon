@@ -16,8 +16,10 @@ install(
     )
 
 install(
-    FILES "${CMAKE_SOURCE_DIR}/pyoperon/__init__.py"
-    FILES "${CMAKE_SOURCE_DIR}/pyoperon/sklearn.py"
+    FILES
+        "${CMAKE_SOURCE_DIR}/pyoperon/__init__.py"
+        "${CMAKE_SOURCE_DIR}/pyoperon/callback.py"
+        "${CMAKE_SOURCE_DIR}/pyoperon/sklearn.py"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/pyoperon"
     )
 
