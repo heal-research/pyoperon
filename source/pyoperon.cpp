@@ -132,11 +132,13 @@ NB_MODULE(pyoperon, m)
 
     nb::class_<InfixFormatterBinding>(m, "InfixFormatter")
         .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return fmt::format("{:infix}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
+            auto spec = fmt::format("{{:infix:{}f}}", decimalPrecision);
+            return fmt::format(fmt::runtime(spec), Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
         })
         .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
             Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
-            return fmt::format("{:infix}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
+            auto spec = fmt::format("{{:infix:{}f}}", decimalPrecision);
+            return fmt::format(fmt::runtime(spec), Operon::Fmt::WithNames{tree, map, decimalPrecision});
         });
 
     nb::class_<DotFormatterBinding>(m, "DotFormatter")

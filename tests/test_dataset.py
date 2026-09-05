@@ -69,3 +69,10 @@ def test_infix_formatter_preserves_dataset_variable_names(named_dataset):
     tree = op.Tree([node]).UpdateNodes()
 
     assert 'F' in op.InfixFormatter.Format(tree, named_dataset, 6)
+
+
+@needs_extension
+def test_infix_formatter_precision_is_decimal_places(named_dataset):
+    tree = op.Tree([op.Node.Constant(1.2345)]).UpdateNodes()
+
+    assert op.InfixFormatter.Format(tree, named_dataset, 2) == '1.23'
