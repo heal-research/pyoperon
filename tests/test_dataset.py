@@ -38,9 +38,8 @@ def named_dataset():
 
 @needs_extension
 class TestGetVariable:
-    """GetVariable's C++ implementation returns tl::expected<Variable, DatasetError>,
-    shimmed back to std::optional at the binding boundary; these lock down the
-    Python-facing None-on-miss contract.
+    """The binding exposes the C++ optional lookup as None on misses;
+    these tests lock down the Python-facing contract.
     """
 
     def test_known_name_returns_variable(self, named_dataset):
