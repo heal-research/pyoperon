@@ -44,6 +44,25 @@ auto PoissonLikelihood(nb::ndarray<T> x, nb::ndarray<T> y, nb::ndarray<T> w) {
 }
 
 // small wrapper to unify the differently-templated MDL evaluators under a single class
+class LengthEvaluator final : public Operon::TreePropertyEvaluator {
+public:
+    explicit LengthEvaluator(Operon::Problem const* problem, std::size_t maxLength = 1)
+        : TreePropertyEvaluator(problem,
+              [](Operon::Tree const& tree) { return static_cast<Operon::Scalar>(tree.Length()); },
+              static_cast<Operon::Scalar>(maxLength))
+    {
+    }
+};
+
+class ShapeEvaluator final : public Operon::TreePropertyEvaluator {
+public:
+    explicit ShapeEvaluator(Operon::Problem const* problem)
+        : TreePropertyEvaluator(problem,
+              [](Operon::Tree const& tree) { return static_cast<Operon::Scalar>(tree.VisitationLength()); })
+    {
+    }
+};
+
 class MDLEvaluator {
     std::unique_ptr<TEvaluatorBase> eval_;
     enum { Gauss, Poisson, PoissonLog } lik_ = Gauss; // TODO: very ugly, find something better
@@ -235,10 +254,13 @@ void InitEval(nb::module_ &m)
             return result;
         });
 
-    nb::class_<Operon::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
-        .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
+    // Operon now provides a generic TreePropertyEvaluator. Keep the named
+    // Python objectives and their established scoring contracts intact.
+    nb::class_<detail::LengthEvaluator, TEvaluatorBase>(m, "LengthEvaluator")
+        .def(nb::init<Operon::Problem const*, std::size_t>(), nb::arg("problem"), nb::arg("max_length") = 1,
+            nb::keep_alive<1, 2>());
 
-    nb::class_<Operon::ShapeEvaluator, TEvaluatorBase>(m, "ShapeEvaluator")
+    nb::class_<detail::ShapeEvaluator, TEvaluatorBase>(m, "ShapeEvaluator")
         .def(nb::init<Operon::Problem const*>(), nb::keep_alive<1, 2>());
 
     nb::class_<Operon::DiversityEvaluator, TEvaluatorBase>(m, "DiversityEvaluator")

@@ -38,9 +38,8 @@ def named_dataset():
 
 @needs_extension
 class TestGetVariable:
-    """GetVariable's C++ implementation returns tl::expected<Variable, DatasetError>,
-    shimmed back to std::optional at the binding boundary; these lock down the
-    Python-facing None-on-miss contract.
+    """The binding exposes the C++ optional lookup as None on misses;
+    these tests lock down the Python-facing contract.
     """
 
     def test_known_name_returns_variable(self, named_dataset):
@@ -60,3 +59,20 @@ class TestGetVariable:
         # relying on the hasher never mapping a real variable name to 0
         unknown_hash = max(named_dataset.VariableHashes) + 1
         assert named_dataset.GetVariable(unknown_hash) is None
+
+
+@needs_extension
+def test_infix_formatter_preserves_dataset_variable_names(named_dataset):
+    variable = named_dataset.GetVariable('F')
+    node = op.Node.Variable(1.0)
+    node.HashValue = variable.Hash
+    tree = op.Tree([node]).UpdateNodes()
+
+    assert 'F' in op.InfixFormatter.Format(tree, named_dataset, 6)
+
+
+@needs_extension
+def test_infix_formatter_precision_is_decimal_places(named_dataset):
+    tree = op.Tree([op.Node.Constant(1.2345)]).UpdateNodes()
+
+    assert op.InfixFormatter.Format(tree, named_dataset, 2) == '1.23'
