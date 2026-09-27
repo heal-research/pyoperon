@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2019-2024 Heal Research
 
 #include <operon/operators/evaluator.hpp>
+#include <operon/optimizer/optimizer.hpp>
 
 using TDispatch                = Operon::ScalarDispatch;
 using TInterpreter             = Operon::Interpreter<Operon::Scalar, TDispatch>;
@@ -33,20 +34,20 @@ using TOptimizerBase           = Operon::OptimizerBase;
 // optimizer::lm
 using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
 
-// loss functions (callable, for LBFGS/SGD which require OptimizerLoss concept)
-using TGaussianLoss             = Operon::GaussianLoss<Operon::Scalar>;
-using TPoissonLoss              = Operon::PoissonLoss<Operon::Scalar, false>;
-using TPoissonLossLog           = Operon::PoissonLoss<Operon::Scalar, true>;
+// gradient costs (callable, for LBFGS/SGD)
+using TGaussianGradientCost     = Operon::GaussianGradientCostFunction<Operon::Scalar>;
+using TPoissonGradientCost      = Operon::PoissonGradientCostFunction<Operon::Scalar, false>;
+using TPoissonGradientCostLog   = Operon::PoissonGradientCostFunction<Operon::Scalar, true>;
 
 // optimizer::lbfgs
-using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianLoss>;
-using TLBFGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonLoss>;
-using TLBFGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonLossLog>;
+using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianGradientCost>;
+using TLBFGSOptimizerPoisson    = Operon::LBFGSOptimizer<TDispatch, TPoissonGradientCost>;
+using TLBFGSOptimizerPoissonLog = Operon::LBFGSOptimizer<TDispatch, TPoissonGradientCostLog>;
 
 // optimizer::sgd
-using TSGDOptimizerGauss        = Operon::SGDOptimizer<TDispatch, TGaussianLoss>;
-using TSGDOptimizerPoisson      = Operon::SGDOptimizer<TDispatch, TPoissonLoss>;
-using TSGDOptimizerPoissonLog   = Operon::SGDOptimizer<TDispatch, TPoissonLossLog>;
+using TSGDOptimizerGauss        = Operon::SGDOptimizer<TDispatch, TGaussianGradientCost>;
+using TSGDOptimizerPoisson      = Operon::SGDOptimizer<TDispatch, TPoissonGradientCost>;
+using TSGDOptimizerPoissonLog   = Operon::SGDOptimizer<TDispatch, TPoissonGradientCostLog>;
 
 // optimizer::sgd::update_rule
 using TUpdateRule               = Operon::UpdateRule::LearningRateUpdateRule;
@@ -69,21 +70,6 @@ public:
     [[nodiscard]] auto BatchSize() const { return optimizer_->BatchSize(); }
 
     auto SetIterations(std::size_t value) const { optimizer_->SetIterations(value); }
-    [[nodiscard]] auto Iterations() const { return optimizer_->Iterations(); }
-
-    [[nodiscard]] auto GetProblem() const { return optimizer_->GetProblem(); }
-
-    [[nodiscard]] auto Optimize(Operon::RandomGenerator& rng, Operon::Tree const& tree) const {
-        return optimizer_->Optimize(rng, tree);
-    }
-
-    [[nodiscard]] auto ComputeLikelihood(Operon::Span<Operon::Scalar const> x, Operon::Span<Operon::Scalar const> y, Operon::Span<Operon::Scalar const> w) const {
-        return optimizer_->ComputeLikelihood(x, y, w);
-    }
-
-    [[nodiscard]] auto ComputeFisherMatrix(Operon::Span<Operon::Scalar const> pred, Operon::Span<Operon::Scalar const> jac, Operon::Span<Operon::Scalar const> sigma) const {
-        return optimizer_->ComputeFisherMatrix(pred, jac, sigma);
-    }
 
     auto Set(std::unique_ptr<TOptimizerBase> optimizer) {
         optimizer_ = std::move(optimizer);

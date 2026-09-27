@@ -115,7 +115,9 @@ void InitEval(nb::module_ &m)
         Operon::Span<Operon::Scalar> span{data, r.Size()};
         nb::gil_scoped_release release;
         TDispatch dtable;
-        TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span);
+        if (auto evaluated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span); !evaluated) {
+            throw std::runtime_error(Operon::FormatInterpreterError(evaluated.error()));
+        }
         nb::gil_scoped_acquire acquire;
         std::array shape{r.Size()};
         return nb::ndarray<nb::numpy, Operon::Scalar, nb::ndim<1>>(data, 1, shape.data(), owner);
@@ -126,7 +128,9 @@ void InitEval(nb::module_ &m)
         nb::capsule owner(data, [](void* p) noexcept { delete[] (Operon::Scalar*)p; });
         Operon::Span<Operon::Scalar> span{data, r.Size()};
         nb::gil_scoped_release release;
-        TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span);
+        if (auto evaluated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r, span); !evaluated) {
+            throw std::runtime_error(Operon::FormatInterpreterError(evaluated.error()));
+        }
         nb::gil_scoped_acquire acquire;
         std::array shape{r.Size()};
         return nb::ndarray<nb::numpy, Operon::Scalar, nb::ndim<1>>(data, 1, shape.data(), owner);
@@ -144,13 +148,14 @@ void InitEval(nb::module_ &m)
 
         TDispatch dtable;
         auto estimated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r);
+        if (!estimated) { throw std::runtime_error(Operon::FormatInterpreterError(estimated.error())); }
 
-        if (metric == "c2") { return Operon::C2{}(estimated, values); }
-        if (metric == "r2") { return Operon::R2{}(estimated, values); }
-        if (metric == "mse") { return Operon::MSE{}(estimated, values); }
-        if (metric == "rmse") { return Operon::RMSE{}(estimated, values); }
-        if (metric == "nmse") { return Operon::NMSE{}(estimated, values); }
-        if (metric == "mae") { return Operon::MAE{}(estimated, values); }
+        if (metric == "c2") { return Operon::C2{}(*estimated, values); }
+        if (metric == "r2") { return Operon::R2{}(*estimated, values); }
+        if (metric == "mse") { return Operon::MSE{}(*estimated, values); }
+        if (metric == "rmse") { return Operon::RMSE{}(*estimated, values); }
+        if (metric == "nmse") { return Operon::NMSE{}(*estimated, values); }
+        if (metric == "mae") { return Operon::MAE{}(*estimated, values); }
         throw std::runtime_error("Invalid fitness metric");
 
     }, nb::arg("tree"), nb::arg("dataset"), nb::arg("range"), nb::arg("target"), nb::arg("metric") = "rsquared");
@@ -183,7 +188,8 @@ void InitEval(nb::module_ &m)
         // TODO: make this run in parallel with taskflow
         std::transform(trees.begin(), trees.end(), data, [&](auto const& t) -> double {
             auto estimated = TInterpreter{&dtable, &d, &t}.Evaluate({}, r);
-            return (*error)(estimated, values);
+            if (!estimated) { throw std::runtime_error(Operon::FormatInterpreterError(estimated.error())); }
+            return (*error)(*estimated, values);
         });
 
         return nb::ndarray<nb::numpy, Operon::Scalar>(data, {-1UL}, owner);
