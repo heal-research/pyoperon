@@ -152,10 +152,10 @@ NB_MODULE(pyoperon, m)
 
     nb::class_<Operon::InfixParser>(m, "InfixParser")
         .def_static("Parse", [](std::string const& expr) {
-            return Operon::InfixParser::Parse(expr);
+            return Operon::InfixParser::ParseOrThrow(expr);
         })
         .def_static("Parse", [](std::string const& expr, Operon::Dataset const& dataset) {
-            return Operon::InfixParser::Parse(expr, dataset);
+            return Operon::InfixParser::ParseOrThrow(expr, dataset);
         });
 
     // genetic algorithm
