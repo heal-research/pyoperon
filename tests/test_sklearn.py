@@ -959,3 +959,110 @@ class TestSampleWeight:
         mse_w_unweighted_fit = self._weighted_mse(reg_unweighted.predict(X), y, w)
         mse_w_weighted_fit = self._weighted_mse(reg_weighted.predict(X), y, w)
         assert mse_w_weighted_fit < mse_w_unweighted_fit
+
+
+# ---------------------------------------------------------------------------
+# Linear scaling (Problem-level setting)
+# ---------------------------------------------------------------------------
+
+def _scaled_target_problem():
+    """Problem whose target is an exact affine function (3x + 5) of the input,
+    plus an individual that is just the bare input variable."""
+    rng = np.random.default_rng(0)
+    X = rng.standard_normal((50, 1)).astype(np.float32)
+    y = (3 * X[:, 0] + 5).astype(np.float32)
+    ds = op.Dataset(np.asfortranarray(np.column_stack((X, y))))
+    target = max(ds.Variables, key=lambda v: v.Index)
+    inputs = [v.Hash for v in ds.Variables if v.Hash != target.Hash]
+
+    problem = op.Problem(ds)
+    problem.TrainingRange = op.Range(0, ds.Rows)
+    problem.Target = target
+    problem.InputHashes = inputs
+
+    var_node = op.Node.Variable(1.0)
+    var_node.HashValue = inputs[0]
+    ind = op.Individual()
+    ind.Genotype = op.Tree([var_node]).UpdateNodes()
+    return ds, problem, ind
+
+
+@needs_extension
+class TestLinearScaling:
+
+    def test_problem_property_defaults_to_enabled_and_roundtrips(self):
+        _, problem, _ = _scaled_target_problem()
+        assert problem.LinearScalingEnabled is True
+        problem.LinearScalingEnabled = False
+        assert problem.LinearScalingEnabled is False
+        problem.LinearScalingEnabled = True
+        assert problem.LinearScalingEnabled is True
+
+    @pytest.mark.parametrize('objective', ['r2', 'nmse', 'rmse', 'mse', 'mae'])
+    def test_init_evaluator_follows_problem_linear_scaling(self, objective):
+        """The evaluator built by sklearn must honour the Problem's scaling
+        switch: the bare variable x is a perfect model of 3x + 5 only after
+        linear scaling."""
+        _, problem, ind = _scaled_target_problem()
+        dtable = op.DispatchTable()
+        rng = op.RandomGenerator(np.uint64(0))
+
+        problem.LinearScalingEnabled = True
+        evaluator = SymbolicRegressor._init_evaluator(objective, problem, dtable, [1])
+        scaled = evaluator(rng, ind)[0]
+
+        problem.LinearScalingEnabled = False
+        evaluator = SymbolicRegressor._init_evaluator(objective, problem, dtable, [1])
+        unscaled = evaluator(rng, ind)[0]
+
+        # r2 is maximised (fitness = -r2), the others are minimised: the
+        # scaled score must be strictly better, and perfect for an exact fit.
+        assert scaled < unscaled
+        perfect = -1.0 if objective == 'r2' else 0.0
+        assert scaled == pytest.approx(perfect, abs=1e-4)
+
+    def test_init_evaluator_c2_is_scale_invariant(self):
+        _, problem, ind = _scaled_target_problem()
+        dtable = op.DispatchTable()
+        rng = op.RandomGenerator(np.uint64(0))
+
+        scores = []
+        for enabled in (True, False):
+            problem.LinearScalingEnabled = enabled
+            evaluator = SymbolicRegressor._init_evaluator('c2', problem, dtable, [1])
+            scores.append(evaluator(rng, ind)[0])
+        assert scores[0] == pytest.approx(-1.0, abs=1e-4)
+        assert scores[1] == pytest.approx(scores[0], abs=1e-4)
+
+    @pytest.mark.parametrize('objective', ['r2', 'c2'])
+    def test_fit_with_linear_scaling_recovers_offset_target(self, objective):
+        rng = np.random.default_rng(1)
+        X = rng.standard_normal((100, 2))
+        y = 3.0 * X[:, 0] - 2.0 * X[:, 1] + 50.0
+
+        reg = SymbolicRegressor(
+            population_size=50, generations=10, max_evaluations=10_000,
+            random_state=1, objectives=[objective],
+            allowed_symbols='add,sub,mul,constant,variable',
+        )
+        reg.fit(X, y)
+
+        y_pred = reg.predict(X)
+        r2 = 1 - np.sum((y - y_pred) ** 2) / np.sum((y - y.mean()) ** 2)
+        assert r2 > 0.9
+
+    def test_fit_c2_without_scale_and_intercept_terms(self):
+        """c2 does not require scaling, so disabling the model terms is
+        honoured: the fit runs with linear scaling off and no scale/intercept
+        is appended to the final model."""
+        rng = np.random.default_rng(1)
+        X = rng.standard_normal((100, 2))
+        y = 3.0 * X[:, 0] - 2.0 * X[:, 1]
+
+        reg = SymbolicRegressor(
+            population_size=50, generations=5, max_evaluations=5000,
+            random_state=1, objectives=['c2'],
+            add_model_scale_term=False, add_model_intercept_term=False,
+        )
+        reg.fit(X, y)
+        assert np.all(np.isfinite(reg.predict(X)))

@@ -27,6 +27,10 @@ void InitProblem(nb::module_ &m)
             &Operon::Problem::GetInputs, // getter
             &Operon::Problem::SetInputs<std::vector<Operon::Hash> const&> // setter
         )
+        .def_prop_rw("LinearScalingEnabled",
+            &Operon::Problem::LinearScalingEnabled,
+            &Operon::Problem::SetLinearScalingEnabled
+        )
         .def_prop_rw("PrimitiveSet",
             [](Operon::Problem const& self) { return self.GetPrimitiveSet(); },
             [](Operon::Problem& self, Operon::PrimitiveSet pset) { self.GetPrimitiveSet() = pset; }

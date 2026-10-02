@@ -565,17 +565,17 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     @staticmethod
     def _init_evaluator(objective, problem, dtable, uncertainty):
         if objective == 'r2':
-            return op.Evaluator(problem, dtable, op.R2(), True)
+            return op.Evaluator(problem, dtable, op.R2(), False)
         elif objective == 'c2':
             return op.Evaluator(problem, dtable, op.C2(), False)
         elif objective == 'nmse':
-            return op.Evaluator(problem, dtable, op.NMSE(), True)
+            return op.Evaluator(problem, dtable, op.NMSE(), False)
         elif objective == 'rmse':
-            return op.Evaluator(problem, dtable, op.RMSE(), True)
+            return op.Evaluator(problem, dtable, op.RMSE(), False)
         elif objective == 'mse':
-            return op.Evaluator(problem, dtable, op.MSE(), True)
+            return op.Evaluator(problem, dtable, op.MSE(), False)
         elif objective == 'mae':
-            return op.Evaluator(problem, dtable, op.MAE(), True)
+            return op.Evaluator(problem, dtable, op.MAE(), False)
         elif objective == 'length':
             return op.LengthEvaluator(problem)
         elif objective == 'shape':
@@ -681,7 +681,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 creator, coeff_initializer, self.max_depth, self.max_length,
             )
         elif mutation_name == 'removesubtree':
-            return op.RemoveSubtreeMutation(pset)
+            return op.RemoveSubtreeMutation(creator, coeff_initializer, self.max_depth)
         elif mutation_name == 'discretepoint':
             mut = op.DiscretePointMutation()
             for c in op.Math.Constants:
@@ -883,6 +883,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         problem.TestRange     = test_range
         problem.Target        = target
         problem.InputHashes   = inputs
+        # Linear scaling is a Problem-level setting; evaluators read it from the problem.
+        problem.LinearScalingEnabled = add_scale and add_intercept
 
         primitive_set_config  = self._init_primitive_config(self.allowed_symbols)
         problem.ConfigurePrimitiveSet(primitive_set_config)
