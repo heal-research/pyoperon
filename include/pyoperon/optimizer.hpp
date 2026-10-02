@@ -35,9 +35,9 @@ using TOptimizerBase           = Operon::OptimizerBase;
 using TLMOptimizerEigen        = Operon::LevenbergMarquardtOptimizer<TDispatch, Operon::OptimizerType::Eigen>;
 
 // gradient costs (callable, for LBFGS/SGD)
-using TGaussianGradientCost     = Operon::GaussianGradientCostFunction<Operon::Scalar>;
-using TPoissonGradientCost      = Operon::PoissonGradientCostFunction<Operon::Scalar, false>;
-using TPoissonGradientCostLog   = Operon::PoissonGradientCostFunction<Operon::Scalar, true>;
+using TGaussianGradientCost     = Operon::GaussianGradientCostFunction;
+using TPoissonGradientCost      = Operon::PoissonGradientCostFunction<false>;
+using TPoissonGradientCostLog   = Operon::PoissonGradientCostFunction<true>;
 
 // optimizer::lbfgs
 using TLBFGSOptimizerGauss      = Operon::LBFGSOptimizer<TDispatch, TGaussianGradientCost>;
