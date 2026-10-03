@@ -220,8 +220,12 @@ void InitEval(nb::module_ &m)
 
     // interpreter
     nb::class_<TInterpreter, TInterpreterBase>(m, "Interpreter")
-        .def("Evaluate", [](TInterpreter const& self, Operon::Range range){
-            return self.Evaluate({}, range);
+        .def("Evaluate", [](TInterpreter const& self, Operon::Range range) {
+            auto evaluated = self.Evaluate({}, range);
+            if (!evaluated) {
+                throw std::runtime_error(Operon::FormatInterpreterError(evaluated.error()));
+            }
+            return *evaluated;
         });
 
     // error metric
