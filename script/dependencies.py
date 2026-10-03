@@ -81,7 +81,7 @@ if __name__ == '__main__':
         ('glaze', 'https://github.com/stephenberry/glaze', 'v7.8.3', default_cmake_args + ['-Dglaze_BUILD_EXAMPLES=OFF', '-Dglaze_DEVELOPER_MODE=OFF', '-Dglaze_ENABLE_FUZZING=OFF']),
         ('ndsort', 'https://github.com/foolnotion/ndsort', 'bd3b323b8d4373287e8cf303bc6304b929bc8ab1', default_cmake_args + ['-DBUILD_EXAMPLES=OFF']),
         ('small_vector', 'https://github.com/gharveymn/small_vector', 'v0.10.2', default_cmake_args + ['-DGCH_SMALL_VECTOR_ENABLE_TESTS=OFF', '-DGCH_SMALL_VECTOR_ENABLE_BENCHMARKS=OFF']),
-        ('pappus', 'https://github.com/heal-research/pappus', 'a0a17896d0ece0519b12ef65f551bd792fde2f8a', default_cmake_args),
+        ('pappus', 'https://github.com/heal-research/pappus', '6b40caf098a7db6c3be8242851d3d91847bfffb1', default_cmake_args),
         ('operon', 'https://github.com/heal-research/operon', 'd4b53a63e94b628b3fc89ca117aef46c3a7a443a', default_cmake_args + ['--preset', operon_build_preset, '-DBUILD_CLI_PROGRAMS=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']),
     ]
 
