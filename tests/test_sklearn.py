@@ -840,6 +840,7 @@ class TestSampleWeight:
         problem.TrainingRange = op.Range(0, ds.Rows)
         problem.Target = target
         problem.InputHashes = inputs
+        problem.LinearScalingEnabled = False
 
         var_node = op.Node.Variable(1.0)
         var_node.HashValue = inputs[0]
