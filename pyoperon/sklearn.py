@@ -565,17 +565,17 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
     @staticmethod
     def _init_evaluator(objective, problem, dtable, uncertainty):
         if objective == 'r2':
-            return op.Evaluator(problem, dtable, op.R2(), True)
+            return op.Evaluator(problem, dtable, op.R2(), False)
         elif objective == 'c2':
             return op.Evaluator(problem, dtable, op.C2(), False)
         elif objective == 'nmse':
-            return op.Evaluator(problem, dtable, op.NMSE(), True)
+            return op.Evaluator(problem, dtable, op.NMSE(), False)
         elif objective == 'rmse':
-            return op.Evaluator(problem, dtable, op.RMSE(), True)
+            return op.Evaluator(problem, dtable, op.RMSE(), False)
         elif objective == 'mse':
-            return op.Evaluator(problem, dtable, op.MSE(), True)
+            return op.Evaluator(problem, dtable, op.MSE(), False)
         elif objective == 'mae':
-            return op.Evaluator(problem, dtable, op.MAE(), True)
+            return op.Evaluator(problem, dtable, op.MAE(), False)
         elif objective == 'length':
             return op.LengthEvaluator(problem)
         elif objective == 'shape':
@@ -681,7 +681,7 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 creator, coeff_initializer, self.max_depth, self.max_length,
             )
         elif mutation_name == 'removesubtree':
-            return op.RemoveSubtreeMutation(pset)
+            return op.RemoveSubtreeMutation(creator, coeff_initializer, self.max_depth)
         elif mutation_name == 'discretepoint':
             mut = op.DiscretePointMutation()
             for c in op.Math.Constants:
@@ -799,11 +799,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             vector is not broadcast.
 
             Poisson likelihoods (`optimizer_likelihood='poisson'` or
-            `'poisson_log'`) do not yet support sample_weight in coefficient
-            optimization: `w` there is already used for the exposure/offset
-            term, a different semantic from a precision weight, and
-            reconciling the two is unresolved. A warning is raised in that
-            case when `optimizer_iterations > 0`.
+            `'poisson_log'`) ignore sample_weight in LBFGS and SGD coefficient
+            optimization. A warning is raised in that case when
+            `optimizer_iterations > 0`.
 
         Returns
         -------
@@ -853,14 +851,18 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError('sample_weight must be non-negative')
             if not np.any(sample_weight > 0):
                 raise ValueError('sample_weight must not be all zero')
-            if optimizer_iterations > 0 and self.optimizer_likelihood in ('poisson', 'poisson_log'):
+            if (
+                optimizer_iterations > 0
+                and self.optimizer in ('lbfgs', 'sgd')
+                and self.optimizer_likelihood in ('poisson', 'poisson_log')
+            ):
                 warnings.warn(
                     'sample_weight is set but optimizer_iterations > 0 with '
                     f'optimizer_likelihood={self.optimizer_likelihood!r}: '
-                    'coefficient optimization does not yet support '
-                    'sample_weight for Poisson likelihoods, so coefficients '
-                    'may be tuned against a different objective than the '
-                    'one used for selection.',
+                    'coefficient optimization ignores sample_weight for '
+                    'Poisson likelihoods, so coefficients are tuned without '
+                    'sample weighting and may differ from the objective used '
+                    'for selection.',
                     stacklevel=2,
                 )
 
@@ -883,6 +885,8 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
         problem.TestRange     = test_range
         problem.Target        = target
         problem.InputHashes   = inputs
+        # Linear scaling is a Problem-level setting; evaluators read it from the problem.
+        problem.LinearScalingEnabled = add_scale and add_intercept
 
         primitive_set_config  = self._init_primitive_config(self.allowed_symbols)
         problem.ConfigurePrimitiveSet(primitive_set_config)

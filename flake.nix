@@ -7,7 +7,7 @@
     infix-parser.url = "github:foolnotion/infix-parser";
     lbfgs.url = "github:foolnotion/lbfgs";
     nixpkgs.url = "github:nixos/nixpkgs/master";
-    operon.url = "github:heal-research/operon";
+    operon.url = "github:heal-research/operon/d4b53a63e94b628b3fc89ca117aef46c3a7a443a";
     vstat.url = "github:heal-research/vstat";
 
     foolnotion.inputs.nixpkgs.follows = "nixpkgs";

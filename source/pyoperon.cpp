@@ -123,39 +123,39 @@ NB_MODULE(pyoperon, m)
     // dispatching through Operon's fmt formatter API.
     nb::class_<TreeFormatterBinding>(m, "TreeFormatter")
         .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return fmt::format("{:tree}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
+            return fmt::format("{:tree}", Operon::Fmt::TreeFormatArgs{tree, dataset, decimalPrecision});
         })
         .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
             Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
-            return fmt::format("{:tree}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
+            return fmt::format("{:tree}", Operon::Fmt::TreeFormatArgs{tree, map, decimalPrecision});
         });
 
     nb::class_<InfixFormatterBinding>(m, "InfixFormatter")
         .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
             auto spec = fmt::format("{{:infix:{}f}}", decimalPrecision);
-            return fmt::format(fmt::runtime(spec), Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
+            return fmt::format(fmt::runtime(spec), Operon::Fmt::TreeFormatArgs{tree, dataset, decimalPrecision});
         })
         .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
             Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
             auto spec = fmt::format("{{:infix:{}f}}", decimalPrecision);
-            return fmt::format(fmt::runtime(spec), Operon::Fmt::WithNames{tree, map, decimalPrecision});
+            return fmt::format(fmt::runtime(spec), Operon::Fmt::TreeFormatArgs{tree, map, decimalPrecision});
         });
 
     nb::class_<DotFormatterBinding>(m, "DotFormatter")
         .def_static("Format", [](Operon::Tree const& tree, Operon::Dataset const& dataset, int decimalPrecision) {
-            return fmt::format("{:dot}", Operon::Fmt::WithNames{tree, dataset, decimalPrecision});
+            return fmt::format("{:dot}", Operon::Fmt::TreeFormatArgs{tree, dataset, decimalPrecision});
         })
         .def_static("Format", [](Operon::Tree const& tree, std::unordered_map<Operon::Hash, std::string> const& variables, int decimalPrecision) {
             Operon::Fmt::VariableNameMap map(variables.begin(), variables.end());
-            return fmt::format("{:dot}", Operon::Fmt::WithNames{tree, map, decimalPrecision});
+            return fmt::format("{:dot}", Operon::Fmt::TreeFormatArgs{tree, map, decimalPrecision});
         });
 
     nb::class_<Operon::InfixParser>(m, "InfixParser")
         .def_static("Parse", [](std::string const& expr) {
-            return Operon::InfixParser::Parse(expr);
+            return Operon::InfixParser::ParseOrThrow(expr);
         })
         .def_static("Parse", [](std::string const& expr, Operon::Dataset const& dataset) {
-            return Operon::InfixParser::Parse(expr, dataset);
+            return Operon::InfixParser::ParseOrThrow(expr, dataset);
         });
 
     // genetic algorithm

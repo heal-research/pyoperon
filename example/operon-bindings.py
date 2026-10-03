@@ -84,7 +84,8 @@ if __name__ == '__main__':
     # define fitness evaluation
     dtable         = Operon.DispatchTable()
     error_metric   = Operon.R2()          # use the coefficient of determination as fitness
-    evaluator      = Operon.Evaluator(problem, dtable, error_metric, True) # initialize evaluator, use linear scaling = True
+    problem.LinearScalingEnabled = True   # linear scaling is a Problem-level setting
+    evaluator      = Operon.Evaluator(problem, dtable, error_metric, False) # last argument: skipNonFinite
     evaluator.Budget = config.Evaluations # computational budget
 
     optimizer      = Operon.LMOptimizer(dtable, problem, max_iter=config.Iterations)

@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO heal-research/operon
-    REF 1871b61edb4dbd90c885c173e502c0c721f6b813
-    SHA512 cada3dbb695d6fa5afe44b8666f2628ababc0c02965323ba71f6f505c5dacf92858a57d3793bef0cd1b88218b02bf228c45a81a027fb69b310e1f2166b095713
+    REF d4b53a63e94b628b3fc89ca117aef46c3a7a443a
+    SHA512 d76f2bdd60014df5675f566954d31ebfd93d1616e10712b337b2a80db8694d2ee72be08e8c7a8faead14ca48673e8839f0a3d4f69b818785d95b4870114cd633
     HEAD_REF main
     PATCHES
         add-msvc-support.patch

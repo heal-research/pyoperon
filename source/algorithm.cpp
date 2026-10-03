@@ -23,8 +23,8 @@ void InitAlgorithm(nb::module_ &m)
     nb::class_<Operon::GeneticAlgorithmBase>(m, "GeneticAlgorithmBase")
         .def_prop_ro("Generation", [](Operon::GeneticAlgorithmBase const& self) { return self.Generation(); }, nb::call_guard<nb::gil_scoped_release>())
         .def_prop_ro("Individuals", [](Operon::GeneticAlgorithmBase const& self) -> std::vector<Operon::Individual> const& { return self.Individuals(); }, nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Parents", [](Operon::GeneticAlgorithmBase const& self) { return self.Parents(); }, nb::call_guard<nb::gil_scoped_release>())
-        .def_prop_ro("Offspring", [](Operon::GeneticAlgorithmBase const& self) { return self.Offspring(); }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Parents", [](Operon::GeneticAlgorithmBase const& self) { auto parents = self.Parents(); return std::vector<Operon::Individual>(parents.begin(), parents.end()); }, nb::call_guard<nb::gil_scoped_release>())
+        .def_prop_ro("Offspring", [](Operon::GeneticAlgorithmBase const& self) { auto offspring = self.Offspring(); return std::vector<Operon::Individual>(offspring.begin(), offspring.end()); }, nb::call_guard<nb::gil_scoped_release>())
         ;
 
     nb::class_<Operon::GeneticProgrammingAlgorithm, Operon::GeneticAlgorithmBase>(m, "GeneticProgrammingAlgorithm")
@@ -36,7 +36,11 @@ void InitAlgorithm(nb::module_ &m)
         // bind from a Python callable and converts it to ReportCallback at
         // the call site instead.
         .def("Run", [](Operon::GeneticProgrammingAlgorithm& self, Operon::RandomGenerator& rng, std::function<bool()> callback, size_t threads, bool warmStart) {
-                self.Run(rng, Operon::ReportCallback(std::move(callback)), threads, warmStart);
+                // an empty std::function must stay an empty ReportCallback: wrapping it would make
+                // the algorithm invoke it every generation and throw std::bad_function_call
+                Operon::ReportCallback report;
+                if (callback) { report = Operon::ReportCallback(std::move(callback)); }
+                self.Run(rng, std::move(report), threads, warmStart);
             }, nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), nb::arg("callback") = nullptr, nb::arg("threads") = 0, nb::arg("warm_start") = false)
         .def("Reset", &Operon::GeneticProgrammingAlgorithm::Reset, nb::call_guard<nb::gil_scoped_release>())
         .def("RestoreIndividuals", &Operon::GeneticProgrammingAlgorithm::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
@@ -56,7 +60,9 @@ void InitAlgorithm(nb::module_ &m)
         // See GeneticProgrammingAlgorithm's Run binding above for why this is
         // a std::function-taking lambda rather than nb::overload_cast directly.
         .def("Run", [](Operon::NSGA2& self, Operon::RandomGenerator& rng, std::function<bool()> callback, size_t threads, bool warmStart) {
-                self.Run(rng, Operon::ReportCallback(std::move(callback)), threads, warmStart);
+                Operon::ReportCallback report;
+                if (callback) { report = Operon::ReportCallback(std::move(callback)); }
+                self.Run(rng, std::move(report), threads, warmStart);
             }, nb::call_guard<nb::gil_scoped_release>(), nb::arg("rng"), "callback"_a = nb::none(), "threads"_a = 0, "warm_start"_a = false)
         .def("Reset", &Operon::NSGA2::Reset)
         .def("RestoreIndividuals", &Operon::NSGA2::RestoreIndividuals, nb::call_guard<nb::gil_scoped_release>())
