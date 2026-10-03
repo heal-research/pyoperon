@@ -799,11 +799,9 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
             vector is not broadcast.
 
             Poisson likelihoods (`optimizer_likelihood='poisson'` or
-            `'poisson_log'`) do not yet support sample_weight in coefficient
-            optimization: `w` there is already used for the exposure/offset
-            term, a different semantic from a precision weight, and
-            reconciling the two is unresolved. A warning is raised in that
-            case when `optimizer_iterations > 0`.
+            `'poisson_log'`) ignore sample_weight in LBFGS and SGD coefficient
+            optimization. A warning is raised in that case when
+            `optimizer_iterations > 0`.
 
         Returns
         -------
@@ -853,14 +851,18 @@ class SymbolicRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError('sample_weight must be non-negative')
             if not np.any(sample_weight > 0):
                 raise ValueError('sample_weight must not be all zero')
-            if optimizer_iterations > 0 and self.optimizer_likelihood in ('poisson', 'poisson_log'):
+            if (
+                optimizer_iterations > 0
+                and self.optimizer in ('lbfgs', 'sgd')
+                and self.optimizer_likelihood in ('poisson', 'poisson_log')
+            ):
                 warnings.warn(
                     'sample_weight is set but optimizer_iterations > 0 with '
                     f'optimizer_likelihood={self.optimizer_likelihood!r}: '
-                    'coefficient optimization does not yet support '
-                    'sample_weight for Poisson likelihoods, so coefficients '
-                    'may be tuned against a different objective than the '
-                    'one used for selection.',
+                    'coefficient optimization ignores sample_weight for '
+                    'Poisson likelihoods, so coefficients are tuned without '
+                    'sample weighting and may differ from the objective used '
+                    'for selection.',
                     stacklevel=2,
                 )
 

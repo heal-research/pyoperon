@@ -764,9 +764,8 @@ class TestSampleWeight:
             reg.fit(X, y, sample_weight=np.zeros(len(y)))
 
     def test_optimizer_iterations_warns_with_sample_weight_poisson(self, small_regression_data):
-        """Poisson likelihoods don't yet support sample_weight in coefficient
-        optimization (w there is already the exposure/offset term), so this
-        combination should still warn."""
+        """LBFGS and SGD ignore sample_weight in Poisson coefficient
+        optimization, so this combination should warn."""
         X, y = small_regression_data
         reg = SymbolicRegressor(
             population_size=50, generations=3, random_state=42,
@@ -775,6 +774,16 @@ class TestSampleWeight:
         )
         with pytest.warns(UserWarning, match='optimizer_iterations'):
             reg.fit(X, y, sample_weight=np.ones(len(y)))
+
+    @pytest.mark.filterwarnings('error')
+    def test_lm_does_not_warn_with_sample_weight_poisson(self, small_regression_data):
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=3, random_state=42,
+            optimizer='lm', optimizer_likelihood='poisson',
+            optimizer_iterations=5,
+        )
+        reg.fit(X, y, sample_weight=np.ones(len(y)))
 
     @pytest.mark.filterwarnings('error')
     def test_no_warning_with_default_optimizer_iterations(self, small_regression_data):
