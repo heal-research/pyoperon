@@ -387,6 +387,19 @@ class TestFitPredict:
         y_pred = reg.predict(X)
         assert y_pred.shape == y.shape
 
+    def test_mdl_objective_fit(self, small_regression_data):
+        # regression: MDL evaluator had no Budget property -> AttributeError in fit
+        X, y = small_regression_data
+        reg = SymbolicRegressor(
+            population_size=50, generations=100000,
+            max_evaluations=2000, n_threads=1, random_state=42,
+            objectives=['mdl'], uncertainty=[0.1],
+        )
+        reg.fit(X, y)
+        assert reg.predict(X).shape == y.shape
+        # generations=100000 can't be reached: the evaluation budget must have stopped the run
+        assert reg.stats_['generations'] < 100000
+
     def test_symbolic_mode(self, small_regression_data):
         X, y = small_regression_data
         reg = SymbolicRegressor(

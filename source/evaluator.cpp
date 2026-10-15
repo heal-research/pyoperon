@@ -33,13 +33,16 @@ auto PoissonLikelihood(nb::ndarray<T> x, nb::ndarray<T> y, nb::ndarray<T> w) {
     return TPoissonLikelihood::ComputeLikelihood(MakeSpan(x), MakeSpan(y), MakeSpan(w));
 }
 
-// small wrapper to unify the differently-templated MDL evaluators under a single class
-class MDLEvaluator {
+// Wraps the differently-templated MDL evaluators behind a single EvaluatorBase, so it exposes Budget and the
+// other evaluator properties and can be used wherever an evaluator is expected.
+class MDLEvaluator final : public TEvaluatorBase {
     std::unique_ptr<TEvaluatorBase> eval_;
     enum { Gauss, Poisson, PoissonLog } lik_ = Gauss; // TODO: very ugly, find something better
 
 public:
-    MDLEvaluator(Operon::Problem const& problem, TDispatch const& dtable, std::string const& lik) {
+    MDLEvaluator(Operon::Problem const& problem, TDispatch const& dtable, std::string const& lik)
+        : TEvaluatorBase(&problem)
+    {
         if (lik == "gauss") {
             eval_ = std::make_unique<TMDLEvaluatorGauss>(&problem, &dtable);
             lik_ = Gauss;
@@ -72,7 +75,33 @@ public:
         }
     }
 
-    [[nodiscard]] auto Get() const { return eval_.get(); }
+    void Prepare(Operon::Span<Operon::Individual const> pop) const override {
+        eval_->SetPopulation(pop);
+        eval_->Prepare(pop);
+    }
+
+    [[nodiscard]] auto ObjectiveCount() const -> std::size_t override { return eval_->ObjectiveCount(); }
+
+    // Residual/Jacobian evaluations are counted on the wrapped evaluator (during evaluation) and on this wrapper
+    // (local search charges the evaluator it is given), so the budget is the sum of both.
+    auto Stats() const -> std::tuple<std::size_t, std::size_t, std::size_t, std::size_t> override {
+        auto [re, je, cc, ct] = eval_->Stats();
+        return std::tuple { re + ResidualEvaluations.load(), je + JacobianEvaluations.load(), cc + CallCount.load(),
+            ct + CostFunctionTime.load() };
+    }
+
+    auto BudgetExhausted() const -> bool override {
+        auto [re, je, cc, ct] = Stats();
+        return re + je >= Budget();
+    }
+
+    auto operator()(Operon::RandomGenerator& rng, Operon::Individual const& ind) const -> ReturnType override {
+        return (*eval_)(rng, ind);
+    }
+
+    auto operator()(Operon::RandomGenerator& rng, Operon::Individual const& ind, Operon::Span<Operon::Scalar> buf) const -> ReturnType override {
+        return (*eval_)(rng, ind, buf);
+    }
 };
 } // namespace detail
 
@@ -240,11 +269,8 @@ void InitEval(nb::module_ &m)
         .def(nb::init<TEvaluatorBase const*>())
         .def_prop_rw("AggregateType", &Operon::AggregateEvaluator::GetAggregateType, &Operon::AggregateEvaluator::SetAggregateType);
 
-    nb::class_<detail::MDLEvaluator>(m, "MinimumDescriptionLengthEvaluator")
+    nb::class_<detail::MDLEvaluator, TEvaluatorBase>(m, "MinimumDescriptionLengthEvaluator")
         .def(nb::init<Operon::Problem const&, TDispatch const&, std::string const&>())
-        .def("__call__", [](detail::MDLEvaluator const& self, Operon::RandomGenerator& rng, Operon::Individual const& ind) {
-            return (*self.Get())(rng, ind);
-        })
         .def_prop_rw("Sigma", nullptr /*get*/ , &detail::MDLEvaluator::SetSigma /*set*/);
 
     nb::class_<TBICEvaluator, TEvaluator>(m, "BayesianInformationCriterionEvaluator")
