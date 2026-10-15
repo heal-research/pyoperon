@@ -37,7 +37,7 @@ if __name__ == '__main__':
         ('vstat', 'https://github.com/heal-research/vstat', 'cd753d0467ccc96389fb969551eccceca97f38d1', default_cmake_args),
         ('FastFloat', 'https://github.com/fastfloat/fast_float', '50a80a73ab2ab256ba1c3bf86923ddd8b4202bc7', default_cmake_args + ['-DFASTFLOAT_TEST=OFF']),
         ('pratt-parser', 'https://github.com/foolnotion/pratt-parser-calculator', '2e0b13615c6ff1fb6381c0ac87796932b326bc89', default_cmake_args),
-        ('unordered_dense', 'https://github.com/martinus/unordered_dense', '4.5.0', default_cmake_args),
+        ('unordered_dense', 'https://github.com/martinus/unordered_dense', 'v4.5.0', default_cmake_args),
         ('cpp-sort', 'https://github.com/Morwenn/cpp-sort', '1.17.0', default_cmake_args + ['-DBUILD_TESTING=0']),
         ('fmt', 'https://github.com/fmtlib/fmt', '12.1.0', default_cmake_args + ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON', '-DFMT_TEST=OFF', 'DBUILD_SHARED_LIBS=OFF']),
         ('Microsoft.GSL', 'https://github.com/microsoft/GSL', 'v4.2.0', default_cmake_args + ['DGSL_INSTALL=1', '-DGSL_TEST=0']),
