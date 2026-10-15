@@ -95,3 +95,7 @@ build-linux/CMakeFiles/pyoperon_pyoperon.dir/source/selection.cpp.o.d
 build-linux/CMakeFiles/pyoperon_pyoperon.dir/source/tree.cpp.o
 build-linux/CMakeFiles/pyoperon_pyoperon.dir/source/tree.cpp.o.d
 build-linux/export/pyoperon/pyoperon_export.hpp
+vcpkg_installed/
+venv-vcpkg/
+dist/
+wheelhouse/

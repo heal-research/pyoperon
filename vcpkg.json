@@ -4,5 +4,11 @@
     "builtin-baseline": "d87340acc46bdeda386037b38aca30136e667e47",
     "dependencies": [
         "operon"
+    ],
+    "overrides": [
+        { "name": "eigen3", "version": "3.4.0", "port-version": 5 },
+        { "name": "fast-float", "version": "8.0.2" },
+        { "name": "fmt", "version": "12.1.0" },
+        { "name": "ms-gsl", "version": "4.2.1" }
     ]
 }

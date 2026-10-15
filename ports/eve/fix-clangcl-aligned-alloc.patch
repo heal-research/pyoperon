@@ -1,0 +1,31 @@
+diff --git a/include/eve/memory/aligned_allocator.hpp b/include/eve/memory/aligned_allocator.hpp
+index 4ffaa4c83..dd842523d 100644
+--- a/include/eve/memory/aligned_allocator.hpp
++++ b/include/eve/memory/aligned_allocator.hpp
+@@ -12,7 +12,7 @@
+ #include <cstddef>
+ #include <bit>
+ 
+-#if defined(SPY_COMPILER_IS_MSVC)
++#if defined(SPY_COMPILER_IS_MSVC) || defined(SPY_COMPILER_IS_CLANGCL)
+ #include <malloc.h>
+ #endif
+ 
+@@ -75,7 +75,7 @@ namespace eve
+       if (a < 8U) a = 8U;
+       auto sz = align(n, over{a});
+ 
+-      #if defined(SPY_COMPILER_IS_MSVC)
++      #if defined(SPY_COMPILER_IS_MSVC) || defined(SPY_COMPILER_IS_CLANGCL)
+       return  _aligned_malloc(sz,a);
+       #else
+ 
+@@ -93,7 +93,7 @@ namespace eve
+     {
+       if(!ptr) return;
+ 
+-      #if defined(SPY_COMPILER_IS_MSVC)
++      #if defined(SPY_COMPILER_IS_MSVC) || defined(SPY_COMPILER_IS_CLANGCL)
+       _aligned_free(ptr);
+       #else
+       std::free(ptr);
